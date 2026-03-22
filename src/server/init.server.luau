@@ -1,0 +1,1495 @@
+--[[
+	Candy Run - Server Script v4
+	Oversized fantasy candy, opaque hallway walls, big spawn with item capsules
+]]
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
+local ServerStorage = game:GetService("ServerStorage")
+
+-- ============================================================
+-- REMOTE EVENTS
+-- ============================================================
+
+local startGameEvent = Instance.new("RemoteEvent")
+startGameEvent.Name = "StartGame"; startGameEvent.Parent = ReplicatedStorage
+
+local timerEvent = Instance.new("RemoteEvent")
+timerEvent.Name = "TimerUpdate"; timerEvent.Parent = ReplicatedStorage
+
+local candyCollectedEvent = Instance.new("RemoteEvent")
+candyCollectedEvent.Name = "CandyCollected"; candyCollectedEvent.Parent = ReplicatedStorage
+
+local respawnEvent = Instance.new("RemoteEvent")
+respawnEvent.Name = "RespawnTimer"; respawnEvent.Parent = ReplicatedStorage
+
+local timerStartEvent = Instance.new("RemoteEvent")
+timerStartEvent.Name = "TimerStart"; timerStartEvent.Parent = ReplicatedStorage
+
+-- ============================================================
+-- LIGHTING
+-- ============================================================
+
+Lighting.ClockTime = 14
+Lighting.Brightness = 2.5
+Lighting.Ambient = Color3.fromRGB(140, 100, 150)
+Lighting.OutdoorAmbient = Color3.fromRGB(180, 140, 190)
+Lighting.FogColor = Color3.fromRGB(255, 210, 235)
+Lighting.FogEnd = 2500; Lighting.FogStart = 500
+
+local atmo = Instance.new("Atmosphere")
+atmo.Density = 0.2; atmo.Offset = 0.15
+atmo.Color = Color3.fromRGB(255, 210, 235)
+atmo.Decay = Color3.fromRGB(230, 180, 255)
+atmo.Glare = 0.15; atmo.Haze = 2
+atmo.Parent = Lighting
+
+local bloom = Instance.new("BloomEffect")
+bloom.Intensity = 0.45; bloom.Size = 32; bloom.Threshold = 1.2
+bloom.Parent = Lighting
+
+local cc = Instance.new("ColorCorrectionEffect")
+cc.Saturation = 0.35; cc.TintColor = Color3.fromRGB(255, 242, 252)
+cc.Brightness = 0.06; cc.Contrast = 0.12
+cc.Parent = Lighting
+
+-- Sunrays for that fantasy glow
+local sunrays = Instance.new("SunRaysEffect")
+sunrays.Intensity = 0.08; sunrays.Spread = 0.5
+sunrays.Parent = Lighting
+
+-- ============================================================
+-- FOLDERS & CONSTANTS
+-- ============================================================
+
+local mapFolder = Instance.new("Folder"); mapFolder.Name = "CandyMap"; mapFolder.Parent = workspace
+local collectiblesFolder = Instance.new("Folder"); collectiblesFolder.Name = "Collectibles"; collectiblesFolder.Parent = workspace
+local hallwayFolder = Instance.new("Folder"); hallwayFolder.Name = "Hallway"; hallwayFolder.Parent = workspace
+
+local START_HEIGHT = 250
+local HALLWAY_WIDTH = 90
+local HALLWAY_HEIGHT = 130
+local WALL_SEGMENT_LENGTH = 60
+local DEATH_Y = 20
+local checkpointPositions = {}
+local playerData = {}
+
+-- ============================================================
+-- HELPERS
+-- ============================================================
+
+local function glow(part, color, range, brightness)
+	local l = Instance.new("PointLight")
+	l.Color = color or part.Color; l.Range = range or 14
+	l.Brightness = brightness or 0.5; l.Parent = part
+end
+
+-- Glass sheen overlay helper
+local function addSheen(parent, size, position, color)
+	local s = Instance.new("Part")
+	s.Size = size; s.Position = position; s.Anchored = true
+	s.Color = color or Color3.fromRGB(255,255,255)
+	s.Material = Enum.Material.Glass
+	s.Transparency = 0.82; s.CanCollide = false
+	s.Parent = parent
+	return s
+end
+
+-- ============================================================
+-- CANDY CANE: Tall, glossy, smoothly curved with bright spiral stripes
+-- ============================================================
+
+local function buildCandyCane(index, pos, m)
+	m = m or 1
+	local model = Instance.new("Model"); model.Name = "CandyCane_"..index
+
+	-- Thick main body
+	local main = Instance.new("Part")
+	main.Name = "Walkable"
+	main.Size = Vector3.new(22*m, 5.5*m, 5.5*m)
+	main.Position = pos; main.Anchored = true
+	main.Color = Color3.fromRGB(230, 25, 25)
+	main.Material = Enum.Material.SmoothPlastic
+	main.Shape = Enum.PartType.Cylinder
+	main.TopSurface = Enum.SurfaceType.Smooth
+	main.BottomSurface = Enum.SurfaceType.Smooth
+	main.Parent = model
+	glow(main, Color3.fromRGB(255, 100, 100), 20, 0.6)
+
+	-- Spiral white stripes (6 bands for tight spiral look)
+	for i2 = -2.5, 2.5, 1 do
+		local stripe = Instance.new("Part")
+		stripe.Size = Vector3.new(2.5*m, 5.8*m, 5.8*m)
+		stripe.Position = pos + Vector3.new(i2*3.2*m, 0, 0)
+		stripe.Anchored = true; stripe.Color = Color3.fromRGB(255,255,255)
+		stripe.Material = Enum.Material.SmoothPlastic
+		stripe.Shape = Enum.PartType.Cylinder
+		stripe.Transparency = 0.4; stripe.CanCollide = false
+		stripe.Parent = model
+	end
+
+	-- Full glossy sheen overlay (polished candy look)
+	local sheen = Instance.new("Part")
+	sheen.Size = Vector3.new(22.5*m, 4*m, 4*m)
+	sheen.Position = pos + Vector3.new(0, 1.2*m, 0)
+	sheen.Anchored = true; sheen.Color = Color3.fromRGB(255, 220, 220)
+	sheen.Material = Enum.Material.Glass
+	sheen.Shape = Enum.PartType.Cylinder
+	sheen.Transparency = 0.75; sheen.CanCollide = false
+	sheen.Parent = model
+
+	-- Curved hook (tall, with smooth curve using 3 spheres)
+	local hookPositions = {
+		{x = 11*m, y = 3*m,  z = 0,     size = 5.5*m},
+		{x = 11*m, y = 7*m,  z = -2*m,  size = 5*m},
+		{x = 9*m,  y = 10*m, z = -3.5*m, size = 4.5*m},
+	}
+	for _, hp in ipairs(hookPositions) do
+		local ball = Instance.new("Part")
+		ball.Size = Vector3.new(hp.size, hp.size, hp.size)
+		ball.Position = pos + Vector3.new(hp.x, hp.y, hp.z)
+		ball.Anchored = true; ball.Color = Color3.fromRGB(230, 25, 25)
+		ball.Material = Enum.Material.SmoothPlastic
+		ball.Shape = Enum.PartType.Ball; ball.Parent = model
+
+		-- White accent on each hook ball
+		local accent = Instance.new("Part")
+		accent.Size = Vector3.new(hp.size*0.7, hp.size*0.7, hp.size*0.7)
+		accent.Position = pos + Vector3.new(hp.x, hp.y, hp.z)
+		accent.Anchored = true; accent.Color = Color3.fromRGB(255,255,255)
+		accent.Material = Enum.Material.SmoothPlastic
+		accent.Shape = Enum.PartType.Ball
+		accent.Transparency = 0.45; accent.CanCollide = false
+		accent.Parent = model
+	end
+
+	model.Parent = mapFolder
+	return main, model
+end
+
+-- ============================================================
+-- CANDY CORN: Soft, rounded, waxy, semi-translucent
+-- ============================================================
+
+local function buildCandyCorn(index, pos, m)
+	m = m or 1
+	local model = Instance.new("Model"); model.Name = "CandyCorn_"..index
+
+	-- Yellow base
+	local base = Instance.new("Part")
+	base.Name = "Walkable"
+	base.Size = Vector3.new(18*m, 4.5*m, 15*m)
+	base.Position = pos; base.Anchored = true
+	base.Color = Color3.fromRGB(255, 225, 50)
+	base.Material = Enum.Material.SmoothPlastic
+	base.TopSurface = Enum.SurfaceType.Smooth
+	base.BottomSurface = Enum.SurfaceType.Smooth
+	base.Parent = model
+	glow(base, Color3.fromRGB(255, 240, 100), 16)
+
+	-- Orange middle with rounded edges (ball for softness)
+	local mid = Instance.new("Part")
+	mid.Size = Vector3.new(15*m, 5*m, 12*m)
+	mid.Position = pos + Vector3.new(0, 4.5*m, 0)
+	mid.Anchored = true; mid.Color = Color3.fromRGB(255, 160, 0)
+	mid.Material = Enum.Material.SmoothPlastic
+	mid.CanCollide = true; mid.Parent = model
+
+	-- Rounded edge balls on corners for soft look
+	for x = -1, 1, 2 do
+		for z = -1, 1, 2 do
+			local corner = Instance.new("Part")
+			corner.Size = Vector3.new(4*m, 4*m, 4*m)
+			corner.Position = pos + Vector3.new(x*6*m, 4.5*m, z*4.5*m)
+			corner.Anchored = true; corner.Color = Color3.fromRGB(255, 160, 0)
+			corner.Material = Enum.Material.SmoothPlastic
+			corner.Shape = Enum.PartType.Ball
+			corner.CanCollide = false; corner.Parent = model
+		end
+	end
+
+	-- White tip (big soft sphere)
+	local tip = Instance.new("Part")
+	tip.Size = Vector3.new(10*m, 8*m, 10*m)
+	tip.Position = pos + Vector3.new(0, 10*m, 0)
+	tip.Anchored = true; tip.Color = Color3.fromRGB(255, 255, 245)
+	tip.Material = Enum.Material.SmoothPlastic
+	tip.Shape = Enum.PartType.Ball
+	tip.CanCollide = true; tip.Parent = model
+
+	-- Waxy semi-translucent overlay (entire piece)
+	local wax = Instance.new("Part")
+	wax.Size = Vector3.new(17*m, 16*m, 14*m)
+	wax.Position = pos + Vector3.new(0, 5*m, 0)
+	wax.Anchored = true; wax.Color = Color3.fromRGB(255, 240, 200)
+	wax.Material = Enum.Material.Glass
+	wax.Transparency = 0.85; wax.CanCollide = false
+	wax.Parent = model
+
+	-- Smooth blending rings
+	for _, info in ipairs({{2.5, 16, Color3.fromRGB(255, 200, 30)}, {7, 13, Color3.fromRGB(255, 215, 130)}}) do
+		local blend = Instance.new("Part")
+		blend.Size = Vector3.new(2*m, info[2]*m, info[2]*m)
+		blend.Position = pos + Vector3.new(0, info[1]*m, 0)
+		blend.Anchored = true; blend.Color = info[3]
+		blend.Material = Enum.Material.SmoothPlastic
+		blend.Shape = Enum.PartType.Cylinder
+		blend.Orientation = Vector3.new(0,0,90)
+		blend.Transparency = 0.2; blend.CanCollide = false
+		blend.Parent = model
+	end
+
+	model.Parent = mapFolder
+	return base, model
+end
+
+-- ============================================================
+-- CHOCOLATE BAR: Rich, solid, 4x2 segments, crinkled foil
+-- ============================================================
+
+local function buildChocolateBar(index, pos, m)
+	m = m or 1
+	local model = Instance.new("Model"); model.Name = "ChocolateBar_"..index
+
+	local bar = Instance.new("Part")
+	bar.Name = "Walkable"
+	bar.Size = Vector3.new(20*m, 4*m, 14*m)
+	bar.Position = pos; bar.Anchored = true
+	bar.Color = Color3.fromRGB(92, 48, 20)
+	bar.Material = Enum.Material.SmoothPlastic
+	bar.TopSurface = Enum.SurfaceType.Smooth
+	bar.BottomSurface = Enum.SurfaceType.Smooth
+	bar.Parent = model
+	glow(bar, Color3.fromRGB(150, 100, 60), 14, 0.4)
+
+	-- 4x2 embossed segments with rounded tops
+	for col = -1.5, 1.5, 1 do
+		for row = -0.5, 0.5, 1 do
+			local seg = Instance.new("Part")
+			seg.Size = Vector3.new(4.2*m, 1.5*m, 5.5*m)
+			seg.Position = pos + Vector3.new(col*4.5*m, 2.7*m, row*3.2*m)
+			seg.Anchored = true; seg.Color = Color3.fromRGB(75, 38, 12)
+			seg.Material = Enum.Material.SmoothPlastic
+			seg.CanCollide = true; seg.Parent = model
+
+			-- Rounded dome top
+			local dome = Instance.new("Part")
+			dome.Size = Vector3.new(4*m, 1.5*m, 5.2*m)
+			dome.Position = pos + Vector3.new(col*4.5*m, 3.5*m, row*3.2*m)
+			dome.Anchored = true; dome.Color = Color3.fromRGB(82, 42, 16)
+			dome.Material = Enum.Material.SmoothPlastic
+			dome.Shape = Enum.PartType.Ball
+			dome.CanCollide = false; dome.Parent = model
+
+			-- Groove lines between segments
+			local grooveX = Instance.new("Part")
+			grooveX.Size = Vector3.new(0.2*m, 2*m, 5.5*m)
+			grooveX.Position = pos + Vector3.new(col*4.5*m + 2.2*m, 2.5*m, row*3.2*m)
+			grooveX.Anchored = true; grooveX.Color = Color3.fromRGB(55, 28, 8)
+			grooveX.Material = Enum.Material.SmoothPlastic
+			grooveX.CanCollide = false; grooveX.Parent = model
+		end
+	end
+
+	-- Center groove (horizontal)
+	local centerGroove = Instance.new("Part")
+	centerGroove.Size = Vector3.new(19*m, 0.2*m, 0.3*m)
+	centerGroove.Position = pos + Vector3.new(0, 2.8*m, 0)
+	centerGroove.Anchored = true; centerGroove.Color = Color3.fromRGB(55, 28, 8)
+	centerGroove.Material = Enum.Material.SmoothPlastic
+	centerGroove.CanCollide = false; centerGroove.Parent = model
+
+	-- Gold foil wrapper with crinkles
+	for _, side in ipairs({-1, 1}) do
+		local foil = Instance.new("Part")
+		foil.Size = Vector3.new(3.5*m, 5*m, 16*m)
+		foil.Position = pos + Vector3.new(side*10.5*m, 0, 0)
+		foil.Anchored = true; foil.Color = Color3.fromRGB(215, 185, 50)
+		foil.Material = Enum.Material.Foil
+		foil.CanCollide = false; foil.Transparency = 0.15
+		foil.Parent = model
+
+		-- Crinkle folds
+		for z2 = -3, 3 do
+			local crinkle = Instance.new("Part")
+			crinkle.Size = Vector3.new(2.5*m, 1.2*m, 1.8*m)
+			crinkle.Position = pos + Vector3.new(side*11.5*m, math.random()*2*m, z2*2*m)
+			crinkle.Anchored = true; crinkle.Color = Color3.fromRGB(225, 200, 65)
+			crinkle.Material = Enum.Material.Foil
+			crinkle.Rotation = Vector3.new(math.random(-15,15), math.random(-25,25), math.random(-10,10))
+			crinkle.CanCollide = false; crinkle.Transparency = 0.2
+			crinkle.Parent = model
+		end
+	end
+
+	-- Subtle sheen
+	addSheen(model, Vector3.new(19*m, 2*m, 13*m), pos + Vector3.new(0, 3*m, 0), Color3.fromRGB(180, 140, 90))
+
+	model.Parent = mapFolder
+	return bar, model
+end
+
+-- ============================================================
+-- LOLLIPOP: Vibrant swirl disc, glass-like, bold colors
+-- ============================================================
+
+local function buildLollipop(index, pos, m)
+	m = m or 1
+	local palettes = {
+		{Color3.fromRGB(255,60,140), Color3.fromRGB(255,200,220)},
+		{Color3.fromRGB(130,60,255), Color3.fromRGB(220,180,255)},
+		{Color3.fromRGB(60,180,255), Color3.fromRGB(180,230,255)},
+		{Color3.fromRGB(255,140,30), Color3.fromRGB(255,220,160)},
+	}
+	local pal = palettes[math.random(1, #palettes)]
+	local model = Instance.new("Model"); model.Name = "Lollipop_"..index
+
+	-- Thick stick
+	local stick = Instance.new("Part")
+	stick.Size = Vector3.new(3*m, 16*m, 3*m)
+	stick.Position = pos + Vector3.new(0, -9*m, 0)
+	stick.Anchored = true; stick.Color = Color3.fromRGB(245, 235, 210)
+	stick.Material = Enum.Material.SmoothPlastic
+	stick.Parent = model
+
+	-- Main disc (walkable) — BIG vibrant
+	local disc = Instance.new("Part")
+	disc.Name = "Walkable"
+	disc.Size = Vector3.new(4.5*m, 18*m, 18*m)
+	disc.Position = pos; disc.Anchored = true
+	disc.Color = pal[1]
+	disc.Material = Enum.Material.SmoothPlastic
+	disc.Shape = Enum.PartType.Cylinder
+	disc.Orientation = Vector3.new(0,0,90)
+	disc.TopSurface = Enum.SurfaceType.Smooth
+	disc.BottomSurface = Enum.SurfaceType.Smooth
+	disc.Parent = model
+	glow(disc, pal[1], 22, 0.6)
+
+	-- Swirl rings (5 alternating layers for bold spiral)
+	local swirlSizes = {15, 12, 9, 6, 3}
+	for i2, sz in ipairs(swirlSizes) do
+		local swirl = Instance.new("Part")
+		swirl.Size = Vector3.new((4.5 + 0.2*i2)*m, sz*m, sz*m)
+		swirl.Position = pos + Vector3.new(0, 0.08*i2*m, 0)
+		swirl.Anchored = true
+		swirl.Color = if i2 % 2 == 0 then pal[2] else Color3.fromRGB(255,255,255)
+		swirl.Material = Enum.Material.SmoothPlastic
+		swirl.Shape = Enum.PartType.Cylinder
+		swirl.Orientation = Vector3.new(0,0,90)
+		swirl.Transparency = 0.3; swirl.CanCollide = false
+		swirl.Parent = model
+	end
+
+	-- Glass-like shiny top surface
+	local glass = Instance.new("Part")
+	glass.Size = Vector3.new(1.5*m, 16*m, 16*m)
+	glass.Position = pos + Vector3.new(0, 2.5*m, 0)
+	glass.Anchored = true; glass.Color = Color3.fromRGB(255,255,255)
+	glass.Material = Enum.Material.Glass
+	glass.Shape = Enum.PartType.Cylinder
+	glass.Orientation = Vector3.new(0,0,90)
+	glass.Transparency = 0.8; glass.CanCollide = false
+	glass.Parent = model
+
+	model.Parent = mapFolder
+	return disc, model
+end
+
+-- ============================================================
+-- GUMMY BEAR: Squishy, semi-transparent, rounded features
+-- ============================================================
+
+local function buildGummyBear(index, pos, m)
+	m = m or 1
+	local gummyColors = {
+		Color3.fromRGB(255,50,50), Color3.fromRGB(50,220,50),
+		Color3.fromRGB(255,200,50), Color3.fromRGB(255,120,0),
+		Color3.fromRGB(200, 50, 200),
+	}
+	local color = gummyColors[math.random(1, #gummyColors)]
+	local model = Instance.new("Model"); model.Name = "GummyBear_"..index
+
+	-- Squishy body (rounded block)
+	local body = Instance.new("Part")
+	body.Name = "Walkable"
+	body.Size = Vector3.new(16*m, 7*m, 12*m)
+	body.Position = pos; body.Anchored = true; body.Color = color
+	body.Material = Enum.Material.SmoothPlastic
+	body.Transparency = 0.18
+	body.TopSurface = Enum.SurfaceType.Smooth
+	body.BottomSurface = Enum.SurfaceType.Smooth
+	body.Parent = model
+	glow(body, color, 16, 0.4)
+
+	-- Rounded body edges (spheres at corners for squishy look)
+	for x = -1, 1, 2 do
+		for z = -1, 1, 2 do
+			local edge = Instance.new("Part")
+			edge.Size = Vector3.new(5*m, 7*m, 5*m)
+			edge.Position = pos + Vector3.new(x*5.5*m, 0, z*3.5*m)
+			edge.Anchored = true; edge.Color = color
+			edge.Material = Enum.Material.SmoothPlastic
+			edge.Shape = Enum.PartType.Ball
+			edge.Transparency = 0.18; edge.CanCollide = false
+			edge.Parent = model
+		end
+	end
+
+	-- Big round head
+	local head = Instance.new("Part")
+	head.Size = Vector3.new(10*m, 8*m, 8*m)
+	head.Position = pos + Vector3.new(0, 7.5*m, 0)
+	head.Anchored = true; head.Color = color
+	head.Material = Enum.Material.SmoothPlastic
+	head.Shape = Enum.PartType.Ball
+	head.Transparency = 0.18; head.CanCollide = true
+	head.Parent = model
+
+	-- Chubby ears
+	for _, side in ipairs({-1, 1}) do
+		local ear = Instance.new("Part")
+		ear.Size = Vector3.new(3*m, 3.5*m, 3*m)
+		ear.Position = pos + Vector3.new(side*3.5*m, 12*m, 0)
+		ear.Anchored = true; ear.Color = color
+		ear.Shape = Enum.PartType.Ball
+		ear.Material = Enum.Material.SmoothPlastic
+		ear.Transparency = 0.18; ear.CanCollide = false
+		ear.Parent = model
+	end
+
+	-- Arms (stubby, squishy)
+	for _, side in ipairs({-1, 1}) do
+		local arm = Instance.new("Part")
+		arm.Size = Vector3.new(3*m, 4.5*m, 3*m)
+		arm.Position = pos + Vector3.new(side*8*m, 1*m, 0)
+		arm.Anchored = true; arm.Color = color
+		arm.Material = Enum.Material.SmoothPlastic
+		arm.Shape = Enum.PartType.Ball
+		arm.Transparency = 0.18; arm.CanCollide = false
+		arm.Parent = model
+	end
+
+	-- Cute eyes (with highlights)
+	for _, side in ipairs({-1, 1}) do
+		local eye = Instance.new("Part")
+		eye.Size = Vector3.new(1.2*m, 1.2*m, 1.2*m)
+		eye.Position = pos + Vector3.new(side*1.8*m, 8.5*m, 4.2*m)
+		eye.Anchored = true; eye.Color = Color3.fromRGB(15, 15, 15)
+		eye.Shape = Enum.PartType.Ball; eye.Material = Enum.Material.SmoothPlastic
+		eye.CanCollide = false; eye.Parent = model
+
+		local hl = Instance.new("Part")
+		hl.Size = Vector3.new(0.5*m, 0.5*m, 0.5*m)
+		hl.Position = pos + Vector3.new(side*1.5*m, 9*m, 4.5*m)
+		hl.Anchored = true; hl.Color = Color3.fromRGB(255,255,255)
+		hl.Shape = Enum.PartType.Ball; hl.Material = Enum.Material.Neon
+		hl.CanCollide = false; hl.Parent = model
+	end
+
+	-- Smile
+	local smile = Instance.new("Part")
+	smile.Size = Vector3.new(3*m, 0.6*m, 0.6*m)
+	smile.Position = pos + Vector3.new(0, 6.8*m, 4.2*m)
+	smile.Anchored = true; smile.Color = Color3.fromRGB(30, 15, 15)
+	smile.Material = Enum.Material.SmoothPlastic
+	smile.CanCollide = false; smile.Parent = model
+
+	-- Internal glass sheen for gummy translucence
+	local innerGlow = Instance.new("Part")
+	innerGlow.Size = Vector3.new(12*m, 10*m, 9*m)
+	innerGlow.Position = pos + Vector3.new(0, 3*m, 0)
+	innerGlow.Anchored = true; innerGlow.Color = color
+	innerGlow.Material = Enum.Material.Glass
+	innerGlow.Transparency = 0.7; innerGlow.CanCollide = false
+	innerGlow.Parent = model
+
+	model.Parent = mapFolder
+	return body, model
+end
+
+-- ============================================================
+-- DONUT: Glossy frosting, drips, sprinkles, bakery look
+-- ============================================================
+
+local function buildDonut(index, pos, m)
+	m = m or 1
+	local frostColors = {
+		Color3.fromRGB(255,140,190), Color3.fromRGB(190,120,255),
+		Color3.fromRGB(120,190,255), Color3.fromRGB(255,210,120),
+	}
+	local frostColor = frostColors[math.random(1, #frostColors)]
+	local model = Instance.new("Model"); model.Name = "Donut_"..index
+
+	-- Big dough ring
+	local ring = Instance.new("Part")
+	ring.Name = "Walkable"
+	ring.Size = Vector3.new(5*m, 20*m, 20*m)
+	ring.Position = pos; ring.Anchored = true
+	ring.Color = Color3.fromRGB(215, 175, 105)
+	ring.Material = Enum.Material.SmoothPlastic
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Orientation = Vector3.new(0,0,90)
+	ring.TopSurface = Enum.SurfaceType.Smooth
+	ring.BottomSurface = Enum.SurfaceType.Smooth
+	ring.Parent = model
+	glow(ring, Color3.fromRGB(235, 205, 145), 14, 0.4)
+
+	-- Glossy frosting layer
+	local frost = Instance.new("Part")
+	frost.Size = Vector3.new(2.5*m, 19*m, 19*m)
+	frost.Position = pos + Vector3.new(0, 1.5*m, 0)
+	frost.Anchored = true; frost.Color = frostColor
+	frost.Material = Enum.Material.SmoothPlastic
+	frost.Shape = Enum.PartType.Cylinder
+	frost.Orientation = Vector3.new(0,0,90)
+	frost.CanCollide = false; frost.Parent = model
+
+	-- Glossy sheen on frosting
+	local frostGlass = Instance.new("Part")
+	frostGlass.Size = Vector3.new(1*m, 18*m, 18*m)
+	frostGlass.Position = pos + Vector3.new(0, 2.5*m, 0)
+	frostGlass.Anchored = true; frostGlass.Color = Color3.fromRGB(255,255,255)
+	frostGlass.Material = Enum.Material.Glass
+	frostGlass.Shape = Enum.PartType.Cylinder
+	frostGlass.Orientation = Vector3.new(0,0,90)
+	frostGlass.Transparency = 0.82; frostGlass.CanCollide = false
+	frostGlass.Parent = model
+
+	-- Frosting drips around edge
+	for i2 = 1, 10 do
+		local angle = (i2/10)*math.pi*2
+		local drip = Instance.new("Part")
+		drip.Size = Vector3.new(2*m, 2.5 + math.random()*2*m, 2*m)
+		drip.Position = pos + Vector3.new(math.cos(angle)*8.5*m, 0, math.sin(angle)*8.5*m)
+		drip.Anchored = true; drip.Color = frostColor
+		drip.Material = Enum.Material.SmoothPlastic
+		drip.Shape = Enum.PartType.Ball
+		drip.CanCollide = false; drip.Parent = model
+	end
+
+	-- Sprinkles (lots of them)
+	local sprColors = {Color3.fromRGB(255,70,70),Color3.fromRGB(70,255,70),Color3.fromRGB(70,70,255),Color3.fromRGB(255,255,70),Color3.fromRGB(255,70,255),Color3.fromRGB(70,255,255)}
+	for i2 = 1, 18 do
+		local angle = (i2/18)*math.pi*2
+		local radius = (3 + math.random()*4)*m
+		local spr = Instance.new("Part")
+		spr.Size = Vector3.new(0.4*m, 0.4*m, 1.4*m)
+		spr.Position = pos + Vector3.new(math.cos(angle)*radius, 3*m, math.sin(angle)*radius)
+		spr.Rotation = Vector3.new(math.random(-15,15), math.random(0,360), math.random(-15,15))
+		spr.Anchored = true; spr.CanCollide = false
+		spr.Color = sprColors[math.random(1,#sprColors)]
+		spr.Material = Enum.Material.SmoothPlastic
+		spr.Parent = model
+	end
+
+	model.Parent = mapFolder
+	return ring, model
+end
+
+-- ============================================================
+-- CUPCAKE: Detailed, layered frosting, sprinkles, wrapper ridges, cherry
+-- ============================================================
+
+local function buildCupcake(index, pos, m)
+	m = m or 1
+	local model = Instance.new("Model"); model.Name = "Cupcake_"..index
+
+	-- Wrapper
+	local wrapper = Instance.new("Part")
+	wrapper.Name = "Walkable"
+	wrapper.Size = Vector3.new(16*m, 7*m, 16*m)
+	wrapper.Position = pos; wrapper.Anchored = true
+	wrapper.Color = Color3.fromRGB(225, 185, 100)
+	wrapper.Material = Enum.Material.SmoothPlastic
+	wrapper.TopSurface = Enum.SurfaceType.Smooth
+	wrapper.BottomSurface = Enum.SurfaceType.Smooth
+	wrapper.Parent = model
+	glow(wrapper, Color3.fromRGB(255, 225, 155), 12, 0.3)
+
+	-- Wrapper ridges (vertical strips)
+	for i2 = 1, 12 do
+		local angle = (i2/12)*math.pi*2
+		local ridge = Instance.new("Part")
+		ridge.Size = Vector3.new(0.5*m, 7*m, 1.2*m)
+		ridge.Position = pos + Vector3.new(math.cos(angle)*8*m, 0, math.sin(angle)*8*m)
+		ridge.Rotation = Vector3.new(0, math.deg(angle), 0)
+		ridge.Anchored = true; ridge.Color = Color3.fromRGB(205, 165, 80)
+		ridge.Material = Enum.Material.SmoothPlastic
+		ridge.CanCollide = false; ridge.Transparency = 0.15
+		ridge.Parent = model
+	end
+
+	-- Cake visible above wrapper
+	local cake = Instance.new("Part")
+	cake.Size = Vector3.new(14*m, 2*m, 14*m)
+	cake.Position = pos + Vector3.new(0, 4.5*m, 0)
+	cake.Anchored = true; cake.Color = Color3.fromRGB(240, 210, 160)
+	cake.Material = Enum.Material.SmoothPlastic
+	cake.CanCollide = true; cake.Parent = model
+
+	-- Big frosting swirl (layered balls)
+	local frostBig = Instance.new("Part")
+	frostBig.Size = Vector3.new(12*m, 6*m, 12*m)
+	frostBig.Position = pos + Vector3.new(0, 7*m, 0)
+	frostBig.Anchored = true; frostBig.Color = Color3.fromRGB(255, 175, 215)
+	frostBig.Material = Enum.Material.SmoothPlastic
+	frostBig.Shape = Enum.PartType.Ball
+	frostBig.CanCollide = true; frostBig.Parent = model
+
+	local frostMid = Instance.new("Part")
+	frostMid.Size = Vector3.new(9*m, 4*m, 9*m)
+	frostMid.Position = pos + Vector3.new(0, 10*m, 0)
+	frostMid.Anchored = true; frostMid.Color = Color3.fromRGB(255, 200, 230)
+	frostMid.Material = Enum.Material.SmoothPlastic
+	frostMid.Shape = Enum.PartType.Ball
+	frostMid.CanCollide = false; frostMid.Parent = model
+
+	local frostTop = Instance.new("Part")
+	frostTop.Size = Vector3.new(5*m, 3*m, 5*m)
+	frostTop.Position = pos + Vector3.new(0, 12.5*m, 0)
+	frostTop.Anchored = true; frostTop.Color = Color3.fromRGB(255, 220, 240)
+	frostTop.Material = Enum.Material.SmoothPlastic
+	frostTop.Shape = Enum.PartType.Ball
+	frostTop.CanCollide = false; frostTop.Parent = model
+
+	-- Frosting gloss
+	addSheen(model, Vector3.new(11*m, 8*m, 11*m), pos + Vector3.new(0, 8*m, 0), Color3.fromRGB(255,230,240))
+
+	-- Cherry on top
+	local cherry = Instance.new("Part")
+	cherry.Size = Vector3.new(3*m, 3*m, 3*m)
+	cherry.Position = pos + Vector3.new(0, 14*m, 0)
+	cherry.Anchored = true; cherry.Color = Color3.fromRGB(220, 15, 15)
+	cherry.Material = Enum.Material.SmoothPlastic
+	cherry.Shape = Enum.PartType.Ball; cherry.CanCollide = false
+	cherry.Parent = model
+
+	local chl = Instance.new("Part")
+	chl.Size = Vector3.new(1*m, 1*m, 1*m)
+	chl.Position = pos + Vector3.new(0.7*m, 15*m, 0.7*m)
+	chl.Anchored = true; chl.Color = Color3.fromRGB(255,200,200)
+	chl.Shape = Enum.PartType.Ball; chl.Material = Enum.Material.Neon
+	chl.CanCollide = false; chl.Transparency = 0.3; chl.Parent = model
+
+	local stem = Instance.new("Part")
+	stem.Size = Vector3.new(0.4*m, 3*m, 0.4*m)
+	stem.Position = pos + Vector3.new(0, 16*m, 0)
+	stem.Anchored = true; stem.Color = Color3.fromRGB(45, 110, 25)
+	stem.Material = Enum.Material.SmoothPlastic
+	stem.CanCollide = false; stem.Parent = model
+
+	model.Parent = mapFolder
+	return wrapper, model
+end
+
+-- ============================================================
+-- JAWBREAKER: Smooth, shiny, bright striped sphere
+-- ============================================================
+
+local function buildJawbreaker(index, pos, m)
+	m = m or 1
+	local model = Instance.new("Model"); model.Name = "Jawbreaker_"..index
+
+	local layers = {
+		{size = 16, color = Color3.fromRGB(255, 65, 65), trans = 0},
+		{size = 13, color = Color3.fromRGB(255, 200, 65), trans = 0.15},
+		{size = 10, color = Color3.fromRGB(65, 200, 255), trans = 0.2},
+		{size = 7,  color = Color3.fromRGB(200, 65, 255), trans = 0.25},
+		{size = 4,  color = Color3.fromRGB(255, 255, 255), trans = 0.3},
+	}
+
+	local walkable
+	for i2, layer in ipairs(layers) do
+		local sphere = Instance.new("Part")
+		sphere.Size = Vector3.new(layer.size*m, layer.size*m, layer.size*m)
+		sphere.Position = pos; sphere.Anchored = true
+		sphere.Color = layer.color
+		sphere.Material = Enum.Material.SmoothPlastic
+		sphere.Shape = Enum.PartType.Ball
+		sphere.Transparency = layer.trans
+		sphere.CanCollide = (i2 == 1)
+		sphere.Parent = model
+		if i2 == 1 then
+			sphere.Name = "Walkable"
+			walkable = sphere
+			glow(sphere, layer.color, 18, 0.5)
+		end
+	end
+
+	-- Glossy sheen
+	local glass = Instance.new("Part")
+	glass.Size = Vector3.new(16.5*m, 16.5*m, 16.5*m)
+	glass.Position = pos; glass.Anchored = true
+	glass.Color = Color3.fromRGB(255,255,255)
+	glass.Material = Enum.Material.Glass
+	glass.Shape = Enum.PartType.Ball
+	glass.Transparency = 0.88; glass.CanCollide = false
+	glass.Parent = model
+
+	model.Parent = mapFolder
+	return walkable, model
+end
+
+local BUILDERS = {
+	candycane = buildCandyCane, candycorn = buildCandyCorn,
+	chocolate = buildChocolateBar, lollipop = buildLollipop,
+	gummy = buildGummyBear, donut = buildDonut,
+	cupcake = buildCupcake, jawbreaker = buildJawbreaker,
+}
+
+-- ============================================================
+-- LEVELS (50)
+-- ============================================================
+
+local LEVELS = {
+	{offset={0,-2,-22},candy="chocolate",size=1.2},{offset={3,-1,-20},candy="candycorn",size=1.1},
+	{offset={-4,0,-21},candy="donut",size=1.2},{offset={2,1,-20},candy="gummy",size=1.1},
+	{offset={-3,-1,-22},candy="cupcake",size=1.0},{offset={5,0,-20},candy="lollipop",size=1.1},
+	{offset={-2,-2,-21},candy="chocolate",size=1.0},{offset={0,1,-22},candy="jawbreaker",size=1.0},
+	{offset={4,0,-20},candy="candycane",size=1.1},{offset={-5,-1,-21},candy="donut",size=1.2,checkpoint=true},
+	{offset={3,2,-24},candy="candycane",size=0.9},{offset={-4,-1,-23},candy="lollipop",size=0.85},
+	{offset={6,0,-22},candy="gummy",size=0.9},{offset={-5,3,-24},candy="candycorn",size=0.8},
+	{offset={2,-2,-25},candy="chocolate",size=0.9,moving=true},{offset={-3,1,-23},candy="cupcake",size=0.85},
+	{offset={4,0,-24},candy="jawbreaker",size=0.8},{offset={-6,-1,-22},candy="candycane",size=0.9},
+	{offset={3,2,-25},candy="donut",size=0.85},{offset={-2,-3,-23},candy="lollipop",size=1.0,checkpoint=true},
+	{offset={0,6,-21},candy="candycorn",size=0.85},{offset={4,-4,-24},candy="chocolate",size=0.8},
+	{offset={-3,5,-22},candy="gummy",size=0.75},{offset={5,-3,-25},candy="lollipop",size=0.7,moving=true},
+	{offset={-6,4,-23},candy="cupcake",size=0.8},{offset={2,-5,-26},candy="jawbreaker",size=0.7},
+	{offset={-4,6,-22},candy="candycane",size=0.8},{offset={3,-2,-24},candy="donut",size=0.75,crumbling=true},
+	{offset={-5,3,-25},candy="candycorn",size=0.8},{offset={4,-4,-23},candy="chocolate",size=1.0,checkpoint=true},
+	{offset={-3,2,-26},candy="candycane",size=0.7,moving=true},{offset={5,-1,-24},candy="lollipop",size=0.65},
+	{offset={-4,3,-27},candy="gummy",size=0.6,crumbling=true},{offset={6,-3,-25},candy="candycorn",size=0.7},
+	{offset={-5,4,-26},candy="jawbreaker",size=0.6,moving=true},{offset={3,-2,-28},candy="cupcake",size=0.65},
+	{offset={-6,5,-24},candy="chocolate",size=0.7,crumbling=true},{offset={4,-4,-27},candy="donut",size=0.6},
+	{offset={-3,3,-25},candy="candycane",size=0.65,moving=true},{offset={5,-2,-26},candy="lollipop",size=1.0,checkpoint=true},
+	{offset={-4,5,-28},candy="jawbreaker",size=0.55,moving=true},{offset={6,-4,-26},candy="candycorn",size=0.6,crumbling=true},
+	{offset={-5,6,-29},candy="gummy",size=0.5},{offset={3,-5,-27},candy="chocolate",size=0.6,moving=true},
+	{offset={-6,4,-28},candy="cupcake",size=0.55,crumbling=true},{offset={4,-3,-30},candy="candycane",size=0.55},
+	{offset={-3,6,-26},candy="lollipop",size=0.5,moving=true},{offset={5,-5,-29},candy="donut",size=0.55,crumbling=true},
+	{offset={-4,4,-27},candy="jawbreaker",size=0.5,moving=true},{offset={0,-3,-28},candy="cupcake",size=1.2,checkpoint=true},
+}
+
+-- ============================================================
+-- COLLECTIBLE
+-- ============================================================
+
+local function createCollectible(position, index)
+	local cols = {Color3.fromRGB(255,100,150),Color3.fromRGB(150,100,255),Color3.fromRGB(100,200,255),Color3.fromRGB(255,200,100)}
+	local c = Instance.new("Part")
+	c.Name = "Collectible_"..index; c.Size = Vector3.new(2.5,2.5,2.5)
+	c.Position = position + Vector3.new(0,8,0)
+	c.Anchored = true; c.CanCollide = false; c.Shape = Enum.PartType.Ball
+	c.Color = cols[math.random(1,#cols)]; c.Material = Enum.Material.Neon
+	c.Parent = collectiblesFolder
+	local light = Instance.new("PointLight"); light.Color = c.Color; light.Brightness = 1; light.Range = 10; light.Parent = c
+	local bp = c.Position
+	task.spawn(function()
+		while c and c.Parent do
+			c.Orientation += Vector3.new(0,4,0)
+			c.Position = bp + Vector3.new(0, math.sin(tick()*2.5)*1.5, 0)
+			task.wait(0.03)
+		end
+	end)
+	c.Touched:Connect(function(hit)
+		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
+		if plr and c.Parent then c.Parent = nil; candyCollectedEvent:FireClient(plr) end
+	end)
+end
+
+-- ============================================================
+-- MOVING / CRUMBLING
+-- ============================================================
+
+local function makeMoving(model)
+	task.spawn(function()
+		local range = math.random(8,14); local speed = math.random(25,40)/10
+		local startPivot = model:GetPivot(); local steps = math.ceil(speed*30)
+		while model and model.Parent do
+			for step = 1, steps do
+				if not model or not model.Parent then return end
+				local a = 0.5-0.5*math.cos((step/steps)*math.pi)
+				model:PivotTo(CFrame.new(startPivot.Position + Vector3.new(range*a,0,0)) * startPivot.Rotation)
+				task.wait(1/30)
+			end
+			for step = 1, steps*2 do
+				if not model or not model.Parent then return end
+				local a = 0.5-0.5*math.cos((step/(steps*2))*math.pi)
+				local x = range*(1-2*a)
+				model:PivotTo(CFrame.new(startPivot.Position + Vector3.new(x,0,0)) * startPivot.Rotation)
+				task.wait(1/30)
+			end
+			for step = 1, steps do
+				if not model or not model.Parent then return end
+				local a = 0.5-0.5*math.cos((step/steps)*math.pi)
+				model:PivotTo(CFrame.new(startPivot.Position + Vector3.new(-range*(1-a),0,0)) * startPivot.Rotation)
+				task.wait(1/30)
+			end
+		end
+	end)
+end
+
+local function makeCrumbling(model, walkable)
+	local crumbling = false
+	walkable.Touched:Connect(function(hit)
+		if crumbling then return end
+		local ch = hit.Parent; local hum = ch and ch:FindFirstChild("Humanoid")
+		if not hum then return end; crumbling = true; task.wait(0.8)
+		local parts = {}
+		for _, p in model:GetDescendants() do
+			if p:IsA("BasePart") then table.insert(parts, {part=p, oT=p.Transparency, oC=p.CanCollide}) end
+		end
+		for step = 1,5 do
+			for _, i in ipairs(parts) do i.part.Transparency = i.oT+(1-i.oT)*(step/5) end; task.wait(0.06)
+		end
+		for _, i in ipairs(parts) do i.part.CanCollide = false end; task.wait(4)
+		for _, i in ipairs(parts) do i.part.CanCollide = i.oC end
+		for step = 5,0,-1 do
+			for _, i in ipairs(parts) do i.part.Transparency = i.oT+(1-i.oT)*(step/5) end; task.wait(0.06)
+		end
+		crumbling = false
+	end)
+end
+
+-- ============================================================
+-- CIRCULAR SPAWN PLATFORM (bigger, with item capsules)
+-- ============================================================
+
+local function createItemCapsule(position, itemName, itemColor, itemEmoji)
+	local model = Instance.new("Model"); model.Name = itemName.."Capsule"
+
+	-- Glass cylinder capsule
+	local capsule = Instance.new("Part")
+	capsule.Name = "CapsuleShell"
+	capsule.Size = Vector3.new(8, 12, 8)
+	capsule.Position = position
+	capsule.Anchored = true; capsule.Color = itemColor
+	capsule.Material = Enum.Material.Glass
+	capsule.Shape = Enum.PartType.Cylinder
+	capsule.Orientation = Vector3.new(0, 0, 90)
+	capsule.Transparency = 0.5
+	capsule.CanCollide = false
+	capsule.Parent = model
+
+	-- Base ring
+	local baseRing = Instance.new("Part")
+	baseRing.Size = Vector3.new(2, 10, 10)
+	baseRing.Position = position + Vector3.new(0, -5.5, 0)
+	baseRing.Anchored = true; baseRing.Color = Color3.fromRGB(200, 200, 220)
+	baseRing.Material = Enum.Material.SmoothPlastic
+	baseRing.Shape = Enum.PartType.Cylinder
+	baseRing.Orientation = Vector3.new(0, 0, 90)
+	baseRing.Parent = model
+
+	-- Top ring
+	local topRing = Instance.new("Part")
+	topRing.Size = Vector3.new(2, 10, 10)
+	topRing.Position = position + Vector3.new(0, 5.5, 0)
+	topRing.Anchored = true; topRing.Color = Color3.fromRGB(200, 200, 220)
+	topRing.Material = Enum.Material.SmoothPlastic
+	topRing.Shape = Enum.PartType.Cylinder
+	topRing.Orientation = Vector3.new(0, 0, 90)
+	topRing.Parent = model
+
+	-- Floating item inside (glowing sphere)
+	local itemOrb = Instance.new("Part")
+	itemOrb.Name = "ItemOrb"
+	itemOrb.Size = Vector3.new(3, 3, 3)
+	itemOrb.Position = position
+	itemOrb.Anchored = true; itemOrb.CanCollide = false
+	itemOrb.Color = itemColor
+	itemOrb.Material = Enum.Material.Neon
+	itemOrb.Shape = Enum.PartType.Ball
+	itemOrb.Parent = model
+
+	local orbLight = Instance.new("PointLight")
+	orbLight.Color = itemColor; orbLight.Brightness = 1.5; orbLight.Range = 15
+	orbLight.Parent = itemOrb
+
+	-- Spin the orb
+	task.spawn(function()
+		local bp2 = itemOrb.Position
+		while itemOrb and itemOrb.Parent do
+			itemOrb.Orientation += Vector3.new(0, 3, 0)
+			itemOrb.Position = bp2 + Vector3.new(0, math.sin(tick()*2)*1.5, 0)
+			task.wait(0.03)
+		end
+	end)
+
+	-- Label
+	local labelPart = Instance.new("Part")
+	labelPart.Size = Vector3.new(1,1,1)
+	labelPart.Position = position + Vector3.new(0, 8, 0)
+	labelPart.Anchored = true; labelPart.Transparency = 1; labelPart.CanCollide = false
+	labelPart.Parent = model
+
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.fromOffset(120, 50); bb.AlwaysOnTop = false; bb.Parent = labelPart
+
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.fromScale(1,1); lbl.BackgroundTransparency = 1
+	lbl.Text = itemEmoji.." "..itemName
+	lbl.TextColor3 = Color3.fromRGB(255,255,255)
+	lbl.TextScaled = true; lbl.Font = Enum.Font.FredokaOne; lbl.Parent = bb
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = itemColor; stroke.Thickness = 2; stroke.Parent = lbl
+
+	-- Walk-in trigger zone
+	local trigger = Instance.new("Part")
+	trigger.Name = "Trigger_"..itemName
+	trigger.Size = Vector3.new(8, 12, 8)
+	trigger.Position = position
+	trigger.Anchored = true; trigger.Transparency = 1; trigger.CanCollide = false
+	trigger.Parent = model
+
+	model.Parent = mapFolder
+	return trigger
+end
+
+local function createCircularSpawn()
+	local model = Instance.new("Model"); model.Name = "SpawnPlatform"
+
+	-- Bigger circular platform
+	local base = Instance.new("Part")
+	base.Name = "SpawnBase"
+	base.Size = Vector3.new(5, 50, 50) -- 50 diameter
+	base.Position = Vector3.new(0, START_HEIGHT, 0)
+	base.Anchored = true; base.Color = Color3.fromRGB(255, 180, 220)
+	base.Material = Enum.Material.SmoothPlastic
+	base.Shape = Enum.PartType.Cylinder
+	base.Orientation = Vector3.new(0,0,90)
+	base.TopSurface = Enum.SurfaceType.Smooth
+	base.BottomSurface = Enum.SurfaceType.Smooth
+	base.Parent = model
+
+	-- Frosting
+	local frost = Instance.new("Part")
+	frost.Size = Vector3.new(2.5, 48, 48)
+	frost.Position = Vector3.new(0, START_HEIGHT+3, 0)
+	frost.Anchored = true; frost.Color = Color3.fromRGB(255, 225, 242)
+	frost.Material = Enum.Material.SmoothPlastic
+	frost.Shape = Enum.PartType.Cylinder
+	frost.Orientation = Vector3.new(0,0,90)
+	frost.CanCollide = true; frost.Parent = model
+
+	-- Neon ring
+	local nring = Instance.new("Part")
+	nring.Size = Vector3.new(2, 54, 54)
+	nring.Position = Vector3.new(0, START_HEIGHT-1, 0)
+	nring.Anchored = true; nring.Color = Color3.fromRGB(200,130,255)
+	nring.Material = Enum.Material.Neon
+	nring.Shape = Enum.PartType.Cylinder
+	nring.Orientation = Vector3.new(0,0,90)
+	nring.Transparency = 0.35; nring.CanCollide = false
+	nring.Parent = model
+
+	-- Sprinkles
+	local sprColors = {Color3.fromRGB(255,80,80),Color3.fromRGB(80,255,80),Color3.fromRGB(80,80,255),Color3.fromRGB(255,255,80),Color3.fromRGB(255,80,255)}
+	for i = 1, 36 do
+		local angle = (i/36)*math.pi*2
+		local radius = math.random(4, 20)
+		local spr = Instance.new("Part")
+		spr.Size = Vector3.new(0.4,0.4,1.4)
+		spr.Position = Vector3.new(math.cos(angle)*radius, START_HEIGHT+4.5, math.sin(angle)*radius)
+		spr.Rotation = Vector3.new(0, math.random(0,360), 0)
+		spr.Anchored = true; spr.CanCollide = false
+		spr.Color = sprColors[math.random(1,#sprColors)]
+		spr.Material = Enum.Material.SmoothPlastic
+		spr.Parent = model
+	end
+
+	-- Candy cane pillars (8 around bigger perimeter)
+	for i = 1, 8 do
+		local angle = (i/8)*math.pi*2
+		local px, pz = math.cos(angle)*22, math.sin(angle)*22
+		local pillar = Instance.new("Part")
+		pillar.Size = Vector3.new(2.5, 22, 2.5)
+		pillar.Position = Vector3.new(px, START_HEIGHT+13, pz)
+		pillar.Anchored = true; pillar.Color = Color3.fromRGB(255,30,30)
+		pillar.Material = Enum.Material.SmoothPlastic; pillar.Parent = model
+
+		local pS = Instance.new("Part")
+		pS.Size = Vector3.new(2, 22.5, 2)
+		pS.Position = Vector3.new(px, START_HEIGHT+13, pz)
+		pS.Anchored = true; pS.Color = Color3.fromRGB(255,255,255)
+		pS.Transparency = 0.35; pS.CanCollide = false
+		pS.Material = Enum.Material.SmoothPlastic; pS.Parent = model
+
+		local ball = Instance.new("Part")
+		ball.Size = Vector3.new(3.5,3.5,3.5)
+		ball.Position = Vector3.new(px, START_HEIGHT+25, pz)
+		ball.Anchored = true; ball.Color = Color3.fromRGB(255,30,30)
+		ball.Shape = Enum.PartType.Ball; ball.Material = Enum.Material.SmoothPlastic
+		ball.CanCollide = false; ball.Parent = model
+	end
+
+	-- Sign
+	local sign = Instance.new("Part")
+	sign.Size = Vector3.new(20, 5, 1.5)
+	sign.Position = Vector3.new(0, START_HEIGHT+22, -23)
+	sign.Anchored = true; sign.Color = Color3.fromRGB(255,100,150)
+	sign.Material = Enum.Material.Neon; sign.Parent = model
+	local sGui = Instance.new("SurfaceGui"); sGui.Face = Enum.NormalId.Front; sGui.Parent = sign
+	local sT = Instance.new("TextLabel")
+	sT.Size = UDim2.fromScale(1,1); sT.BackgroundTransparency = 1
+	sT.Text = "🍬 CANDY RUN 🍬"; sT.TextColor3 = Color3.fromRGB(255,255,255)
+	sT.TextScaled = true; sT.Font = Enum.Font.FredokaOne; sT.Parent = sGui
+
+	model.Parent = mapFolder
+
+	-- Spawn location
+	local spawn = Instance.new("SpawnLocation")
+	spawn.Name = "MainSpawn"; spawn.Size = Vector3.new(10,1,10)
+	spawn.Position = Vector3.new(0, START_HEIGHT+5, 0)
+	spawn.Anchored = true; spawn.Transparency = 1
+	spawn.CanCollide = false; spawn.Neutral = true
+	spawn.Parent = mapFolder
+
+	checkpointPositions[0] = Vector3.new(0, START_HEIGHT+7, 0)
+
+	-- ============================================================
+	-- ITEM CAPSULES (arranged in a row behind spawn)
+	-- ============================================================
+
+	local speedTrigger = createItemCapsule(
+		Vector3.new(-12, START_HEIGHT + 8, 10),
+		"Speed Coil", Color3.fromRGB(80, 200, 255), "⚡"
+	)
+
+	local gravityTrigger = createItemCapsule(
+		Vector3.new(0, START_HEIGHT + 8, 10),
+		"Gravity Coil", Color3.fromRGB(180, 80, 255), "🌀"
+	)
+
+	local carpetTrigger = createItemCapsule(
+		Vector3.new(12, START_HEIGHT + 8, 10),
+		"Magic Carpet", Color3.fromRGB(255, 180, 50), "🧞"
+	)
+
+	-- Item give logic
+	local function giveItem(player, itemName)
+		local char = player.Character
+		if not char then return end
+		local hum = char:FindFirstChild("Humanoid")
+		if not hum then return end
+
+		-- Remove existing tool of same name
+		for _, tool in player.Backpack:GetChildren() do
+			if tool.Name == itemName then tool:Destroy() end
+		end
+		for _, tool in char:GetChildren() do
+			if tool:IsA("Tool") and tool.Name == itemName then tool:Destroy() end
+		end
+
+		local tool = Instance.new("Tool")
+		tool.Name = itemName
+		tool.CanBeDropped = false
+		tool.RequiresHandle = true
+
+		local handle = Instance.new("Part")
+		handle.Name = "Handle"
+		handle.Size = Vector3.new(1, 1, 1)
+		handle.Shape = Enum.PartType.Ball
+		handle.Material = Enum.Material.Neon
+		handle.Parent = tool
+
+		if itemName == "Speed Coil" then
+			handle.Color = Color3.fromRGB(80, 200, 255)
+			tool.Equipped:Connect(function()
+				if hum then hum.WalkSpeed = 70 end
+			end)
+			tool.Unequipped:Connect(function()
+				if hum then hum.WalkSpeed = 48 end
+			end)
+		elseif itemName == "Gravity Coil" then
+			handle.Color = Color3.fromRGB(180, 80, 255)
+			tool.Equipped:Connect(function()
+				if hum then hum.JumpPower = 120 end
+			end)
+			tool.Unequipped:Connect(function()
+				if hum then hum.JumpPower = 60 end
+			end)
+		elseif itemName == "Magic Carpet" then
+			handle.Color = Color3.fromRGB(255, 180, 50)
+			-- Magic carpet: fly while equipped
+			tool.Equipped:Connect(function()
+				local bp = Instance.new("BodyVelocity")
+				bp.Name = "CarpetFly"
+				bp.MaxForce = Vector3.new(0, 50000, 0)
+				bp.Velocity = Vector3.new(0, 20, 0)
+				local rp = char:FindFirstChild("HumanoidRootPart")
+				if rp then bp.Parent = rp end
+			end)
+			tool.Unequipped:Connect(function()
+				local rp = char:FindFirstChild("HumanoidRootPart")
+				if rp then
+					local bp = rp:FindFirstChild("CarpetFly")
+					if bp then bp:Destroy() end
+				end
+			end)
+		end
+
+		tool.Parent = player.Backpack
+	end
+
+	-- Touch detection for capsules
+	local debounces = {}
+
+	speedTrigger.Touched:Connect(function(hit)
+		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
+		if plr and not debounces[plr.UserId.."speed"] then
+			debounces[plr.UserId.."speed"] = true
+			giveItem(plr, "Speed Coil")
+			task.delay(2, function() debounces[plr.UserId.."speed"] = nil end)
+		end
+	end)
+
+	gravityTrigger.Touched:Connect(function(hit)
+		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
+		if plr and not debounces[plr.UserId.."gravity"] then
+			debounces[plr.UserId.."gravity"] = true
+			giveItem(plr, "Gravity Coil")
+			task.delay(2, function() debounces[plr.UserId.."gravity"] = nil end)
+		end
+	end)
+
+	carpetTrigger.Touched:Connect(function(hit)
+		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
+		if plr and not debounces[plr.UserId.."carpet"] then
+			debounces[plr.UserId.."carpet"] = true
+			giveItem(plr, "Magic Carpet")
+			task.delay(2, function() debounces[plr.UserId.."carpet"] = nil end)
+		end
+	end)
+end
+
+-- ============================================================
+-- HALLWAY (opaque walls, candy ceiling)
+-- ============================================================
+
+local function createHallway()
+	hallwayFolder:ClearAllChildren()
+	local minZ, maxZ = 100, 0
+	local testPos = Vector3.new(0, START_HEIGHT, -24)
+	for _, level in ipairs(LEVELS) do
+		testPos = testPos + Vector3.new(level.offset[1], level.offset[2], level.offset[3])
+		if testPos.Z < minZ then minZ = testPos.Z end
+		if testPos.Z > maxZ then maxZ = testPos.Z end
+	end
+	minZ -= 80; maxZ += 60
+
+	local totalLen = maxZ - minZ
+	local numSeg = math.ceil(totalLen / WALL_SEGMENT_LENGTH)
+	local halfW = HALLWAY_WIDTH / 2
+
+	local wallColors = {
+		Color3.fromRGB(255,180,210), Color3.fromRGB(220,170,255),
+		Color3.fromRGB(180,220,255), Color3.fromRGB(255,220,180),
+		Color3.fromRGB(200,255,210),
+	}
+
+	for seg = 0, numSeg do
+		local segZ = maxZ - seg * WALL_SEGMENT_LENGTH
+		local color = wallColors[(seg % #wallColors) + 1]
+
+		-- OPAQUE walls (NO transparency)
+		for _, side in ipairs({-1, 1}) do
+			local wall = Instance.new("Part")
+			wall.Size = Vector3.new(4, HALLWAY_HEIGHT*3, WALL_SEGMENT_LENGTH+2)
+			wall.Position = Vector3.new(side*halfW, START_HEIGHT-20, segZ-WALL_SEGMENT_LENGTH/2)
+			wall.Anchored = true; wall.Color = color
+			wall.Material = Enum.Material.SmoothPlastic
+			wall.Transparency = 0  -- FULLY OPAQUE
+			wall.Parent = hallwayFolder
+
+			-- Candy stripe decoration
+			local stripe = Instance.new("Part")
+			stripe.Size = Vector3.new(1.5, 5, WALL_SEGMENT_LENGTH+2)
+			stripe.Position = Vector3.new(side*(halfW-2), START_HEIGHT + (seg*4)%25, segZ-WALL_SEGMENT_LENGTH/2)
+			stripe.Anchored = true; stripe.Color = Color3.fromRGB(255,255,255)
+			stripe.Material = Enum.Material.SmoothPlastic
+			stripe.Transparency = 0.3; stripe.CanCollide = false
+			stripe.Parent = hallwayFolder
+
+			-- Second stripe
+			local stripe2 = Instance.new("Part")
+			stripe2.Size = Vector3.new(1, 3, WALL_SEGMENT_LENGTH+2)
+			stripe2.Position = Vector3.new(side*(halfW-2), START_HEIGHT + (seg*4+12)%25, segZ-WALL_SEGMENT_LENGTH/2)
+			stripe2.Anchored = true; stripe2.Color = Color3.fromRGB(255,200,220)
+			stripe2.Material = Enum.Material.SmoothPlastic
+			stripe2.Transparency = 0.4; stripe2.CanCollide = false
+			stripe2.Parent = hallwayFolder
+		end
+
+		-- Ceiling: candy checkerboard
+		local ceilY = START_HEIGHT + HALLWAY_HEIGHT
+		local tilesPerRow = math.ceil(HALLWAY_WIDTH / 10)
+		for tx = 0, tilesPerRow - 1 do
+			local tileX = -halfW + tx*10 + 5
+			local tileColor = if (seg+tx)%2==0 then Color3.fromRGB(255,180,210) else Color3.fromRGB(255,255,255)
+			local tile = Instance.new("Part")
+			tile.Size = Vector3.new(10.1, 2, WALL_SEGMENT_LENGTH+0.1)
+			tile.Position = Vector3.new(tileX, ceilY, segZ-WALL_SEGMENT_LENGTH/2)
+			tile.Anchored = true; tile.Color = tileColor
+			tile.Material = Enum.Material.SmoothPlastic
+			tile.TopSurface = Enum.SurfaceType.Smooth
+			tile.BottomSurface = Enum.SurfaceType.Smooth
+			tile.Parent = hallwayFolder
+		end
+
+		-- Hanging candy from ceiling
+		if seg % 2 == 0 then
+			local ls = Instance.new("Part")
+			ls.Size = Vector3.new(0.6,10,0.6)
+			ls.Position = Vector3.new(math.random(-25,25), ceilY-6, segZ-WALL_SEGMENT_LENGTH/2)
+			ls.Anchored = true; ls.Color = Color3.fromRGB(240,230,200)
+			ls.Material = Enum.Material.SmoothPlastic; ls.CanCollide = false
+			ls.Parent = hallwayFolder
+
+			local lt = Instance.new("Part")
+			lt.Size = Vector3.new(2, 6, 6)
+			lt.Position = ls.Position + Vector3.new(0,-6,0)
+			lt.Anchored = true; lt.Color = wallColors[math.random(1,#wallColors)]
+			lt.Material = Enum.Material.Neon; lt.Shape = Enum.PartType.Cylinder
+			lt.Orientation = Vector3.new(0,0,90)
+			lt.CanCollide = false; lt.Transparency = 0.15
+			lt.Parent = hallwayFolder
+		end
+
+		-- Wall candy canes
+		if seg % 3 == 0 then
+			for _, side in ipairs({-halfW+4, halfW-4}) do
+				local cane = Instance.new("Part")
+				cane.Size = Vector3.new(18,2,2)
+				cane.Position = Vector3.new(side, START_HEIGHT+35, segZ-WALL_SEGMENT_LENGTH/2)
+				cane.Anchored = true; cane.Color = Color3.fromRGB(255,40,40)
+				cane.Material = Enum.Material.SmoothPlastic
+				cane.Shape = Enum.PartType.Cylinder; cane.CanCollide = false
+				cane.Parent = hallwayFolder
+			end
+		end
+	end
+end
+
+-- ============================================================
+-- DEATH FLOOR
+-- ============================================================
+
+local function createDeathFloor()
+	local df = Instance.new("Part")
+	df.Name = "DeathFloor"
+	df.Size = Vector3.new(HALLWAY_WIDTH+20, 8, 3000)
+	df.Position = Vector3.new(0, DEATH_Y, -700)
+	df.Anchored = true; df.Color = Color3.fromRGB(200,20,20)
+	df.Material = Enum.Material.Neon; df.Transparency = 0.1
+	df.CanCollide = false; df.Parent = workspace
+
+	for i = 1, 35 do
+		local p = Instance.new("Part")
+		p.Size = Vector3.new(math.random(12,35), 1.5, math.random(12,35))
+		p.Position = Vector3.new(math.random(-40,40), DEATH_Y+4.5, math.random(-1600,100))
+		p.Anchored = true; p.Color = Color3.fromRGB(255, math.random(30,80), math.random(20,50))
+		p.Material = Enum.Material.Neon; p.Transparency = 0.25; p.CanCollide = false
+		p.Parent = workspace
+	end
+
+	task.spawn(function()
+		while df and df.Parent do
+			TweenService:Create(df, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+				Transparency = 0.25, Color = Color3.fromRGB(255,50,50),
+			}):Play(); task.wait(1.5)
+			TweenService:Create(df, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+				Transparency = 0.1, Color = Color3.fromRGB(200,20,20),
+			}):Play(); task.wait(1.5)
+		end
+	end)
+
+	local em = Instance.new("ParticleEmitter")
+	em.Color = ColorSequence.new(Color3.fromRGB(255,50,50))
+	em.Size = NumberSequence.new({NumberSequenceKeypoint.new(0,4),NumberSequenceKeypoint.new(1,0)})
+	em.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.4),NumberSequenceKeypoint.new(1,1)})
+	em.Lifetime = NumberRange.new(1.5,3); em.Rate = 45
+	em.Speed = NumberRange.new(3,8); em.SpreadAngle = Vector2.new(50,50)
+	em.Acceleration = Vector3.new(0,5,0); em.Parent = df
+
+	df.Touched:Connect(function(hit)
+		local ch = hit.Parent; local hum = ch and ch:FindFirstChild("Humanoid")
+		if hum and hum.Health > 0 then hum.Health = 0 end
+	end)
+
+	local bk = Instance.new("Part")
+	bk.Size = Vector3.new(2000,1,3000); bk.Position = Vector3.new(0,DEATH_Y-20,-700)
+	bk.Anchored = true; bk.Transparency = 1; bk.CanCollide = false; bk.Parent = workspace
+	bk.Touched:Connect(function(hit)
+		local ch = hit.Parent; local hum = ch and ch:FindFirstChild("Humanoid")
+		if hum and hum.Health > 0 then hum.Health = 0 end
+	end)
+end
+
+-- ============================================================
+-- MAP GENERATION
+-- ============================================================
+
+local function generateMap()
+	mapFolder:ClearAllChildren(); collectiblesFolder:ClearAllChildren()
+	checkpointPositions = {}; createCircularSpawn()
+
+	local currentPos = Vector3.new(0, START_HEIGHT, -28)
+	local maxX = HALLWAY_WIDTH/2 - 12
+
+	for i, level in ipairs(LEVELS) do
+		local off = level.offset
+		currentPos = currentPos + Vector3.new(off[1], off[2], off[3])
+		if currentPos.Y < DEATH_Y+15 then currentPos = Vector3.new(currentPos.X, DEATH_Y+20, currentPos.Z) end
+		if currentPos.Y > START_HEIGHT+30 then currentPos = Vector3.new(currentPos.X, START_HEIGHT, currentPos.Z) end
+		currentPos = Vector3.new(math.clamp(currentPos.X, -maxX, maxX), currentPos.Y, currentPos.Z)
+
+		local builder = BUILDERS[level.candy] or buildChocolateBar
+		local walkable, mdl = builder(i, currentPos, level.size)
+
+		local np = Instance.new("Part")
+		np.Size = Vector3.new(1,1,1); np.Position = currentPos + Vector3.new(0,16,0)
+		np.Anchored = true; np.Transparency = 1; np.CanCollide = false; np.Parent = mapFolder
+		local ng = Instance.new("BillboardGui"); ng.Size = UDim2.fromOffset(60,40); ng.AlwaysOnTop = false; ng.Parent = np
+		local nl = Instance.new("TextLabel"); nl.Size = UDim2.fromScale(1,1); nl.BackgroundTransparency = 1
+		nl.Text = tostring(i); nl.TextColor3 = Color3.fromRGB(255,255,255)
+		nl.TextTransparency = 0.3; nl.TextScaled = true; nl.Font = Enum.Font.FredokaOne; nl.Parent = ng
+		local ns = Instance.new("UIStroke"); ns.Color = Color3.fromRGB(200,100,150); ns.Thickness = 2; ns.Parent = nl
+
+		if level.moving then makeMoving(mdl) end
+		if level.crumbling then makeCrumbling(mdl, walkable) end
+
+		if level.checkpoint then
+			checkpointPositions[i] = currentPos + Vector3.new(0,5,0)
+			local cp = Instance.new("Part"); cp.Size = Vector3.new(1,10,10)
+			cp.Position = currentPos + Vector3.new(0,5,0); cp.Anchored = true
+			cp.Color = Color3.fromRGB(100,255,100); cp.Material = Enum.Material.Neon
+			cp.Transparency = 0.3; cp.CanCollide = false; cp.Shape = Enum.PartType.Cylinder
+			cp.Orientation = Vector3.new(0,0,90); cp.Parent = mapFolder
+
+			local cpt = Instance.new("Part"); cpt.Size = Vector3.new(18,14,18)
+			cpt.Position = currentPos + Vector3.new(0,7,0); cpt.Anchored = true
+			cpt.Transparency = 1; cpt.CanCollide = false; cpt.Parent = mapFolder
+			cpt.Touched:Connect(function(hit)
+				local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
+				if plr then
+					local data = playerData[plr]
+					if data and (not data.checkpoint or data.checkpoint < i) then data.checkpoint = i end
+				end
+			end)
+
+			local pole = Instance.new("Part"); pole.Size = Vector3.new(0.5,14,0.5)
+			pole.Position = currentPos + Vector3.new(6,11,0); pole.Anchored = true
+			pole.Color = Color3.fromRGB(255,255,255); pole.Material = Enum.Material.SmoothPlastic; pole.Parent = mapFolder
+
+			local flag = Instance.new("Part"); flag.Size = Vector3.new(5,3,0.3)
+			flag.Position = currentPos + Vector3.new(8.5,17,0); flag.Anchored = true
+			flag.Color = Color3.fromRGB(255,100,150); flag.Material = Enum.Material.Neon; flag.Parent = mapFolder
+			local fG = Instance.new("SurfaceGui"); fG.Face = Enum.NormalId.Front; fG.Parent = flag
+			local fL = Instance.new("TextLabel"); fL.Size = UDim2.fromScale(1,1); fL.BackgroundTransparency = 1
+			fL.Text = "✓ "..i; fL.TextColor3 = Color3.fromRGB(255,255,255)
+			fL.TextScaled = true; fL.Font = Enum.Font.FredokaOne; fL.Parent = fG
+		end
+
+		if i % 3 == 0 then createCollectible(currentPos, i) end
+	end
+
+	-- Finish
+	local fp = currentPos + Vector3.new(0,0,-30)
+	local fb = Instance.new("Part"); fb.Name = "FinishPlatform"
+	fb.Size = Vector3.new(6,40,40); fb.Position = fp; fb.Anchored = true
+	fb.Color = Color3.fromRGB(255,215,0); fb.Material = Enum.Material.Neon
+	fb.Shape = Enum.PartType.Cylinder; fb.Orientation = Vector3.new(0,0,90); fb.Parent = mapFolder
+
+	local ts = Instance.new("Part"); ts.Size = Vector3.new(2.5,22,2.5)
+	ts.Position = fp+Vector3.new(0,14,0); ts.Anchored = true
+	ts.Color = Color3.fromRGB(245,235,210); ts.Material = Enum.Material.SmoothPlastic; ts.Parent = mapFolder
+
+	local tt = Instance.new("Part"); tt.Size = Vector3.new(6,16,16)
+	tt.Position = fp+Vector3.new(0,29,0); tt.Anchored = true
+	tt.Color = Color3.fromRGB(255,215,0); tt.Material = Enum.Material.Neon
+	tt.Shape = Enum.PartType.Cylinder; tt.Orientation = Vector3.new(0,0,90)
+	tt.CanCollide = false; tt.Parent = mapFolder
+
+	task.spawn(function()
+		local r = 0
+		while tt and tt.Parent do r += 2; tt.Orientation = Vector3.new(0,r%360,90); task.wait(0.03) end
+	end)
+
+	local vz = Instance.new("Part"); vz.Name = "VictoryZone"
+	vz.Size = Vector3.new(40,30,40); vz.Position = fp+Vector3.new(0,18,0)
+	vz.Anchored = true; vz.Transparency = 1; vz.CanCollide = false; vz.Parent = mapFolder
+
+	local wp = {}
+	vz.Touched:Connect(function(hit)
+		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
+		if plr and not wp[plr] then
+			wp[plr] = true; timerEvent:FireClient(plr, "WIN")
+			task.delay(5, function() wp[plr] = nil end)
+		end
+	end)
+end
+
+-- ============================================================
+-- PLAYER / RESPAWN
+-- ============================================================
+
+local function getSpawnPosition(player)
+	local data = playerData[player]
+	if data and data.checkpoint then return checkpointPositions[data.checkpoint] or checkpointPositions[0] end
+	return checkpointPositions[0] or Vector3.new(0, START_HEIGHT+7, 0)
+end
+
+local function onPlayerDied(player)
+	local data = playerData[player]
+	if not data or data.respawning then return end
+	data.respawning = true
+	respawnEvent:FireClient(player, 3)
+	task.wait(3)
+	if player.Parent then
+		player:LoadCharacter()
+		data.respawning = false
+		task.spawn(function()
+			local character = player.Character or player.CharacterAdded:Wait()
+			local rootPart = character:WaitForChild("HumanoidRootPart", 5)
+			if rootPart then task.wait(0.1); rootPart.CFrame = CFrame.new(getSpawnPosition(player)) end
+			timerStartEvent:FireClient(player)
+		end)
+	end
+end
+
+local function onCharacterAdded(player, character)
+	local humanoid = character:WaitForChild("Humanoid")
+	humanoid.Died:Connect(function() onPlayerDied(player) end)
+end
+
+Players.PlayerAdded:Connect(function(player)
+	playerData[player] = {startTime=nil, candies=0, checkpoint=nil, respawning=false}
+	player.CharacterAdded:Connect(function(character) onCharacterAdded(player, character) end)
+	if player.Character then onCharacterAdded(player, player.Character) end
+end)
+
+startGameEvent.OnServerEvent:Connect(function(player)
+	local data = playerData[player]
+	if data then data.startTime = tick(); data.candies = 0; data.checkpoint = nil end
+	local character = player.Character
+	if character then
+		local rootPart = character:FindFirstChild("HumanoidRootPart")
+		if rootPart then rootPart.CFrame = CFrame.new(0, START_HEIGHT+7, 0) end
+	end
+	timerStartEvent:FireClient(player)
+end)
+
+Players.PlayerRemoving:Connect(function(player) playerData[player] = nil end)
+
+-- ============================================================
+-- INIT
+-- ============================================================
+
+generateMap()
+createHallway()
+createDeathFloor()
+print("[CandyRun] Server v4 initialized!")
