@@ -857,63 +857,211 @@ end
 -- CIRCULAR SPAWN PLATFORM (bigger, with item capsules)
 -- ============================================================
 
-local function createItemCapsule(position, itemName, itemColor, itemEmoji)
+-- Build a detailed coil display (spiral of rings around a central rod)
+local function buildCoilDisplay(parent, position, coilColor, secondaryColor)
+	-- Central rod
+	local rod = Instance.new("Part")
+	rod.Size = Vector3.new(0.6, 5, 0.6)
+	rod.Position = position; rod.Anchored = true; rod.CanCollide = false
+	rod.Color = Color3.fromRGB(180, 180, 200)
+	rod.Material = Enum.Material.Metal; rod.Parent = parent
+
+	-- Spiral rings (12 rings spiraling around the rod)
+	for i = 0, 11 do
+		local angle = (i / 12) * math.pi * 2 * 3 -- 3 full rotations
+		local yOff = (i / 11) * 4 - 2  -- spread along rod
+		local radius = 1.2
+		local ring = Instance.new("Part")
+		ring.Size = Vector3.new(0.8, 0.8, 0.8)
+		ring.Position = position + Vector3.new(
+			math.cos(angle) * radius,
+			yOff,
+			math.sin(angle) * radius
+		)
+		ring.Anchored = true; ring.CanCollide = false
+		ring.Color = if i % 2 == 0 then coilColor else secondaryColor
+		ring.Material = Enum.Material.Neon
+		ring.Shape = Enum.PartType.Ball
+		ring.Transparency = 0.1
+		ring.Parent = parent
+	end
+
+	-- Top cap
+	local topCap = Instance.new("Part")
+	topCap.Size = Vector3.new(1.5, 0.5, 1.5)
+	topCap.Position = position + Vector3.new(0, 2.8, 0)
+	topCap.Anchored = true; topCap.CanCollide = false
+	topCap.Color = coilColor; topCap.Material = Enum.Material.SmoothPlastic
+	topCap.Shape = Enum.PartType.Cylinder
+	topCap.Orientation = Vector3.new(0, 0, 90)
+	topCap.Parent = parent
+
+	-- Bottom cap
+	local botCap = Instance.new("Part")
+	botCap.Size = Vector3.new(1.5, 0.5, 1.5)
+	botCap.Position = position + Vector3.new(0, -2.8, 0)
+	botCap.Anchored = true; botCap.CanCollide = false
+	botCap.Color = coilColor; botCap.Material = Enum.Material.SmoothPlastic
+	botCap.Shape = Enum.PartType.Cylinder
+	botCap.Orientation = Vector3.new(0, 0, 90)
+	botCap.Parent = parent
+
+	-- Glow
+	local glow = Instance.new("PointLight")
+	glow.Color = coilColor; glow.Brightness = 1.5; glow.Range = 15
+	glow.Parent = rod
+
+	return rod
+end
+
+-- Build a rainbow carpet display
+local function buildCarpetDisplay(parent, position)
+	local rainbowColors = {
+		Color3.fromRGB(255, 50, 50),   -- red
+		Color3.fromRGB(255, 160, 0),   -- orange
+		Color3.fromRGB(255, 255, 50),  -- yellow
+		Color3.fromRGB(50, 255, 50),   -- green
+		Color3.fromRGB(50, 150, 255),  -- blue
+		Color3.fromRGB(130, 50, 255),  -- indigo
+		Color3.fromRGB(200, 50, 255),  -- violet
+	}
+
+	local carpetModel = Instance.new("Model")
+	carpetModel.Name = "CarpetDisplay"; carpetModel.Parent = parent
+
+	-- Carpet body: flat rectangle made of rainbow stripes
+	local stripeWidth = 0.8
+	local carpetLength = 5
+	local carpetWidth = #rainbowColors * stripeWidth
+
+	for i, color in ipairs(rainbowColors) do
+		local stripe = Instance.new("Part")
+		stripe.Size = Vector3.new(stripeWidth, 0.3, carpetLength)
+		stripe.Position = position + Vector3.new((i - (#rainbowColors+1)/2) * stripeWidth, 0, 0)
+		stripe.Anchored = true; stripe.CanCollide = false
+		stripe.Color = color
+		stripe.Material = Enum.Material.Fabric
+		stripe.Parent = carpetModel
+	end
+
+	-- Gold fringe on edges
+	for _, zOff in ipairs({-carpetLength/2 - 0.2, carpetLength/2 + 0.2}) do
+		local fringe = Instance.new("Part")
+		fringe.Size = Vector3.new(carpetWidth + 0.5, 0.15, 0.4)
+		fringe.Position = position + Vector3.new(0, -0.1, zOff)
+		fringe.Anchored = true; fringe.CanCollide = false
+		fringe.Color = Color3.fromRGB(220, 180, 50)
+		fringe.Material = Enum.Material.Fabric
+		fringe.Parent = carpetModel
+	end
+
+	-- Gold border along sides
+	for _, xOff in ipairs({-carpetWidth/2 - 0.2, carpetWidth/2 + 0.2}) do
+		local border = Instance.new("Part")
+		border.Size = Vector3.new(0.3, 0.15, carpetLength + 0.8)
+		border.Position = position + Vector3.new(xOff, -0.1, 0)
+		border.Anchored = true; border.CanCollide = false
+		border.Color = Color3.fromRGB(220, 180, 50)
+		border.Material = Enum.Material.Fabric
+		border.Parent = carpetModel
+	end
+
+	-- Subtle glow underneath
+	local glowPart = Instance.new("Part")
+	glowPart.Size = Vector3.new(carpetWidth, 0.1, carpetLength)
+	glowPart.Position = position + Vector3.new(0, -0.3, 0)
+	glowPart.Anchored = true; glowPart.CanCollide = false
+	glowPart.Color = Color3.fromRGB(255, 220, 100)
+	glowPart.Material = Enum.Material.Neon
+	glowPart.Transparency = 0.5
+	glowPart.Parent = carpetModel
+
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 220, 100)
+	light.Brightness = 1; light.Range = 12
+	light.Parent = glowPart
+
+	return carpetModel
+end
+
+local function createItemCapsule(position, itemName, itemColor, itemEmoji, displayType)
 	local model = Instance.new("Model"); model.Name = itemName.."Capsule"
 
 	-- Glass cylinder capsule
 	local capsule = Instance.new("Part")
 	capsule.Name = "CapsuleShell"
-	capsule.Size = Vector3.new(8, 12, 8)
+	capsule.Size = Vector3.new(10, 14, 10)
 	capsule.Position = position
 	capsule.Anchored = true; capsule.Color = itemColor
 	capsule.Material = Enum.Material.Glass
 	capsule.Shape = Enum.PartType.Cylinder
 	capsule.Orientation = Vector3.new(0, 0, 90)
-	capsule.Transparency = 0.5
+	capsule.Transparency = 0.55
 	capsule.CanCollide = false
 	capsule.Parent = model
 
-	-- Base ring
-	local baseRing = Instance.new("Part")
-	baseRing.Size = Vector3.new(2, 10, 10)
-	baseRing.Position = position + Vector3.new(0, -5.5, 0)
-	baseRing.Anchored = true; baseRing.Color = Color3.fromRGB(200, 200, 220)
-	baseRing.Material = Enum.Material.SmoothPlastic
-	baseRing.Shape = Enum.PartType.Cylinder
-	baseRing.Orientation = Vector3.new(0, 0, 90)
-	baseRing.Parent = model
+	-- Base pedestal
+	local basePed = Instance.new("Part")
+	basePed.Size = Vector3.new(2.5, 12, 12)
+	basePed.Position = position + Vector3.new(0, -6.5, 0)
+	basePed.Anchored = true; basePed.Color = Color3.fromRGB(60, 60, 70)
+	basePed.Material = Enum.Material.SmoothPlastic
+	basePed.Shape = Enum.PartType.Cylinder
+	basePed.Orientation = Vector3.new(0, 0, 90)
+	basePed.Parent = model
 
-	-- Top ring
-	local topRing = Instance.new("Part")
-	topRing.Size = Vector3.new(2, 10, 10)
-	topRing.Position = position + Vector3.new(0, 5.5, 0)
-	topRing.Anchored = true; topRing.Color = Color3.fromRGB(200, 200, 220)
-	topRing.Material = Enum.Material.SmoothPlastic
-	topRing.Shape = Enum.PartType.Cylinder
-	topRing.Orientation = Vector3.new(0, 0, 90)
-	topRing.Parent = model
+	-- Base accent ring
+	local baseAccent = Instance.new("Part")
+	baseAccent.Size = Vector3.new(0.8, 13, 13)
+	baseAccent.Position = position + Vector3.new(0, -5.5, 0)
+	baseAccent.Anchored = true; baseAccent.Color = itemColor
+	baseAccent.Material = Enum.Material.Neon
+	baseAccent.Shape = Enum.PartType.Cylinder
+	baseAccent.Orientation = Vector3.new(0, 0, 90)
+	baseAccent.Transparency = 0.3; baseAccent.CanCollide = false
+	baseAccent.Parent = model
 
-	-- Floating item inside (glowing sphere)
-	local itemOrb = Instance.new("Part")
-	itemOrb.Name = "ItemOrb"
-	itemOrb.Size = Vector3.new(3, 3, 3)
-	itemOrb.Position = position
-	itemOrb.Anchored = true; itemOrb.CanCollide = false
-	itemOrb.Color = itemColor
-	itemOrb.Material = Enum.Material.Neon
-	itemOrb.Shape = Enum.PartType.Ball
-	itemOrb.Parent = model
+	-- Top cap
+	local topCap = Instance.new("Part")
+	topCap.Size = Vector3.new(1.5, 11, 11)
+	topCap.Position = position + Vector3.new(0, 7, 0)
+	topCap.Anchored = true; topCap.Color = Color3.fromRGB(60, 60, 70)
+	topCap.Material = Enum.Material.SmoothPlastic
+	topCap.Shape = Enum.PartType.Cylinder
+	topCap.Orientation = Vector3.new(0, 0, 90)
+	topCap.Parent = model
 
-	local orbLight = Instance.new("PointLight")
-	orbLight.Color = itemColor; orbLight.Brightness = 1.5; orbLight.Range = 15
-	orbLight.Parent = itemOrb
+	-- Display item inside
+	if displayType == "speed_coil" then
+		local coilParts = buildCoilDisplay(model, position, Color3.fromRGB(80, 200, 255), Color3.fromRGB(200, 240, 255))
+		-- Spin
+		task.spawn(function()
+			local t = 0
+			while model and model.Parent do
+				t += 0.03
+				for _, p in model:GetDescendants() do
+					if p:IsA("BasePart") and p.Shape == Enum.PartType.Ball and p.Material == Enum.Material.Neon then
+						-- handled by parent model spin below
+					end
+				end
+				task.wait(0.03)
+			end
+		end)
+	elseif displayType == "gravity_coil" then
+		buildCoilDisplay(model, position, Color3.fromRGB(180, 80, 255), Color3.fromRGB(230, 180, 255))
+	elseif displayType == "carpet" then
+		buildCarpetDisplay(model, position)
+	end
 
-	-- Spin the orb
+	-- Slow rotation of display items
 	task.spawn(function()
-		local bp2 = itemOrb.Position
-		while itemOrb and itemOrb.Parent do
-			itemOrb.Orientation += Vector3.new(0, 3, 0)
-			itemOrb.Position = bp2 + Vector3.new(0, math.sin(tick()*2)*1.5, 0)
+		while model and model.Parent do
+			-- Rotate all non-capsule non-pedestal parts
+			for _, child in model:GetChildren() do
+				if child:IsA("Model") then
+					child:PivotTo(child:GetPivot() * CFrame.Angles(0, math.rad(1.5), 0))
+				end
+			end
 			task.wait(0.03)
 		end
 	end)
@@ -921,12 +1069,12 @@ local function createItemCapsule(position, itemName, itemColor, itemEmoji)
 	-- Label
 	local labelPart = Instance.new("Part")
 	labelPart.Size = Vector3.new(1,1,1)
-	labelPart.Position = position + Vector3.new(0, 8, 0)
+	labelPart.Position = position + Vector3.new(0, 10, 0)
 	labelPart.Anchored = true; labelPart.Transparency = 1; labelPart.CanCollide = false
 	labelPart.Parent = model
 
 	local bb = Instance.new("BillboardGui")
-	bb.Size = UDim2.fromOffset(120, 50); bb.AlwaysOnTop = false; bb.Parent = labelPart
+	bb.Size = UDim2.fromOffset(140, 55); bb.AlwaysOnTop = false; bb.Parent = labelPart
 
 	local lbl = Instance.new("TextLabel")
 	lbl.Size = UDim2.fromScale(1,1); lbl.BackgroundTransparency = 1
@@ -940,7 +1088,7 @@ local function createItemCapsule(position, itemName, itemColor, itemEmoji)
 	-- Walk-in trigger zone
 	local trigger = Instance.new("Part")
 	trigger.Name = "Trigger_"..itemName
-	trigger.Size = Vector3.new(8, 12, 8)
+	trigger.Size = Vector3.new(10, 14, 10)
 	trigger.Position = position
 	trigger.Anchored = true; trigger.Transparency = 1; trigger.CanCollide = false
 	trigger.Parent = model
@@ -1055,19 +1203,146 @@ local function createCircularSpawn()
 	-- ============================================================
 
 	local speedTrigger = createItemCapsule(
-		Vector3.new(-12, START_HEIGHT + 8, 10),
-		"Speed Coil", Color3.fromRGB(80, 200, 255), "⚡"
+		Vector3.new(-14, START_HEIGHT + 8, 12),
+		"Speed Coil", Color3.fromRGB(80, 200, 255), "⚡", "speed_coil"
 	)
 
 	local gravityTrigger = createItemCapsule(
-		Vector3.new(0, START_HEIGHT + 8, 10),
-		"Gravity Coil", Color3.fromRGB(180, 80, 255), "🌀"
+		Vector3.new(0, START_HEIGHT + 8, 12),
+		"Gravity Coil", Color3.fromRGB(180, 80, 255), "🌀", "gravity_coil"
 	)
 
 	local carpetTrigger = createItemCapsule(
-		Vector3.new(12, START_HEIGHT + 8, 10),
-		"Magic Carpet", Color3.fromRGB(255, 180, 50), "🧞"
+		Vector3.new(14, START_HEIGHT + 8, 12),
+		"Magic Carpet", Color3.fromRGB(255, 180, 50), "🧞", "carpet"
 	)
+
+	-- Build a coil-shaped tool handle
+	local function makeCoilHandle(tool, coilColor, secondaryColor)
+		local handle = Instance.new("Part")
+		handle.Name = "Handle"
+		handle.Size = Vector3.new(0.5, 3, 0.5)
+		handle.Color = Color3.fromRGB(180, 180, 200)
+		handle.Material = Enum.Material.Metal
+		handle.Parent = tool
+
+		-- Spiral coil rings around the handle
+		for i = 0, 8 do
+			local angle = (i / 8) * math.pi * 2 * 2.5
+			local yOff = (i / 8) * 2.5 - 1.25
+			local ring = Instance.new("Part")
+			ring.Name = "CoilRing"
+			ring.Size = Vector3.new(0.5, 0.5, 0.5)
+			ring.Shape = Enum.PartType.Ball
+			ring.Color = if i % 2 == 0 then coilColor else secondaryColor
+			ring.Material = Enum.Material.Neon
+			ring.CanCollide = false
+			ring.Parent = tool
+
+			local weld = Instance.new("Weld")
+			weld.Part0 = handle; weld.Part1 = ring
+			weld.C0 = CFrame.new(math.cos(angle)*0.8, yOff, math.sin(angle)*0.8)
+			weld.Parent = ring
+		end
+
+		-- Top/bottom caps
+		for _, yOff in ipairs({-1.6, 1.6}) do
+			local cap = Instance.new("Part")
+			cap.Name = "Cap"
+			cap.Size = Vector3.new(1, 0.3, 1)
+			cap.Color = coilColor
+			cap.Material = Enum.Material.SmoothPlastic
+			cap.Shape = Enum.PartType.Cylinder
+			cap.Orientation = Vector3.new(0, 0, 90)
+			cap.CanCollide = false
+			cap.Parent = tool
+
+			local weld = Instance.new("Weld")
+			weld.Part0 = handle; weld.Part1 = cap
+			weld.C0 = CFrame.new(0, yOff, 0)
+			weld.Parent = cap
+		end
+
+		return handle
+	end
+
+	-- Build a rainbow carpet tool handle
+	local function makeCarpetHandle(tool)
+		local handle = Instance.new("Part")
+		handle.Name = "Handle"
+		handle.Size = Vector3.new(5, 0.3, 7)
+		handle.Color = Color3.fromRGB(255, 100, 100)
+		handle.Material = Enum.Material.Fabric
+		handle.Parent = tool
+
+		-- Rainbow stripes welded to handle
+		local rainbowColors = {
+			Color3.fromRGB(255, 50, 50),
+			Color3.fromRGB(255, 160, 0),
+			Color3.fromRGB(255, 255, 50),
+			Color3.fromRGB(50, 255, 50),
+			Color3.fromRGB(50, 150, 255),
+			Color3.fromRGB(130, 50, 255),
+			Color3.fromRGB(200, 50, 255),
+		}
+
+		local stripeW = 5 / #rainbowColors
+		for i, color in ipairs(rainbowColors) do
+			local stripe = Instance.new("Part")
+			stripe.Name = "Stripe"..i
+			stripe.Size = Vector3.new(stripeW, 0.35, 7)
+			stripe.Color = color
+			stripe.Material = Enum.Material.Fabric
+			stripe.CanCollide = false
+			stripe.Parent = tool
+
+			local weld = Instance.new("Weld")
+			weld.Part0 = handle; weld.Part1 = stripe
+			weld.C0 = CFrame.new((i - (#rainbowColors+1)/2) * stripeW, 0.02, 0)
+			weld.Parent = stripe
+		end
+
+		-- Gold fringe
+		for _, zOff in ipairs({-3.6, 3.6}) do
+			local fringe = Instance.new("Part")
+			fringe.Name = "Fringe"
+			fringe.Size = Vector3.new(5.5, 0.15, 0.4)
+			fringe.Color = Color3.fromRGB(220, 180, 50)
+			fringe.Material = Enum.Material.Fabric
+			fringe.CanCollide = false; fringe.Parent = tool
+
+			local weld = Instance.new("Weld")
+			weld.Part0 = handle; weld.Part1 = fringe
+			weld.C0 = CFrame.new(0, -0.1, zOff)
+			weld.Parent = fringe
+		end
+
+		-- Glow underneath
+		local glow = Instance.new("Part")
+		glow.Name = "CarpetGlow"
+		glow.Size = Vector3.new(4.5, 0.1, 6.5)
+		glow.Color = Color3.fromRGB(255, 220, 100)
+		glow.Material = Enum.Material.Neon
+		glow.Transparency = 0.5
+		glow.CanCollide = false; glow.Parent = tool
+
+		local weld = Instance.new("Weld")
+		weld.Part0 = handle; weld.Part1 = glow
+		weld.C0 = CFrame.new(0, -0.3, 0)
+		weld.Parent = glow
+
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(255, 220, 100)
+		light.Brightness = 0.8; light.Range = 10
+		light.Parent = glow
+
+		return handle
+	end
+
+	-- Remote event for magic carpet flight (client handles controls)
+	local carpetFlyEvent = Instance.new("RemoteEvent")
+	carpetFlyEvent.Name = "CarpetFlyToggle"
+	carpetFlyEvent.Parent = ReplicatedStorage
 
 	-- Item give logic
 	local function giveItem(player, itemName)
@@ -1089,45 +1364,69 @@ local function createCircularSpawn()
 		tool.CanBeDropped = false
 		tool.RequiresHandle = true
 
-		local handle = Instance.new("Part")
-		handle.Name = "Handle"
-		handle.Size = Vector3.new(1, 1, 1)
-		handle.Shape = Enum.PartType.Ball
-		handle.Material = Enum.Material.Neon
-		handle.Parent = tool
-
 		if itemName == "Speed Coil" then
-			handle.Color = Color3.fromRGB(80, 200, 255)
+			makeCoilHandle(tool, Color3.fromRGB(80, 200, 255), Color3.fromRGB(200, 240, 255))
 			tool.Equipped:Connect(function()
-				if hum then hum.WalkSpeed = 70 end
+				if hum then hum.WalkSpeed = hum.WalkSpeed + 30 end
 			end)
 			tool.Unequipped:Connect(function()
-				if hum then hum.WalkSpeed = 48 end
+				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 30, 28) end
 			end)
+
 		elseif itemName == "Gravity Coil" then
-			handle.Color = Color3.fromRGB(180, 80, 255)
+			makeCoilHandle(tool, Color3.fromRGB(180, 80, 255), Color3.fromRGB(230, 180, 255))
+			-- Gravity coil: reduce gravity to float (+20 jump, lower gravity feel)
 			tool.Equipped:Connect(function()
-				if hum then hum.JumpPower = 120 end
+				if hum then
+					hum.JumpPower = hum.JumpPower + 20
+				end
+				local rootPart = char:FindFirstChild("HumanoidRootPart")
+				if rootPart then
+					-- BodyForce to counteract some gravity (makes you float)
+					local bf = Instance.new("BodyForce")
+					bf.Name = "GravityReducer"
+					-- Counteract ~60% of gravity: mass * gravity * 0.6
+					local mass = 0
+					for _, part in char:GetDescendants() do
+						if part:IsA("BasePart") then mass += part:GetMass() end
+					end
+					bf.Force = Vector3.new(0, mass * workspace.Gravity * 0.6, 0)
+					bf.Parent = rootPart
+				end
 			end)
 			tool.Unequipped:Connect(function()
-				if hum then hum.JumpPower = 60 end
+				if hum then
+					hum.JumpPower = math.max(hum.JumpPower - 20, 60)
+				end
+				local rootPart = char:FindFirstChild("HumanoidRootPart")
+				if rootPart then
+					local bf = rootPart:FindFirstChild("GravityReducer")
+					if bf then bf:Destroy() end
+				end
 			end)
+
 		elseif itemName == "Magic Carpet" then
-			handle.Color = Color3.fromRGB(255, 180, 50)
-			-- Magic carpet: fly while equipped
+			makeCarpetHandle(tool)
+			-- Carpet: tell client to enable flight mode
 			tool.Equipped:Connect(function()
-				local bp = Instance.new("BodyVelocity")
-				bp.Name = "CarpetFly"
-				bp.MaxForce = Vector3.new(0, 50000, 0)
-				bp.Velocity = Vector3.new(0, 20, 0)
-				local rp = char:FindFirstChild("HumanoidRootPart")
-				if rp then bp.Parent = rp end
+				carpetFlyEvent:FireClient(player, true)
+				-- Sit on carpet: force sit
+				if hum then
+					hum.Sit = true
+				end
 			end)
 			tool.Unequipped:Connect(function()
-				local rp = char:FindFirstChild("HumanoidRootPart")
-				if rp then
-					local bp = rp:FindFirstChild("CarpetFly")
-					if bp then bp:Destroy() end
+				carpetFlyEvent:FireClient(player, false)
+				if hum then
+					hum.Sit = false
+				end
+				-- Clean up any flight forces
+				local rootPart = char:FindFirstChild("HumanoidRootPart")
+				if rootPart then
+					local bg = rootPart:FindFirstChild("CarpetGyro")
+					if bg then bg:Destroy() end
+					local bv = rootPart:FindFirstChild("CarpetVelocity")
+					if bv then bv:Destroy() end
 				end
 			end)
 		end
