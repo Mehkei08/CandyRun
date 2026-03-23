@@ -152,11 +152,13 @@ local function buildCandyCane(index, pos, m)
 	sheen.Transparency = 0.75; sheen.CanCollide = false
 	sheen.Parent = model
 
-	-- Curved hook (tall, with smooth curve using 3 spheres)
+	-- Curved hook (tall, with smooth curve using 5 spheres for smoother arc)
 	local hookPositions = {
-		{x = 11*m, y = 3*m,  z = 0,     size = 5.5*m},
-		{x = 11*m, y = 7*m,  z = -2*m,  size = 5*m},
-		{x = 9*m,  y = 10*m, z = -3.5*m, size = 4.5*m},
+		{x = 11*m, y = 2*m,  z = 0,      size = 5.5*m},
+		{x = 11.2*m, y = 5*m,  z = -0.8*m, size = 5.2*m},
+		{x = 11*m, y = 8*m,  z = -2*m,   size = 5*m},
+		{x = 10*m, y = 10.5*m, z = -3*m, size = 4.7*m},
+		{x = 8.5*m, y = 11.5*m, z = -4*m, size = 4.3*m},
 	}
 	for _, hp in ipairs(hookPositions) do
 		local ball = Instance.new("Part")
@@ -175,6 +177,53 @@ local function buildCandyCane(index, pos, m)
 		accent.Shape = Enum.PartType.Ball
 		accent.Transparency = 0.45; accent.CanCollide = false
 		accent.Parent = model
+	end
+
+	-- Frosted sugar crystal effect (tiny neon specks scattered on surface)
+	for i2 = 1, 12 do
+		local crystal = Instance.new("Part")
+		crystal.Size = Vector3.new(0.3*m, 0.3*m, 0.3*m)
+		crystal.Position = pos + Vector3.new(
+			(math.random()-0.5)*20*m,
+			(math.random()-0.5)*4*m + 0.5*m,
+			(math.random()-0.5)*4*m
+		)
+		crystal.Anchored = true; crystal.CanCollide = false
+		crystal.Color = Color3.fromRGB(255, 245, 250)
+		crystal.Material = Enum.Material.Neon
+		crystal.Shape = Enum.PartType.Ball
+		crystal.Transparency = 0.3
+		crystal.Parent = model
+	end
+
+	-- Reflection highlight stripe (thin glass strip along the top)
+	local highlight = Instance.new("Part")
+	highlight.Size = Vector3.new(20*m, 0.5*m, 1*m)
+	highlight.Position = pos + Vector3.new(0, 2.8*m, 0)
+	highlight.Anchored = true; highlight.CanCollide = false
+	highlight.Color = Color3.fromRGB(255, 255, 255)
+	highlight.Material = Enum.Material.Glass
+	highlight.Transparency = 0.7
+	highlight.Parent = model
+
+	-- Extra ambient glow
+	glow(main, Color3.fromRGB(255, 150, 150), 28, 0.35)
+
+	-- Sparkle parts floating nearby
+	for i2 = 1, 4 do
+		local sparkle = Instance.new("Part")
+		sparkle.Size = Vector3.new(0.2*m, 0.2*m, 0.2*m)
+		sparkle.Position = pos + Vector3.new(
+			(math.random()-0.5)*24*m,
+			3*m + math.random()*5*m,
+			(math.random()-0.5)*8*m
+		)
+		sparkle.Anchored = true; sparkle.CanCollide = false
+		sparkle.Color = Color3.fromRGB(255, 255, 255)
+		sparkle.Material = Enum.Material.Neon
+		sparkle.Shape = Enum.PartType.Ball
+		sparkle.Transparency = 0.1
+		sparkle.Parent = model
 	end
 
 	model.Parent = mapFolder
@@ -336,8 +385,77 @@ local function buildChocolateBar(index, pos, m)
 		end
 	end
 
+	-- Snap lines between segment rows (thin dark grooves)
+	for col = -0.5, 0.5, 1 do
+		local snapLine = Instance.new("Part")
+		snapLine.Size = Vector3.new(19*m, 0.15*m, 0.2*m)
+		snapLine.Position = pos + Vector3.new(0, 2.1*m, col*3.2*m)
+		snapLine.Anchored = true; snapLine.CanCollide = false
+		snapLine.Color = Color3.fromRGB(40, 18, 5)
+		snapLine.Material = Enum.Material.SmoothPlastic
+		snapLine.Parent = model
+	end
+
+	-- Cocoa powder dust particles (tiny brown specks on top)
+	for i2 = 1, 10 do
+		local dust = Instance.new("Part")
+		dust.Size = Vector3.new(0.25*m, 0.25*m, 0.25*m)
+		dust.Position = pos + Vector3.new(
+			(math.random()-0.5)*18*m,
+			4*m + math.random()*0.5*m,
+			(math.random()-0.5)*12*m
+		)
+		dust.Anchored = true; dust.CanCollide = false
+		dust.Color = Color3.fromRGB(120, 65, 30)
+		dust.Material = Enum.Material.SmoothPlastic
+		dust.Shape = Enum.PartType.Ball
+		dust.Transparency = 0.3
+		dust.Parent = model
+	end
+
+	-- Melted edge effect (slightly darker, larger parts at edges)
+	for _, side in ipairs({-1, 1}) do
+		local meltX = Instance.new("Part")
+		meltX.Size = Vector3.new(1.5*m, 3.5*m, 14.5*m)
+		meltX.Position = pos + Vector3.new(side*10.2*m, -0.3*m, 0)
+		meltX.Anchored = true; meltX.CanCollide = false
+		meltX.Color = Color3.fromRGB(60, 30, 10)
+		meltX.Material = Enum.Material.SmoothPlastic
+		meltX.Transparency = 0.25
+		meltX.Parent = model
+
+		local meltZ = Instance.new("Part")
+		meltZ.Size = Vector3.new(20.5*m, 3.5*m, 1.5*m)
+		meltZ.Position = pos + Vector3.new(0, -0.3*m, side*7.2*m)
+		meltZ.Anchored = true; meltZ.CanCollide = false
+		meltZ.Color = Color3.fromRGB(60, 30, 10)
+		meltZ.Material = Enum.Material.SmoothPlastic
+		meltZ.Transparency = 0.25
+		meltZ.Parent = model
+	end
+
 	-- Subtle sheen
 	addSheen(model, Vector3.new(19*m, 2*m, 13*m), pos + Vector3.new(0, 3*m, 0), Color3.fromRGB(180, 140, 90))
+
+	-- Extra ambient glow
+	glow(bar, Color3.fromRGB(160, 110, 70), 22, 0.3)
+
+	-- Sparkle parts floating nearby
+	for i2 = 1, 3 do
+		local sparkle = Instance.new("Part")
+		sparkle.Size = Vector3.new(0.2*m, 0.2*m, 0.2*m)
+		sparkle.Position = pos + Vector3.new(
+			(math.random()-0.5)*22*m,
+			5*m + math.random()*4*m,
+			(math.random()-0.5)*16*m
+		)
+		sparkle.Anchored = true; sparkle.CanCollide = false
+		sparkle.Color = Color3.fromRGB(255, 235, 200)
+		sparkle.Material = Enum.Material.Neon
+		sparkle.Shape = Enum.PartType.Ball
+		sparkle.Transparency = 0.1
+		sparkle.Parent = model
+	end
 
 	model.Parent = mapFolder
 	return bar, model
@@ -380,12 +498,12 @@ local function buildLollipop(index, pos, m)
 	disc.Parent = model
 	glow(disc, pal[1], 22, 0.6)
 
-	-- Swirl rings (5 alternating layers for bold spiral)
-	local swirlSizes = {15, 12, 9, 6, 3}
+	-- Swirl rings (8 alternating layers for tight spiral look)
+	local swirlSizes = {16.5, 15, 13, 11, 9, 7, 5, 2.5}
 	for i2, sz in ipairs(swirlSizes) do
 		local swirl = Instance.new("Part")
-		swirl.Size = Vector3.new((4.5 + 0.2*i2)*m, sz*m, sz*m)
-		swirl.Position = pos + Vector3.new(0, 0.08*i2*m, 0)
+		swirl.Size = Vector3.new((4.5 + 0.15*i2)*m, sz*m, sz*m)
+		swirl.Position = pos + Vector3.new(0, 0.06*i2*m, 0)
 		swirl.Anchored = true
 		swirl.Color = if i2 % 2 == 0 then pal[2] else Color3.fromRGB(255,255,255)
 		swirl.Material = Enum.Material.SmoothPlastic
@@ -405,6 +523,64 @@ local function buildLollipop(index, pos, m)
 	glass.Orientation = Vector3.new(0,0,90)
 	glass.Transparency = 0.8; glass.CanCollide = false
 	glass.Parent = model
+
+	-- Wrapper/cellophane effect at the base of the disc (transparent crinkled parts)
+	for i2 = 1, 8 do
+		local angle = (i2/8)*math.pi*2
+		local wrapper = Instance.new("Part")
+		wrapper.Size = Vector3.new(2.5*m, 3*m, 1.5*m)
+		wrapper.Position = pos + Vector3.new(
+			math.cos(angle)*9.5*m,
+			-1*m,
+			math.sin(angle)*9.5*m
+		)
+		wrapper.Rotation = Vector3.new(math.random(-20,20), math.deg(angle), math.random(-15,15))
+		wrapper.Anchored = true; wrapper.CanCollide = false
+		wrapper.Color = Color3.fromRGB(255, 240, 250)
+		wrapper.Material = Enum.Material.Glass
+		wrapper.Transparency = 0.6
+		wrapper.Parent = model
+	end
+
+	-- Tiny bow on the stick
+	for _, side in ipairs({-1, 1}) do
+		local bowLoop = Instance.new("Part")
+		bowLoop.Size = Vector3.new(2*m, 1.2*m, 1.2*m)
+		bowLoop.Position = pos + Vector3.new(side*1.2*m, -14*m, 0)
+		bowLoop.Anchored = true; bowLoop.CanCollide = false
+		bowLoop.Color = pal[1]
+		bowLoop.Material = Enum.Material.SmoothPlastic
+		bowLoop.Shape = Enum.PartType.Ball
+		bowLoop.Parent = model
+	end
+	local bowKnot = Instance.new("Part")
+	bowKnot.Size = Vector3.new(0.8*m, 0.8*m, 0.8*m)
+	bowKnot.Position = pos + Vector3.new(0, -14*m, 0)
+	bowKnot.Anchored = true; bowKnot.CanCollide = false
+	bowKnot.Color = pal[2]
+	bowKnot.Material = Enum.Material.SmoothPlastic
+	bowKnot.Shape = Enum.PartType.Ball
+	bowKnot.Parent = model
+
+	-- Extra ambient glow
+	glow(disc, pal[1], 30, 0.4)
+
+	-- Sparkle parts floating nearby
+	for i2 = 1, 4 do
+		local sparkle = Instance.new("Part")
+		sparkle.Size = Vector3.new(0.2*m, 0.2*m, 0.2*m)
+		sparkle.Position = pos + Vector3.new(
+			(math.random()-0.5)*20*m,
+			3*m + math.random()*6*m,
+			(math.random()-0.5)*20*m
+		)
+		sparkle.Anchored = true; sparkle.CanCollide = false
+		sparkle.Color = Color3.fromRGB(255, 255, 255)
+		sparkle.Material = Enum.Material.Neon
+		sparkle.Shape = Enum.PartType.Ball
+		sparkle.Transparency = 0.1
+		sparkle.Parent = model
+	end
 
 	model.Parent = mapFolder
 	return disc, model
@@ -509,14 +685,72 @@ local function buildGummyBear(index, pos, m)
 	smile.Material = Enum.Material.SmoothPlastic
 	smile.CanCollide = false; smile.Parent = model
 
-	-- Internal glass sheen for gummy translucence
+	-- Internal glass sheen for gummy translucence (enhanced gradient)
 	local innerGlow = Instance.new("Part")
 	innerGlow.Size = Vector3.new(12*m, 10*m, 9*m)
 	innerGlow.Position = pos + Vector3.new(0, 3*m, 0)
 	innerGlow.Anchored = true; innerGlow.Color = color
 	innerGlow.Material = Enum.Material.Glass
-	innerGlow.Transparency = 0.7; innerGlow.CanCollide = false
+	innerGlow.Transparency = 0.6; innerGlow.CanCollide = false
 	innerGlow.Parent = model
+
+	-- Deeper translucency core (visible gradient center)
+	local innerCore = Instance.new("Part")
+	innerCore.Size = Vector3.new(8*m, 6*m, 6*m)
+	innerCore.Position = pos + Vector3.new(0, 2*m, 0)
+	innerCore.Anchored = true; innerCore.Color = color
+	innerCore.Material = Enum.Material.Glass
+	innerCore.Transparency = 0.45; innerCore.CanCollide = false
+	innerCore.Parent = model
+
+	-- Sugar coating effect (tiny white neon specks on surface)
+	for i2 = 1, 16 do
+		local sugar = Instance.new("Part")
+		sugar.Size = Vector3.new(0.25*m, 0.25*m, 0.25*m)
+		sugar.Position = pos + Vector3.new(
+			(math.random()-0.5)*15*m,
+			(math.random()-0.5)*6*m + 1*m,
+			(math.random()-0.5)*11*m
+		)
+		sugar.Anchored = true; sugar.CanCollide = false
+		sugar.Color = Color3.fromRGB(255, 255, 255)
+		sugar.Material = Enum.Material.Neon
+		sugar.Shape = Enum.PartType.Ball
+		sugar.Transparency = 0.2
+		sugar.Parent = model
+	end
+
+	-- Belly button detail (small dark sphere)
+	local bellyButton = Instance.new("Part")
+	bellyButton.Size = Vector3.new(1*m, 1*m, 1*m)
+	bellyButton.Position = pos + Vector3.new(0, 0, 6.2*m)
+	bellyButton.Anchored = true; bellyButton.CanCollide = false
+	bellyButton.Color = Color3.new(color.R*0.5, color.G*0.5, color.B*0.5)
+	bellyButton.Material = Enum.Material.SmoothPlastic
+	bellyButton.Shape = Enum.PartType.Ball
+	bellyButton.Transparency = 0.1
+	bellyButton.Parent = model
+
+	-- Extra ambient glow
+	glow(body, color, 24, 0.35)
+	glow(head, color, 16, 0.3)
+
+	-- Sparkle parts floating nearby
+	for i2 = 1, 4 do
+		local sparkle = Instance.new("Part")
+		sparkle.Size = Vector3.new(0.2*m, 0.2*m, 0.2*m)
+		sparkle.Position = pos + Vector3.new(
+			(math.random()-0.5)*20*m,
+			5*m + math.random()*10*m,
+			(math.random()-0.5)*14*m
+		)
+		sparkle.Anchored = true; sparkle.CanCollide = false
+		sparkle.Color = Color3.fromRGB(255, 255, 255)
+		sparkle.Material = Enum.Material.Neon
+		sparkle.Shape = Enum.PartType.Ball
+		sparkle.Transparency = 0.1
+		sparkle.Parent = model
+	end
 
 	model.Parent = mapFolder
 	return body, model
@@ -582,11 +816,11 @@ local function buildDonut(index, pos, m)
 		drip.CanCollide = false; drip.Parent = model
 	end
 
-	-- Sprinkles (lots of them)
+	-- Sprinkles (lots of them - 25 for full coverage)
 	local sprColors = {Color3.fromRGB(255,70,70),Color3.fromRGB(70,255,70),Color3.fromRGB(70,70,255),Color3.fromRGB(255,255,70),Color3.fromRGB(255,70,255),Color3.fromRGB(70,255,255)}
-	for i2 = 1, 18 do
-		local angle = (i2/18)*math.pi*2
-		local radius = (3 + math.random()*4)*m
+	for i2 = 1, 25 do
+		local angle = (i2/25)*math.pi*2 + math.random()*0.3
+		local radius = (3 + math.random()*4.5)*m
 		local spr = Instance.new("Part")
 		spr.Size = Vector3.new(0.4*m, 0.4*m, 1.4*m)
 		spr.Position = pos + Vector3.new(math.cos(angle)*radius, 3*m, math.sin(angle)*radius)
@@ -595,6 +829,67 @@ local function buildDonut(index, pos, m)
 		spr.Color = sprColors[math.random(1,#sprColors)]
 		spr.Material = Enum.Material.SmoothPlastic
 		spr.Parent = model
+	end
+
+	-- Bite mark (wedge-shaped dark transparent cutout)
+	local bite = Instance.new("Part")
+	bite.Size = Vector3.new(5*m, 6*m, 5*m)
+	bite.Position = pos + Vector3.new(9*m, 0, 0)
+	bite.Anchored = true; bite.CanCollide = false
+	bite.Color = Color3.fromRGB(30, 20, 10)
+	bite.Material = Enum.Material.SmoothPlastic
+	bite.Transparency = 0.3
+	bite.Parent = model
+
+	-- Cream filling visible at the bite mark
+	local cream = Instance.new("Part")
+	cream.Size = Vector3.new(3*m, 4*m, 3.5*m)
+	cream.Position = pos + Vector3.new(8.5*m, 0, 0)
+	cream.Anchored = true; cream.CanCollide = false
+	cream.Color = Color3.fromRGB(255, 250, 220)
+	cream.Material = Enum.Material.SmoothPlastic
+	cream.Shape = Enum.PartType.Ball
+	cream.Parent = model
+
+	local creamDrip = Instance.new("Part")
+	creamDrip.Size = Vector3.new(1.5*m, 2*m, 1.5*m)
+	creamDrip.Position = pos + Vector3.new(9.5*m, -1.5*m, 0)
+	creamDrip.Anchored = true; creamDrip.CanCollide = false
+	creamDrip.Color = Color3.fromRGB(255, 250, 225)
+	creamDrip.Material = Enum.Material.SmoothPlastic
+	creamDrip.Shape = Enum.PartType.Ball
+	creamDrip.Parent = model
+
+	-- Extra ambient glow
+	glow(ring, Color3.fromRGB(255, 225, 170), 22, 0.35)
+
+	-- Glass sheen overlay for candy shine
+	local donutGlass = Instance.new("Part")
+	donutGlass.Size = Vector3.new(4*m, 18*m, 18*m)
+	donutGlass.Position = pos + Vector3.new(0, 1*m, 0)
+	donutGlass.Anchored = true; donutGlass.CanCollide = false
+	donutGlass.Color = Color3.fromRGB(255, 255, 255)
+	donutGlass.Material = Enum.Material.Glass
+	donutGlass.Shape = Enum.PartType.Cylinder
+	donutGlass.Orientation = Vector3.new(0,0,90)
+	donutGlass.Transparency = 0.88
+	donutGlass.Parent = model
+
+	-- Sparkle parts floating nearby
+	for i2 = 1, 4 do
+		local sparkle = Instance.new("Part")
+		sparkle.Size = Vector3.new(0.2*m, 0.2*m, 0.2*m)
+		sparkle.Position = pos + Vector3.new(
+			(math.random()-0.5)*22*m,
+			4*m + math.random()*5*m,
+			(math.random()-0.5)*22*m
+		)
+		sparkle.Anchored = true; sparkle.CanCollide = false
+		sparkle.Color = Color3.fromRGB(255, 255, 255)
+		sparkle.Material = Enum.Material.Neon
+		sparkle.Shape = Enum.PartType.Ball
+		sparkle.Transparency = 0.1
+		sparkle.Parent = model
 	end
 
 	model.Parent = mapFolder
@@ -757,31 +1052,99 @@ local BUILDERS = {
 -- ============================================================
 
 local LEVELS = {
-	{offset={0,-2,-22},candy="chocolate",size=1.2},{offset={3,-1,-20},candy="candycorn",size=1.1},
-	{offset={-4,0,-21},candy="donut",size=1.2},{offset={2,1,-20},candy="gummy",size=1.1},
-	{offset={-3,-1,-22},candy="cupcake",size=1.0},{offset={5,0,-20},candy="lollipop",size=1.1},
-	{offset={-2,-2,-21},candy="chocolate",size=1.0},{offset={0,1,-22},candy="jawbreaker",size=1.0},
-	{offset={4,0,-20},candy="candycane",size=1.1},{offset={-5,-1,-21},candy="donut",size=1.2,checkpoint=true},
-	{offset={3,2,-24},candy="candycane",size=0.9},{offset={-4,-1,-23},candy="lollipop",size=0.85},
-	{offset={6,0,-22},candy="gummy",size=0.9},{offset={-5,3,-24},candy="candycorn",size=0.8},
-	{offset={2,-2,-25},candy="chocolate",size=0.9,moving=true},{offset={-3,1,-23},candy="cupcake",size=0.85},
-	{offset={4,0,-24},candy="jawbreaker",size=0.8},{offset={-6,-1,-22},candy="candycane",size=0.9},
-	{offset={3,2,-25},candy="donut",size=0.85},{offset={-2,-3,-23},candy="lollipop",size=1.0,checkpoint=true},
-	{offset={0,6,-21},candy="candycorn",size=0.85},{offset={4,-4,-24},candy="chocolate",size=0.8},
-	{offset={-3,5,-22},candy="gummy",size=0.75},{offset={5,-3,-25},candy="lollipop",size=0.7,moving=true},
-	{offset={-6,4,-23},candy="cupcake",size=0.8},{offset={2,-5,-26},candy="jawbreaker",size=0.7},
-	{offset={-4,6,-22},candy="candycane",size=0.8},{offset={3,-2,-24},candy="donut",size=0.75,crumbling=true},
-	{offset={-5,3,-25},candy="candycorn",size=0.8},{offset={4,-4,-23},candy="chocolate",size=1.0,checkpoint=true},
-	{offset={-3,2,-26},candy="candycane",size=0.7,moving=true},{offset={5,-1,-24},candy="lollipop",size=0.65},
-	{offset={-4,3,-27},candy="gummy",size=0.6,crumbling=true},{offset={6,-3,-25},candy="candycorn",size=0.7},
-	{offset={-5,4,-26},candy="jawbreaker",size=0.6,moving=true},{offset={3,-2,-28},candy="cupcake",size=0.65},
-	{offset={-6,5,-24},candy="chocolate",size=0.7,crumbling=true},{offset={4,-4,-27},candy="donut",size=0.6},
-	{offset={-3,3,-25},candy="candycane",size=0.65,moving=true},{offset={5,-2,-26},candy="lollipop",size=1.0,checkpoint=true},
-	{offset={-4,5,-28},candy="jawbreaker",size=0.55,moving=true},{offset={6,-4,-26},candy="candycorn",size=0.6,crumbling=true},
-	{offset={-5,6,-29},candy="gummy",size=0.5},{offset={3,-5,-27},candy="chocolate",size=0.6,moving=true},
-	{offset={-6,4,-28},candy="cupcake",size=0.55,crumbling=true},{offset={4,-3,-30},candy="candycane",size=0.55},
-	{offset={-3,6,-26},candy="lollipop",size=0.5,moving=true},{offset={5,-5,-29},candy="donut",size=0.55,crumbling=true},
-	{offset={-4,4,-27},candy="jawbreaker",size=0.5,moving=true},{offset={0,-3,-28},candy="cupcake",size=1.2,checkpoint=true},
+	-- ====== PHASE 1: WARM-UP (1-15) ======
+	-- Generous spacing, large platforms, introduce candy types gradually
+	{offset={0,-1,-20},candy="chocolate",size=1.3},          -- 1: easy opener
+	{offset={2,0,-19},candy="candycorn",size=1.2},           -- 2: slight right
+	{offset={-3,1,-20},candy="donut",size=1.2},              -- 3: left, slight rise
+	{offset={1,-1,-18},candy="gummy",size=1.1},              -- 4: easy hop
+	{offset={-2,0,-21},candy="cupcake",size=1.2},            -- 5: introduce cupcake
+	{offset={3,1,-19},candy="lollipop",size=1.1},            -- 6: introduce lollipop
+	{offset={-1,-2,-20},candy="jawbreaker",size=1.1},        -- 7: introduce jawbreaker
+	{offset={0,1,-22},candy="candycane",size=1.2,checkpoint=true}, -- 8: CHECKPOINT
+	{offset={2,-1,-19},candy="chocolate",size=1.1},          -- 9: back to basics
+	{offset={-3,0,-20},candy="candycorn",size=1.0},          -- 10: steady
+	{offset={3,2,-21},candy="gummy",size=1.1},               -- 11: slight climb
+	{offset={-2,-1,-19},candy="lollipop",size=1.0},          -- 12: easy descent
+	{offset={1,0,-22},candy="donut",size=1.1},               -- 13: longer gap
+	{offset={-3,1,-20},candy="cupcake",size=1.0},            -- 14: approaching checkpoint
+	{offset={2,0,-21},candy="jawbreaker",size=1.1,checkpoint=true}, -- 15: CHECKPOINT
+
+	-- ====== PHASE 2: MIXED PATHS (16-35) ======
+	-- Tighter, medium platforms, height variation, moving/crumbling introduced
+	{offset={-4,2,-22},candy="candycane",size=0.95},         -- 16: tighter spacing
+	{offset={5,-1,-20},candy="lollipop",size=0.9},           -- 17: wide swing right
+	{offset={-3,3,-21},candy="gummy",size=0.85},             -- 18: climbing
+	{offset={4,-2,-23},candy="chocolate",size=0.9},          -- 19: drop and leap
+	{offset={0,1,-20},candy="donut",size=1.1,checkpoint=true}, -- 20: CHECKPOINT
+	-- Staircase sequence 21-24
+	{offset={-2,2,-14},candy="candycorn",size=0.85},         -- 21: stair step 1
+	{offset={-1,3,-13},candy="candycane",size=0.8},          -- 22: stair step 2
+	{offset={0,3,-14},candy="lollipop",size=0.8},            -- 23: stair step 3
+	{offset={1,2,-15},candy="cupcake",size=0.85,moving=true}, -- 24: first moving!
+	{offset={-5,-3,-24},candy="jawbreaker",size=0.8},        -- 25: big drop, first crumbling
+	{offset={6,4,-22},candy="gummy",size=0.75,crumbling=true}, -- 26: crumbling intro
+	{offset={-4,-2,-23},candy="chocolate",size=0.8,moving=true}, -- 27: moving + gap
+	{offset={3,1,-21},candy="candycorn",size=1.0,checkpoint=true}, -- 28: CHECKPOINT
+	{offset={-6,5,-22},candy="lollipop",size=0.8},           -- 29: high climb left
+	{offset={5,-4,-24},candy="donut",size=0.75,crumbling=true}, -- 30: crumbling drop
+	{offset={-3,3,-21},candy="candycane",size=0.8,moving=true}, -- 31: moving climb
+	-- Staircase sequence 32-34
+	{offset={2,2,-13},candy="jawbreaker",size=0.75},         -- 32: rapid stair 1
+	{offset={1,4,-12},candy="cupcake",size=0.7},             -- 33: rapid stair 2
+	{offset={-1,3,-14},candy="gummy",size=0.75,crumbling=true}, -- 34: crumbling stair
+	{offset={-2,0,-22},candy="chocolate",size=1.0,checkpoint=true}, -- 35: CHECKPOINT
+
+	-- ====== PHASE 3: GAUNTLET (36-55) ======
+	-- Small platforms, moving+crumbling, zigzags, combo chains, rollercoasters
+	{offset={5,-3,-26},candy="candycane",size=0.7,moving=true}, -- 36: gauntlet begins
+	{offset={-7,4,-24},candy="lollipop",size=0.65},          -- 37: big swing left
+	{offset={6,-5,-27},candy="gummy",size=0.6,crumbling=true}, -- 38: crumble drop
+	{offset={-8,8,-25},candy="jawbreaker",size=0.65,moving=true}, -- 39: huge climb
+	{offset={3,-2,-24},candy="donut",size=1.0,checkpoint=true}, -- 40: CHECKPOINT
+	-- Combo chain 41-45
+	{offset={-2,-6,-11},candy="candycorn",size=0.55},        -- 41: rapid 1
+	{offset={3,5,-12},candy="chocolate",size=0.5},           -- 42: rapid 2
+	{offset={-4,-5,-10},candy="cupcake",size=0.55},          -- 43: rapid 3
+	{offset={5,7,-13},candy="candycane",size=0.5},           -- 44: rapid 4
+	{offset={-3,-6,-11},candy="lollipop",size=0.55},         -- 45: rapid 5 end chain
+	-- Height rollercoaster 46-48
+	{offset={6,8,-28},candy="gummy",size=0.65,moving=true},  -- 46: launch up
+	{offset={-7,-7,-26},candy="jawbreaker",size=0.6,crumbling=true}, -- 47: plummet
+	{offset={4,5,-25},candy="donut",size=1.0,checkpoint=true}, -- 48: CHECKPOINT
+	-- Zigzag gauntlet 49-54
+	{offset={-8,-4,-28},candy="candycorn",size=0.6,moving=true}, -- 49: zig left
+	{offset={8,6,-26},candy="chocolate",size=0.55,crumbling=true}, -- 50: zag right up
+	{offset={-7,-5,-29},candy="cupcake",size=0.6,moving=true}, -- 51: zig left down
+	{offset={7,5,-27},candy="candycane",size=0.55},          -- 52: zag right up
+	{offset={-6,-7,-30},candy="lollipop",size=0.6,crumbling=true}, -- 53: zig drop
+	{offset={5,6,-26},candy="gummy",size=0.6,moving=true},   -- 54: zag recover
+	{offset={-2,0,-24},candy="jawbreaker",size=1.1,checkpoint=true}, -- 55: CHECKPOINT
+
+	-- ====== PHASE 4: NIGHTMARE (56-75) ======
+	-- Tiny platforms, almost all moving/crumbling, extreme precision
+	{offset={-6,-4,-28},candy="chocolate",size=0.6,moving=true}, -- 56: nightmare starts
+	{offset={7,5,-26},candy="candycane",size=0.55,crumbling=true}, -- 57: crumble climb
+	{offset={-5,-8,-30},candy="lollipop",size=0.5,moving=true}, -- 58: trust fall!
+	{offset={8,6,-27},candy="cupcake",size=0.5,crumbling=true}, -- 59: tiny crumble
+	{offset={-3,1,-24},candy="donut",size=1.0,checkpoint=true}, -- 60: CHECKPOINT
+	-- Rapid fire sequence 61-66
+	{offset={4,-6,-11},candy="gummy",size=0.45,moving=true},  -- 61: rapid tiny 1
+	{offset={-5,5,-10},candy="jawbreaker",size=0.5,crumbling=true}, -- 62: rapid tiny 2
+	{offset={6,-7,-12},candy="candycorn",size=0.45,moving=true}, -- 63: rapid tiny 3
+	{offset={-4,6,-11},candy="chocolate",size=0.5,crumbling=true}, -- 64: rapid tiny 4
+	{offset={5,-5,-10},candy="candycane",size=0.45,moving=true}, -- 65: rapid tiny 5
+	{offset={-6,7,-13},candy="lollipop",size=0.5,crumbling=true}, -- 66: rapid tiny 6
+	{offset={3,-9,-28},candy="cupcake",size=0.55,moving=true}, -- 67: trust fall drop
+	{offset={-2,2,-22},candy="gummy",size=1.0,checkpoint=true}, -- 68: CHECKPOINT
+	-- Final gauntlet 69-74: the hardest jumps
+	{offset={7,-10,-30},candy="jawbreaker",size=0.45,moving=true}, -- 69: extreme drop
+	{offset={-8,8,-28},candy="donut",size=0.4,crumbling=true}, -- 70: tiny crumble climb
+	{offset={6,-9,-30},candy="candycorn",size=0.4,moving=true}, -- 71: precision hell
+	{offset={-7,7,-29},candy="chocolate",size=0.45,crumbling=true}, -- 72: crumble zigzag
+	{offset={8,-8,-28},candy="candycane",size=0.4,moving=true}, -- 73: moving precision
+	{offset={-6,6,-30},candy="lollipop",size=0.4,crumbling=true}, -- 74: near impossible
+	{offset={0,0,-26},candy="cupcake",size=1.2,checkpoint=true}, -- 75: FINISH CHECKPOINT
 }
 
 -- ============================================================
