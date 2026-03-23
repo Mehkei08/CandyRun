@@ -1757,13 +1757,15 @@ end
 local function createHallway()
 	hallwayFolder:ClearAllChildren()
 	local minZ, maxZ = 100, 0
-	local testPos = Vector3.new(0, START_HEIGHT, -24)
+	local testPos = Vector3.new(0, START_HEIGHT, -65) -- match generateMap start
 	for _, level in ipairs(LEVELS) do
 		testPos = testPos + Vector3.new(level.offset[1], level.offset[2], level.offset[3])
 		if testPos.Z < minZ then minZ = testPos.Z end
 		if testPos.Z > maxZ then maxZ = testPos.Z end
 	end
-	minZ -= 80; maxZ += 60
+	minZ -= 80
+	-- Cap maxZ so hallway doesn't overlap with the spawn room (room extends to Z=-60)
+	maxZ = math.min(maxZ + 30, -65)
 
 	local totalLen = maxZ - minZ
 	local numSeg = math.ceil(totalLen / WALL_SEGMENT_LENGTH)
