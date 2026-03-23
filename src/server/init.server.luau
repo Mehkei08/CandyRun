@@ -44,32 +44,32 @@ grappleHitEvent.Name = "GrappleHit"; grappleHitEvent.Parent = ReplicatedStorage
 -- LIGHTING
 -- ============================================================
 
-Lighting.ClockTime = 14
-Lighting.Brightness = 2.5
-Lighting.Ambient = Color3.fromRGB(140, 100, 150)
-Lighting.OutdoorAmbient = Color3.fromRGB(180, 140, 190)
-Lighting.FogColor = Color3.fromRGB(255, 210, 235)
-Lighting.FogEnd = 2500; Lighting.FogStart = 500
+Lighting.ClockTime = 21.5  -- evening/dusk
+Lighting.Brightness = 0.8
+Lighting.Ambient = Color3.fromRGB(60, 40, 70)
+Lighting.OutdoorAmbient = Color3.fromRGB(80, 55, 90)
+Lighting.FogColor = Color3.fromRGB(120, 80, 130)
+Lighting.FogEnd = 1800; Lighting.FogStart = 300
 
 local atmo = Instance.new("Atmosphere")
-atmo.Density = 0.2; atmo.Offset = 0.15
-atmo.Color = Color3.fromRGB(255, 210, 235)
-atmo.Decay = Color3.fromRGB(230, 180, 255)
-atmo.Glare = 0.15; atmo.Haze = 2
+atmo.Density = 0.35; atmo.Offset = 0.1
+atmo.Color = Color3.fromRGB(140, 90, 150)
+atmo.Decay = Color3.fromRGB(100, 60, 120)
+atmo.Glare = 0.05; atmo.Haze = 3.5
 atmo.Parent = Lighting
 
 local bloom = Instance.new("BloomEffect")
-bloom.Intensity = 0.45; bloom.Size = 32; bloom.Threshold = 1.2
+bloom.Intensity = 0.6; bloom.Size = 40; bloom.Threshold = 0.8
 bloom.Parent = Lighting
 
 local cc = Instance.new("ColorCorrectionEffect")
-cc.Saturation = 0.35; cc.TintColor = Color3.fromRGB(255, 242, 252)
-cc.Brightness = 0.06; cc.Contrast = 0.12
+cc.Saturation = 0.4; cc.TintColor = Color3.fromRGB(230, 200, 240)
+cc.Brightness = -0.05; cc.Contrast = 0.18
 cc.Parent = Lighting
 
--- Sunrays for that fantasy glow
+-- Subtle sunrays
 local sunrays = Instance.new("SunRaysEffect")
-sunrays.Intensity = 0.08; sunrays.Spread = 0.5
+sunrays.Intensity = 0.04; sunrays.Spread = 0.3
 sunrays.Parent = Lighting
 
 -- ============================================================
@@ -1051,100 +1051,166 @@ local BUILDERS = {
 -- LEVELS (50)
 -- ============================================================
 
+-- extra = {{dx,dy,dz,candy,size}, ...} — additional candy blocks relative to the main one
 local LEVELS = {
 	-- ====== PHASE 1: WARM-UP (1-15) ======
-	-- Large scale, generous spacing, multiple candy types per sequence
-	{offset={0,-1,-24},candy="chocolate",size=1.4},          -- 1: big easy opener
-	{offset={4,0,-22},candy="candycorn",size=1.3},           -- 2: wide right
-	{offset={-6,1,-25},candy="donut",size=1.3},              -- 3: big swing left
-	{offset={3,-1,-20},candy="gummy",size=1.2},              -- 4: forward hop
-	{offset={-5,2,-24},candy="cupcake",size=1.3},            -- 5: climbing left
-	{offset={7,0,-22},candy="lollipop",size=1.2},            -- 6: wide right swing
-	{offset={-4,-2,-25},candy="jawbreaker",size=1.2},        -- 7: descent left
-	{offset={2,1,-20},candy="candycane",size=1.3},           -- 8: easy bridge
-	{offset={-6,0,-24},candy="chocolate",size=1.2},          -- 9: wide left
-	{offset={5,2,-22},candy="gummy",size=1.1},               -- 10: climbing right
-	{offset={-3,-1,-25},candy="lollipop",size=1.2},          -- 11: forward descent
-	{offset={7,1,-20},candy="donut",size=1.1},               -- 12: swing right
-	{offset={-8,0,-24},candy="cupcake",size=1.2},            -- 13: far left
-	{offset={5,2,-22},candy="candycorn",size=1.1},           -- 14: climb right
+	{offset={0,-1,-24},candy="chocolate",size=1.4,
+		extra={{6,0,-8,"candycorn",1.0},{-5,1,-14,"gummy",1.1}}},
+	{offset={4,0,-22},candy="candycorn",size=1.3,
+		extra={{-7,1,-10,"lollipop",1.0},{3,-1,-16,"donut",1.1}}},
+	{offset={-6,1,-25},candy="donut",size=1.3,
+		extra={{5,0,-9,"chocolate",1.0}}},
+	{offset={3,-1,-20},candy="gummy",size=1.2,
+		extra={{-4,1,-11,"cupcake",1.0},{6,0,-18,"candycane",1.1}}},
+	{offset={-5,2,-24},candy="cupcake",size=1.3,
+		extra={{4,-1,-10,"jawbreaker",1.0}}},
+	{offset={7,0,-22},candy="lollipop",size=1.2,
+		extra={{-6,1,-12,"gummy",1.0},{-2,0,-20,"candycorn",1.1}}},
+	{offset={-4,-2,-25},candy="jawbreaker",size=1.2,
+		extra={{5,1,-10,"chocolate",1.0}}},
+	{offset={2,1,-20},candy="candycane",size=1.3,
+		extra={{-5,0,-11,"donut",0.95},{4,1,-18,"lollipop",1.0}}},
+	{offset={-6,0,-24},candy="chocolate",size=1.2,
+		extra={{7,-1,-10,"cupcake",1.0}}},
+	{offset={5,2,-22},candy="gummy",size=1.1,
+		extra={{-6,0,-12,"jawbreaker",1.0},{-2,2,-20,"candycane",1.0}}},
+	{offset={-3,-1,-25},candy="lollipop",size=1.2,
+		extra={{5,1,-9,"candycorn",0.95}}},
+	{offset={7,1,-20},candy="donut",size=1.1,
+		extra={{-5,0,-12,"gummy",1.0},{-8,1,-20,"cupcake",1.0}}},
+	{offset={-8,0,-24},candy="cupcake",size=1.2,
+		extra={{6,-1,-10,"chocolate",1.0}}},
+	{offset={5,2,-22},candy="candycorn",size=1.1,
+		extra={{-4,0,-11,"lollipop",0.95},{-7,2,-18,"jawbreaker",1.0}}},
 	{offset={0,-1,-25},candy="jawbreaker",size=1.3,checkpoint=true}, -- 15: CHECKPOINT
 
 	-- ====== PHASE 2: MIXED PATHS (16-30) ======
-	-- Medium platforms, more height variation, moving/crumbling introduced
-	{offset={-6,3,-26},candy="candycane",size=1.1},          -- 16: bigger gaps
-	{offset={8,-2,-24},candy="lollipop",size=1.0},           -- 17: wide swing
-	{offset={-5,4,-25},candy="gummy",size=0.95},             -- 18: climbing
-	{offset={7,-3,-28},candy="chocolate",size=1.0},          -- 19: drop and leap
-	-- Staircase up 20-22
-	{offset={-3,3,-16},candy="candycorn",size=0.95},         -- 20: stair up 1
-	{offset={-2,4,-15},candy="candycane",size=0.9},          -- 21: stair up 2
-	{offset={0,4,-16},candy="lollipop",size=0.9},            -- 22: stair up 3
-	{offset={4,-6,-28},candy="cupcake",size=0.95,moving=true}, -- 23: first moving!
-	{offset={-7,3,-26},candy="jawbreaker",size=0.9},         -- 24: recovery
-	{offset={8,-4,-25},candy="gummy",size=0.85,crumbling=true}, -- 25: first crumbling!
-	{offset={-6,5,-28},candy="donut",size=0.9,moving=true},  -- 26: moving climb
-	{offset={5,-3,-24},candy="chocolate",size=0.95},         -- 27: stable landing
-	{offset={-8,4,-26},candy="candycane",size=0.9,crumbling=true}, -- 28: crumble left
-	{offset={7,-5,-28},candy="lollipop",size=0.85,moving=true}, -- 29: moving right
+	{offset={-6,3,-26},candy="candycane",size=1.1,
+		extra={{5,-1,-10,"gummy",0.85},{8,1,-18,"lollipop",0.9}}},
+	{offset={8,-2,-24},candy="lollipop",size=1.0,
+		extra={{-6,2,-10,"chocolate",0.85},{-3,0,-17,"candycorn",0.9}}},
+	{offset={-5,4,-25},candy="gummy",size=0.95,
+		extra={{6,-1,-11,"donut",0.85},{3,2,-19,"cupcake",0.9}}},
+	{offset={7,-3,-28},candy="chocolate",size=1.0,
+		extra={{-5,2,-9,"jawbreaker",0.8}}},
+	-- Staircase 20-22
+	{offset={-3,3,-16},candy="candycorn",size=0.95,
+		extra={{-2,3,-10,"candycane",0.85},{0,3,-18,"lollipop",0.85}}},
+	{offset={-2,4,-15},candy="candycane",size=0.9,
+		extra={{4,-1,-9,"gummy",0.8}}},
+	{offset={0,4,-16},candy="lollipop",size=0.9,
+		extra={{-5,-2,-10,"chocolate",0.8},{5,1,-17,"donut",0.85}}},
+	{offset={4,-6,-28},candy="cupcake",size=0.95,moving=true,
+		extra={{-6,3,-10,"jawbreaker",0.8}}},
+	{offset={-7,3,-26},candy="jawbreaker",size=0.9,
+		extra={{6,-2,-11,"candycorn",0.8},{3,1,-18,"gummy",0.85}}},
+	{offset={8,-4,-25},candy="gummy",size=0.85,crumbling=true,
+		extra={{-7,3,-10,"cupcake",0.8}}},
+	{offset={-6,5,-28},candy="donut",size=0.9,moving=true,
+		extra={{5,-2,-11,"lollipop",0.8},{8,0,-18,"candycane",0.85}}},
+	{offset={5,-3,-24},candy="chocolate",size=0.95,
+		extra={{-6,2,-10,"jawbreaker",0.8}}},
+	{offset={-8,4,-26},candy="candycane",size=0.9,crumbling=true,
+		extra={{7,-3,-11,"gummy",0.8},{4,1,-18,"chocolate",0.85}}},
+	{offset={7,-5,-28},candy="lollipop",size=0.85,moving=true,
+		extra={{-6,3,-10,"donut",0.8}}},
 	{offset={0,2,-25},candy="cupcake",size=1.2,checkpoint=true}, -- 30: CHECKPOINT
 
 	-- ====== PHASE 3: GAUNTLET (31-45) ======
-	-- Smaller platforms, combos, zigzags, heavy moving+crumbling
-	{offset={-8,3,-30},candy="jawbreaker",size=0.8,moving=true}, -- 31: gauntlet opens
-	{offset={10,-4,-28},candy="candycorn",size=0.75},        -- 32: huge swing right
-	{offset={-9,5,-30},candy="gummy",size=0.7,crumbling=true}, -- 33: crumble climb
-	{offset={8,-6,-26},candy="chocolate",size=0.75,moving=true}, -- 34: moving drop
+	{offset={-8,3,-30},candy="jawbreaker",size=0.8,moving=true,
+		extra={{6,-2,-10,"candycorn",0.65},{10,1,-18,"gummy",0.7}}},
+	{offset={10,-4,-28},candy="candycorn",size=0.75,
+		extra={{-8,3,-10,"chocolate",0.65},{-5,-1,-17,"lollipop",0.7}}},
+	{offset={-9,5,-30},candy="gummy",size=0.7,crumbling=true,
+		extra={{7,-3,-10,"cupcake",0.6},{4,2,-16,"candycane",0.65}}},
+	{offset={8,-6,-26},candy="chocolate",size=0.75,moving=true,
+		extra={{-7,4,-11,"donut",0.6}}},
 	-- Combo chain 35-38
-	{offset={-4,-5,-14},candy="lollipop",size=0.65},         -- 35: rapid 1
-	{offset={5,6,-13},candy="candycane",size=0.6},           -- 36: rapid 2
-	{offset={-6,-5,-12},candy="donut",size=0.65,crumbling=true}, -- 37: rapid crumble
-	{offset={7,7,-15},candy="cupcake",size=0.6,moving=true}, -- 38: rapid moving
+	{offset={-4,-5,-14},candy="lollipop",size=0.65,
+		extra={{4,3,-8,"jawbreaker",0.55},{-3,-2,-14,"candycorn",0.6}}},
+	{offset={5,6,-13},candy="candycane",size=0.6,
+		extra={{-5,-3,-9,"gummy",0.55},{4,4,-15,"chocolate",0.6}}},
+	{offset={-6,-5,-12},candy="donut",size=0.65,crumbling=true,
+		extra={{6,2,-9,"cupcake",0.55}}},
+	{offset={7,7,-15},candy="cupcake",size=0.6,moving=true,
+		extra={{-6,-4,-10,"lollipop",0.55},{-3,3,-16,"jawbreaker",0.6}}},
 	-- Height rollercoaster 39-42
-	{offset={-8,8,-30},candy="jawbreaker",size=0.7,moving=true}, -- 39: launch up
-	{offset={6,-10,-28},candy="gummy",size=0.65,crumbling=true}, -- 40: plummet
-	{offset={-5,9,-26},candy="candycorn",size=0.7,moving=true}, -- 41: rocket back up
-	{offset={8,-8,-30},candy="chocolate",size=0.65,crumbling=true}, -- 42: drop again
-	-- Zigzag finish
-	{offset={-10,5,-28},candy="lollipop",size=0.7,moving=true}, -- 43: zig left
-	{offset={10,-4,-26},candy="candycane",size=0.65,crumbling=true}, -- 44: zag right
+	{offset={-8,8,-30},candy="jawbreaker",size=0.7,moving=true,
+		extra={{6,-3,-10,"candycane",0.6}}},
+	{offset={6,-10,-28},candy="gummy",size=0.65,crumbling=true,
+		extra={{-5,4,-10,"donut",0.55},{-8,1,-17,"candycorn",0.6}}},
+	{offset={-5,9,-26},candy="candycorn",size=0.7,moving=true,
+		extra={{6,-4,-10,"chocolate",0.55}}},
+	{offset={8,-8,-30},candy="chocolate",size=0.65,crumbling=true,
+		extra={{-7,5,-10,"gummy",0.55},{-3,2,-17,"lollipop",0.6}}},
+	-- Zigzag
+	{offset={-10,5,-28},candy="lollipop",size=0.7,moving=true,
+		extra={{8,-3,-10,"cupcake",0.55}}},
+	{offset={10,-4,-26},candy="candycane",size=0.65,crumbling=true,
+		extra={{-8,4,-10,"jawbreaker",0.55},{-5,-2,-16,"donut",0.6}}},
 	{offset={0,2,-28},candy="donut",size=1.2,checkpoint=true}, -- 45: CHECKPOINT
 
 	-- ====== PHASE 4: EXTREME (46-60) ======
-	-- Small/tiny platforms, almost all moving or crumbling
-	{offset={-8,-4,-30},candy="cupcake",size=0.65,moving=true}, -- 46: extreme begins
-	{offset={10,6,-28},candy="jawbreaker",size=0.6,crumbling=true}, -- 47: crumble swing
-	{offset={-7,-8,-32},candy="gummy",size=0.55,moving=true}, -- 48: trust fall
-	{offset={9,7,-28},candy="candycorn",size=0.6,crumbling=true}, -- 49: tiny crumble
-	{offset={-8,-6,-30},candy="chocolate",size=0.6,moving=true}, -- 50: moving drop
+	{offset={-8,-4,-30},candy="cupcake",size=0.65,moving=true,
+		extra={{6,3,-9,"lollipop",0.5},{10,-1,-16,"jawbreaker",0.55}}},
+	{offset={10,6,-28},candy="jawbreaker",size=0.6,crumbling=true,
+		extra={{-8,-3,-10,"candycorn",0.5}}},
+	{offset={-7,-8,-32},candy="gummy",size=0.55,moving=true,
+		extra={{7,4,-10,"chocolate",0.5},{4,-2,-17,"candycane",0.5}}},
+	{offset={9,7,-28},candy="candycorn",size=0.6,crumbling=true,
+		extra={{-7,-3,-10,"donut",0.5}}},
+	{offset={-8,-6,-30},candy="chocolate",size=0.6,moving=true,
+		extra={{6,4,-9,"cupcake",0.5},{9,-2,-16,"gummy",0.5}}},
 	-- Rapid fire 51-56
-	{offset={5,-5,-13},candy="lollipop",size=0.5,moving=true}, -- 51: rapid 1
-	{offset={-6,6,-12},candy="candycane",size=0.55,crumbling=true}, -- 52: rapid 2
-	{offset={7,-7,-14},candy="donut",size=0.5,moving=true},  -- 53: rapid 3
-	{offset={-5,5,-11},candy="cupcake",size=0.55,crumbling=true}, -- 54: rapid 4
-	{offset={6,-6,-13},candy="jawbreaker",size=0.5,moving=true}, -- 55: rapid 5
-	{offset={-7,7,-15},candy="gummy",size=0.5,crumbling=true}, -- 56: rapid 6
-	{offset={4,-9,-30},candy="candycorn",size=0.55,moving=true}, -- 57: trust fall
-	{offset={-6,8,-28},candy="chocolate",size=0.55,crumbling=true}, -- 58: crumble climb
-	{offset={8,-7,-32},candy="lollipop",size=0.5,moving=true}, -- 59: precision
+	{offset={5,-5,-13},candy="lollipop",size=0.5,moving=true,
+		extra={{-4,3,-8,"jawbreaker",0.4}}},
+	{offset={-6,6,-12},candy="candycane",size=0.55,crumbling=true,
+		extra={{5,-3,-9,"candycorn",0.45},{3,2,-15,"chocolate",0.5}}},
+	{offset={7,-7,-14},candy="donut",size=0.5,moving=true,
+		extra={{-6,4,-8,"gummy",0.4}}},
+	{offset={-5,5,-11},candy="cupcake",size=0.55,crumbling=true,
+		extra={{5,-4,-9,"lollipop",0.45}}},
+	{offset={6,-6,-13},candy="jawbreaker",size=0.5,moving=true,
+		extra={{-5,3,-9,"candycane",0.4},{-3,-2,-15,"donut",0.45}}},
+	{offset={-7,7,-15},candy="gummy",size=0.5,crumbling=true,
+		extra={{6,-4,-8,"cupcake",0.4}}},
+	{offset={4,-9,-30},candy="candycorn",size=0.55,moving=true,
+		extra={{-5,5,-10,"chocolate",0.45},{-8,0,-17,"lollipop",0.5}}},
+	{offset={-6,8,-28},candy="chocolate",size=0.55,crumbling=true,
+		extra={{7,-4,-9,"gummy",0.45}}},
+	{offset={8,-7,-32},candy="lollipop",size=0.5,moving=true,
+		extra={{-6,3,-10,"candycane",0.4},{-9,1,-17,"jawbreaker",0.45}}},
 	{offset={0,2,-26},candy="candycane",size=1.2,checkpoint=true}, -- 60: CHECKPOINT
 
 	-- ====== PHASE 5: NIGHTMARE (61-75) ======
-	-- Tiniest platforms, everything moves or crumbles, maximum challenge
-	{offset={-9,-5,-32},candy="donut",size=0.5,moving=true}, -- 61: nightmare starts
-	{offset={10,7,-30},candy="cupcake",size=0.45,crumbling=true}, -- 62: ultra tiny
-	{offset={-8,-9,-32},candy="jawbreaker",size=0.45,moving=true}, -- 63: trust fall hell
-	{offset={9,8,-28},candy="gummy",size=0.5,crumbling=true}, -- 64: crumble climb
-	{offset={-10,-7,-34},candy="candycorn",size=0.45,moving=true}, -- 65: widest swing
-	{offset={8,6,-30},candy="chocolate",size=0.5,crumbling=true}, -- 66: crumble right
-	{offset={-7,-10,-32},candy="lollipop",size=0.45,moving=true}, -- 67: huge drop
-	{offset={9,9,-28},candy="candycane",size=0.45,crumbling=true}, -- 68: crumble rocket
-	{offset={-10,-8,-34},candy="donut",size=0.4,moving=true}, -- 69: extreme precision
-	{offset={8,7,-30},candy="cupcake",size=0.45,crumbling=true}, -- 70: micro crumble
-	{offset={-9,-10,-32},candy="jawbreaker",size=0.4,moving=true}, -- 71: death drop
-	{offset={10,8,-30},candy="gummy",size=0.4,crumbling=true}, -- 72: impossible crumble
-	{offset={-8,-9,-34},candy="candycorn",size=0.4,moving=true}, -- 73: pixel perfect
-	{offset={9,10,-28},candy="chocolate",size=0.4,crumbling=true}, -- 74: near impossible
+	{offset={-9,-5,-32},candy="donut",size=0.5,moving=true,
+		extra={{7,3,-9,"gummy",0.4},{10,-2,-16,"candycorn",0.4}}},
+	{offset={10,7,-30},candy="cupcake",size=0.45,crumbling=true,
+		extra={{-8,-4,-9,"jawbreaker",0.35},{-5,2,-15,"chocolate",0.4}}},
+	{offset={-8,-9,-32},candy="jawbreaker",size=0.45,moving=true,
+		extra={{7,5,-9,"lollipop",0.35}}},
+	{offset={9,8,-28},candy="gummy",size=0.5,crumbling=true,
+		extra={{-7,-3,-10,"candycane",0.4},{-10,2,-16,"donut",0.4}}},
+	{offset={-10,-7,-34},candy="candycorn",size=0.45,moving=true,
+		extra={{8,4,-9,"cupcake",0.35}}},
+	{offset={8,6,-30},candy="chocolate",size=0.5,crumbling=true,
+		extra={{-6,-3,-10,"lollipop",0.35},{-9,1,-16,"jawbreaker",0.4}}},
+	{offset={-7,-10,-32},candy="lollipop",size=0.45,moving=true,
+		extra={{6,5,-9,"gummy",0.35}}},
+	{offset={9,9,-28},candy="candycane",size=0.45,crumbling=true,
+		extra={{-7,-5,-10,"chocolate",0.35},{-10,3,-16,"candycorn",0.4}}},
+	{offset={-10,-8,-34},candy="donut",size=0.4,moving=true,
+		extra={{8,4,-9,"cupcake",0.3}}},
+	{offset={8,7,-30},candy="cupcake",size=0.45,crumbling=true,
+		extra={{-7,-3,-10,"jawbreaker",0.35},{-10,2,-16,"gummy",0.35}}},
+	{offset={-9,-10,-32},candy="jawbreaker",size=0.4,moving=true,
+		extra={{7,5,-9,"lollipop",0.3}}},
+	{offset={10,8,-30},candy="gummy",size=0.4,crumbling=true,
+		extra={{-8,-4,-9,"candycane",0.3},{-5,2,-15,"chocolate",0.35}}},
+	{offset={-8,-9,-34},candy="candycorn",size=0.4,moving=true,
+		extra={{7,4,-9,"donut",0.3}}},
+	{offset={9,10,-28},candy="chocolate",size=0.4,crumbling=true,
+		extra={{-8,-5,-10,"cupcake",0.3},{-5,3,-16,"lollipop",0.35}}},
 	{offset={0,0,-30},candy="cupcake",size=1.4,checkpoint=true}, -- 75: FINAL CHECKPOINT
 }
 
@@ -2310,6 +2376,18 @@ local function generateMap()
 
 		if level.moving then makeMoving(mdl) end
 		if level.crumbling then makeCrumbling(mdl, walkable) end
+
+		-- Spawn extra candy blocks for this level (multi-block paths)
+		if level.extra then
+			for ei, ex in ipairs(level.extra) do
+				local exPos = currentPos + Vector3.new(ex[1], ex[2], ex[3])
+				local exCandy = ex[4] or "chocolate"
+				local exSize = ex[5] or 0.8
+				local exBuilder = BUILDERS[exCandy] or buildChocolateBar
+				local exWalkable, exMdl = exBuilder(i*100+ei, exPos, exSize)
+				-- Extra blocks don't move/crumble (they're stepping stones)
+			end
+		end
 
 		if level.checkpoint then
 			checkpointPositions[i] = currentPos + Vector3.new(0,5,0)
