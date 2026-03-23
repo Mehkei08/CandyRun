@@ -28,6 +28,18 @@ respawnEvent.Name = "RespawnTimer"; respawnEvent.Parent = ReplicatedStorage
 local timerStartEvent = Instance.new("RemoteEvent")
 timerStartEvent.Name = "TimerStart"; timerStartEvent.Parent = ReplicatedStorage
 
+local grappleShootEvent = Instance.new("RemoteEvent")
+grappleShootEvent.Name = "GrappleShoot"; grappleShootEvent.Parent = ReplicatedStorage
+
+local grappleHitEvent = Instance.new("RemoteEvent")
+grappleHitEvent.Name = "GrappleHit"; grappleHitEvent.Parent = ReplicatedStorage
+
+local grappleShootEvent = Instance.new("RemoteEvent")
+grappleShootEvent.Name = "GrappleShoot"; grappleShootEvent.Parent = ReplicatedStorage
+
+local grappleHitEvent = Instance.new("RemoteEvent")
+grappleHitEvent.Name = "GrappleHit"; grappleHitEvent.Parent = ReplicatedStorage
+
 -- ============================================================
 -- LIGHTING
 -- ============================================================
@@ -1051,6 +1063,10 @@ local function createItemCapsule(position, itemName, itemColor, itemEmoji, displ
 		buildCoilDisplay(model, position, Color3.fromRGB(180, 80, 255), Color3.fromRGB(230, 180, 255))
 	elseif displayType == "carpet" then
 		buildCarpetDisplay(model, position)
+	elseif displayType == "fusion_coil" then
+		buildFusionCoilDisplay(model, position)
+	elseif displayType == "grapple" then
+		buildGrappleDisplay(model, position)
 	end
 
 	-- Slow rotation of display items
@@ -1097,51 +1113,198 @@ local function createItemCapsule(position, itemName, itemColor, itemEmoji, displ
 	return trigger
 end
 
-local function createCircularSpawn()
-	local model = Instance.new("Model"); model.Name = "SpawnPlatform"
+-- Build a grappling gun display model
+local function buildGrappleDisplay(parent, position)
+	local gunModel = Instance.new("Model")
+	gunModel.Name = "GrappleDisplay"; gunModel.Parent = parent
 
-	-- Bigger circular platform
-	local base = Instance.new("Part")
-	base.Name = "SpawnBase"
-	base.Size = Vector3.new(5, 50, 50) -- 50 diameter
-	base.Position = Vector3.new(0, START_HEIGHT, 0)
-	base.Anchored = true; base.Color = Color3.fromRGB(255, 180, 220)
-	base.Material = Enum.Material.SmoothPlastic
-	base.Shape = Enum.PartType.Cylinder
-	base.Orientation = Vector3.new(0,0,90)
-	base.TopSurface = Enum.SurfaceType.Smooth
-	base.BottomSurface = Enum.SurfaceType.Smooth
-	base.Parent = model
+	-- Barrel
+	local barrel = Instance.new("Part")
+	barrel.Size = Vector3.new(1.2, 1.2, 4)
+	barrel.Position = position + Vector3.new(0, 0, 1)
+	barrel.Anchored = true; barrel.CanCollide = false
+	barrel.Color = Color3.fromRGB(80, 80, 90)
+	barrel.Material = Enum.Material.Metal; barrel.Parent = gunModel
 
-	-- Frosting
-	local frost = Instance.new("Part")
-	frost.Size = Vector3.new(2.5, 48, 48)
-	frost.Position = Vector3.new(0, START_HEIGHT+3, 0)
-	frost.Anchored = true; frost.Color = Color3.fromRGB(255, 225, 242)
-	frost.Material = Enum.Material.SmoothPlastic
-	frost.Shape = Enum.PartType.Cylinder
-	frost.Orientation = Vector3.new(0,0,90)
-	frost.CanCollide = true; frost.Parent = model
+	-- Barrel tip (neon)
+	local tip = Instance.new("Part")
+	tip.Size = Vector3.new(1.4, 1.4, 0.5)
+	tip.Position = position + Vector3.new(0, 0, 3.2)
+	tip.Anchored = true; tip.CanCollide = false
+	tip.Color = Color3.fromRGB(255, 80, 80)
+	tip.Material = Enum.Material.Neon; tip.Parent = gunModel
 
-	-- Neon ring
-	local nring = Instance.new("Part")
-	nring.Size = Vector3.new(2, 54, 54)
-	nring.Position = Vector3.new(0, START_HEIGHT-1, 0)
-	nring.Anchored = true; nring.Color = Color3.fromRGB(200,130,255)
-	nring.Material = Enum.Material.Neon
-	nring.Shape = Enum.PartType.Cylinder
-	nring.Orientation = Vector3.new(0,0,90)
-	nring.Transparency = 0.35; nring.CanCollide = false
-	nring.Parent = model
+	-- Handle/grip
+	local grip = Instance.new("Part")
+	grip.Size = Vector3.new(0.8, 2, 0.8)
+	grip.Position = position + Vector3.new(0, -1.2, 0)
+	grip.Anchored = true; grip.CanCollide = false
+	grip.Color = Color3.fromRGB(60, 60, 65)
+	grip.Material = Enum.Material.SmoothPlastic; grip.Parent = gunModel
 
-	-- Sprinkles
+	-- Hook decoration
+	local hook = Instance.new("Part")
+	hook.Size = Vector3.new(0.6, 0.6, 0.6)
+	hook.Position = position + Vector3.new(0, 0, 3.8)
+	hook.Anchored = true; hook.CanCollide = false
+	hook.Color = Color3.fromRGB(255, 200, 50)
+	hook.Material = Enum.Material.Neon
+	hook.Shape = Enum.PartType.Ball; hook.Parent = gunModel
+
+	-- Glow
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 100, 100)
+	light.Brightness = 1.2; light.Range = 12
+	light.Parent = barrel
+
+	return gunModel
+end
+
+-- Build a fusion coil display (alternating blue + purple)
+local function buildFusionCoilDisplay(parent, position)
+	buildCoilDisplay(parent, position, Color3.fromRGB(80, 200, 255), Color3.fromRGB(180, 80, 255))
+end
+
+local function createSpawnRoom()
+	local model = Instance.new("Model"); model.Name = "SpawnRoom"
+
+	-- Room dimensions
+	local ROOM_W = 200  -- X width
+	local ROOM_D = 120  -- Z depth
+	local ROOM_H = 80   -- Y height
+	local floorY = START_HEIGHT
+
+	-- ============================================================
+	-- FLOOR (candy tile checkerboard)
+	-- ============================================================
+	local tileSize = 10
+	for tx = 0, math.ceil(ROOM_W/tileSize)-1 do
+		for tz = 0, math.ceil(ROOM_D/tileSize)-1 do
+			local tile = Instance.new("Part")
+			tile.Size = Vector3.new(tileSize, 3, tileSize)
+			tile.Position = Vector3.new(
+				-ROOM_W/2 + tx*tileSize + tileSize/2,
+				floorY,
+				-ROOM_D/2 + tz*tileSize + tileSize/2
+			)
+			tile.Anchored = true
+			tile.Color = if (tx+tz)%2==0 then Color3.fromRGB(255,180,210) else Color3.fromRGB(255,235,245)
+			tile.Material = Enum.Material.SmoothPlastic
+			tile.TopSurface = Enum.SurfaceType.Smooth
+			tile.BottomSurface = Enum.SurfaceType.Smooth
+			tile.Parent = model
+		end
+	end
+
+	-- ============================================================
+	-- WALLS (opaque, candy-colored, decorated)
+	-- ============================================================
+	local wallThickness = 5
+	local wallColors = {
+		Color3.fromRGB(255,160,200), Color3.fromRGB(220,150,255),
+		Color3.fromRGB(180,210,255), Color3.fromRGB(255,210,170),
+	}
+
+	-- Back wall (+Z)
+	local backWall = Instance.new("Part")
+	backWall.Size = Vector3.new(ROOM_W+wallThickness*2, ROOM_H, wallThickness)
+	backWall.Position = Vector3.new(0, floorY+ROOM_H/2, ROOM_D/2+wallThickness/2)
+	backWall.Anchored = true; backWall.Color = wallColors[1]
+	backWall.Material = Enum.Material.SmoothPlastic; backWall.Parent = model
+
+	-- Left wall (-X)
+	local leftWall = Instance.new("Part")
+	leftWall.Size = Vector3.new(wallThickness, ROOM_H, ROOM_D+wallThickness*2)
+	leftWall.Position = Vector3.new(-ROOM_W/2-wallThickness/2, floorY+ROOM_H/2, 0)
+	leftWall.Anchored = true; leftWall.Color = wallColors[2]
+	leftWall.Material = Enum.Material.SmoothPlastic; leftWall.Parent = model
+
+	-- Right wall (+X)
+	local rightWall = Instance.new("Part")
+	rightWall.Size = Vector3.new(wallThickness, ROOM_H, ROOM_D+wallThickness*2)
+	rightWall.Position = Vector3.new(ROOM_W/2+wallThickness/2, floorY+ROOM_H/2, 0)
+	rightWall.Anchored = true; rightWall.Color = wallColors[3]
+	rightWall.Material = Enum.Material.SmoothPlastic; rightWall.Parent = model
+
+	-- Front wall (-Z) with opening for the course
+	local doorW = 30
+	local frontWallL = Instance.new("Part")
+	frontWallL.Size = Vector3.new((ROOM_W-doorW)/2+wallThickness, ROOM_H, wallThickness)
+	frontWallL.Position = Vector3.new(-(doorW/2 + frontWallL.Size.X/2) + wallThickness/2, floorY+ROOM_H/2, -ROOM_D/2-wallThickness/2)
+	frontWallL.Anchored = true; frontWallL.Color = wallColors[4]
+	frontWallL.Material = Enum.Material.SmoothPlastic; frontWallL.Parent = model
+
+	local frontWallR = Instance.new("Part")
+	frontWallR.Size = Vector3.new((ROOM_W-doorW)/2+wallThickness, ROOM_H, wallThickness)
+	frontWallR.Position = Vector3.new((doorW/2 + frontWallR.Size.X/2) - wallThickness/2, floorY+ROOM_H/2, -ROOM_D/2-wallThickness/2)
+	frontWallR.Anchored = true; frontWallR.Color = wallColors[4]
+	frontWallR.Material = Enum.Material.SmoothPlastic; frontWallR.Parent = model
+
+	-- Door arch
+	local archTop = Instance.new("Part")
+	archTop.Size = Vector3.new(doorW+4, 8, wallThickness+2)
+	archTop.Position = Vector3.new(0, floorY+ROOM_H-4, -ROOM_D/2-wallThickness/2)
+	archTop.Anchored = true; archTop.Color = Color3.fromRGB(255,100,150)
+	archTop.Material = Enum.Material.Neon; archTop.Transparency = 0.2
+	archTop.CanCollide = false; archTop.Parent = model
+
+	-- ============================================================
+	-- CEILING (candy checkerboard)
+	-- ============================================================
+	local ceilY = floorY + ROOM_H
+	for tx = 0, math.ceil(ROOM_W/tileSize)-1 do
+		for tz = 0, math.ceil(ROOM_D/tileSize)-1 do
+			local ct = Instance.new("Part")
+			ct.Size = Vector3.new(tileSize, 2, tileSize)
+			ct.Position = Vector3.new(
+				-ROOM_W/2 + tx*tileSize + tileSize/2,
+				ceilY,
+				-ROOM_D/2 + tz*tileSize + tileSize/2
+			)
+			ct.Anchored = true
+			ct.Color = if (tx+tz)%2==0 then Color3.fromRGB(220,170,255) else Color3.fromRGB(255,255,255)
+			ct.Material = Enum.Material.SmoothPlastic
+			ct.TopSurface = Enum.SurfaceType.Smooth
+			ct.BottomSurface = Enum.SurfaceType.Smooth
+			ct.Parent = model
+		end
+	end
+
+	-- ============================================================
+	-- WALL DECORATIONS (candy cane pillars along walls, stripes)
+	-- ============================================================
+	for i = 1, 10 do
+		for _, side in ipairs({-1, 1}) do
+			local px = side * (ROOM_W/2 - 3)
+			local pz = -ROOM_D/2 + i * (ROOM_D / 11)
+			local pillar = Instance.new("Part")
+			pillar.Size = Vector3.new(3, ROOM_H-5, 3)
+			pillar.Position = Vector3.new(px, floorY+ROOM_H/2, pz)
+			pillar.Anchored = true; pillar.Color = Color3.fromRGB(255,30,30)
+			pillar.Material = Enum.Material.SmoothPlastic; pillar.Parent = model
+
+			local pStripe = Instance.new("Part")
+			pStripe.Size = Vector3.new(2.5, ROOM_H-4, 2.5)
+			pStripe.Position = Vector3.new(px, floorY+ROOM_H/2, pz)
+			pStripe.Anchored = true; pStripe.Color = Color3.fromRGB(255,255,255)
+			pStripe.Transparency = 0.35; pStripe.CanCollide = false
+			pStripe.Material = Enum.Material.SmoothPlastic; pStripe.Parent = model
+
+			local topBall = Instance.new("Part")
+			topBall.Size = Vector3.new(4,4,4)
+			topBall.Position = Vector3.new(px, floorY+ROOM_H-3, pz)
+			topBall.Anchored = true; topBall.Color = Color3.fromRGB(255,30,30)
+			topBall.Shape = Enum.PartType.Ball; topBall.Material = Enum.Material.SmoothPlastic
+			topBall.CanCollide = false; topBall.Parent = model
+		end
+	end
+
+	-- Sprinkles scattered on floor
 	local sprColors = {Color3.fromRGB(255,80,80),Color3.fromRGB(80,255,80),Color3.fromRGB(80,80,255),Color3.fromRGB(255,255,80),Color3.fromRGB(255,80,255)}
-	for i = 1, 36 do
-		local angle = (i/36)*math.pi*2
-		local radius = math.random(4, 20)
+	for i = 1, 80 do
 		local spr = Instance.new("Part")
-		spr.Size = Vector3.new(0.4,0.4,1.4)
-		spr.Position = Vector3.new(math.cos(angle)*radius, START_HEIGHT+4.5, math.sin(angle)*radius)
+		spr.Size = Vector3.new(0.5,0.5,1.6)
+		spr.Position = Vector3.new(math.random(-85,85), floorY+2, math.random(-50,50))
 		spr.Rotation = Vector3.new(0, math.random(0,360), 0)
 		spr.Anchored = true; spr.CanCollide = false
 		spr.Color = sprColors[math.random(1,#sprColors)]
@@ -1149,72 +1312,111 @@ local function createCircularSpawn()
 		spr.Parent = model
 	end
 
-	-- Candy cane pillars (8 around bigger perimeter)
-	for i = 1, 8 do
-		local angle = (i/8)*math.pi*2
-		local px, pz = math.cos(angle)*22, math.sin(angle)*22
-		local pillar = Instance.new("Part")
-		pillar.Size = Vector3.new(2.5, 22, 2.5)
-		pillar.Position = Vector3.new(px, START_HEIGHT+13, pz)
-		pillar.Anchored = true; pillar.Color = Color3.fromRGB(255,30,30)
-		pillar.Material = Enum.Material.SmoothPlastic; pillar.Parent = model
+	-- Neon accent strip along floor edges
+	for _, side in ipairs({-1, 1}) do
+		local strip = Instance.new("Part")
+		strip.Size = Vector3.new(ROOM_W, 0.5, 1)
+		strip.Position = Vector3.new(0, floorY+1.8, side*ROOM_D/2)
+		strip.Anchored = true; strip.Color = Color3.fromRGB(200,130,255)
+		strip.Material = Enum.Material.Neon; strip.Transparency = 0.3
+		strip.CanCollide = false; strip.Parent = model
 
-		local pS = Instance.new("Part")
-		pS.Size = Vector3.new(2, 22.5, 2)
-		pS.Position = Vector3.new(px, START_HEIGHT+13, pz)
-		pS.Anchored = true; pS.Color = Color3.fromRGB(255,255,255)
-		pS.Transparency = 0.35; pS.CanCollide = false
-		pS.Material = Enum.Material.SmoothPlastic; pS.Parent = model
-
-		local ball = Instance.new("Part")
-		ball.Size = Vector3.new(3.5,3.5,3.5)
-		ball.Position = Vector3.new(px, START_HEIGHT+25, pz)
-		ball.Anchored = true; ball.Color = Color3.fromRGB(255,30,30)
-		ball.Shape = Enum.PartType.Ball; ball.Material = Enum.Material.SmoothPlastic
-		ball.CanCollide = false; ball.Parent = model
+		local strip2 = Instance.new("Part")
+		strip2.Size = Vector3.new(1, 0.5, ROOM_D)
+		strip2.Position = Vector3.new(side*ROOM_W/2, floorY+1.8, 0)
+		strip2.Anchored = true; strip2.Color = Color3.fromRGB(200,130,255)
+		strip2.Material = Enum.Material.Neon; strip2.Transparency = 0.3
+		strip2.CanCollide = false; strip2.Parent = model
 	end
 
-	-- Sign
+	-- ============================================================
+	-- SIGN (above door)
+	-- ============================================================
 	local sign = Instance.new("Part")
-	sign.Size = Vector3.new(20, 5, 1.5)
-	sign.Position = Vector3.new(0, START_HEIGHT+22, -23)
+	sign.Size = Vector3.new(30, 7, 2)
+	sign.Position = Vector3.new(0, floorY+ROOM_H-10, -ROOM_D/2)
 	sign.Anchored = true; sign.Color = Color3.fromRGB(255,100,150)
 	sign.Material = Enum.Material.Neon; sign.Parent = model
-	local sGui = Instance.new("SurfaceGui"); sGui.Face = Enum.NormalId.Front; sGui.Parent = sign
+	local sGui = Instance.new("SurfaceGui"); sGui.Face = Enum.NormalId.Back; sGui.Parent = sign
 	local sT = Instance.new("TextLabel")
 	sT.Size = UDim2.fromScale(1,1); sT.BackgroundTransparency = 1
 	sT.Text = "🍬 CANDY RUN 🍬"; sT.TextColor3 = Color3.fromRGB(255,255,255)
 	sT.TextScaled = true; sT.Font = Enum.Font.FredokaOne; sT.Parent = sGui
 
+	-- Also on front side
+	local sGui2 = Instance.new("SurfaceGui"); sGui2.Face = Enum.NormalId.Front; sGui2.Parent = sign
+	local sT2 = Instance.new("TextLabel")
+	sT2.Size = UDim2.fromScale(1,1); sT2.BackgroundTransparency = 1
+	sT2.Text = "🍬 CANDY RUN 🍬"; sT2.TextColor3 = Color3.fromRGB(255,255,255)
+	sT2.TextScaled = true; sT2.Font = Enum.Font.FredokaOne; sT2.Parent = sGui2
+
+	-- Ceiling lights (row down center of room)
+	for i = 1, 8 do
+		local lz = -ROOM_D/2 + i * (ROOM_D / 9)
+		local rod = Instance.new("Part")
+		rod.Size = Vector3.new(0.5, 8, 0.5)
+		rod.Position = Vector3.new(0, ceilY-4, lz)
+		rod.Anchored = true; rod.Color = Color3.fromRGB(240,230,200)
+		rod.Material = Enum.Material.SmoothPlastic; rod.CanCollide = false
+		rod.Parent = model
+
+		local lamp = Instance.new("Part")
+		lamp.Size = Vector3.new(3, 8, 8)
+		lamp.Position = Vector3.new(0, ceilY-10, lz)
+		lamp.Anchored = true; lamp.Color = Color3.fromRGB(255,200,230)
+		lamp.Material = Enum.Material.Neon; lamp.Shape = Enum.PartType.Cylinder
+		lamp.Orientation = Vector3.new(0,0,90)
+		lamp.CanCollide = false; lamp.Transparency = 0.1
+		lamp.Parent = model
+
+		local pl = Instance.new("PointLight")
+		pl.Color = Color3.fromRGB(255,220,240); pl.Brightness = 1.5; pl.Range = 40
+		pl.Parent = lamp
+	end
+
 	model.Parent = mapFolder
 
-	-- Spawn location
+	-- ============================================================
+	-- SPAWN LOCATION
+	-- ============================================================
 	local spawn = Instance.new("SpawnLocation")
-	spawn.Name = "MainSpawn"; spawn.Size = Vector3.new(10,1,10)
-	spawn.Position = Vector3.new(0, START_HEIGHT+5, 0)
+	spawn.Name = "MainSpawn"; spawn.Size = Vector3.new(12,1,12)
+	spawn.Position = Vector3.new(0, floorY+3, 20)
 	spawn.Anchored = true; spawn.Transparency = 1
 	spawn.CanCollide = false; spawn.Neutral = true
 	spawn.Parent = mapFolder
 
-	checkpointPositions[0] = Vector3.new(0, START_HEIGHT+7, 0)
+	checkpointPositions[0] = Vector3.new(0, floorY+5, 20)
 
 	-- ============================================================
-	-- ITEM CAPSULES (arranged in a row behind spawn)
+	-- ITEM CAPSULES (5 items, arranged in an arc)
 	-- ============================================================
+	local capsuleZ = 35  -- behind spawn
+	local capsuleSpacing = 22
 
 	local speedTrigger = createItemCapsule(
-		Vector3.new(-14, START_HEIGHT + 8, 12),
+		Vector3.new(-capsuleSpacing*2, floorY + 10, capsuleZ),
 		"Speed Coil", Color3.fromRGB(80, 200, 255), "⚡", "speed_coil"
 	)
 
 	local gravityTrigger = createItemCapsule(
-		Vector3.new(0, START_HEIGHT + 8, 12),
+		Vector3.new(-capsuleSpacing, floorY + 10, capsuleZ),
 		"Gravity Coil", Color3.fromRGB(180, 80, 255), "🌀", "gravity_coil"
 	)
 
+	local fusionTrigger = createItemCapsule(
+		Vector3.new(0, floorY + 10, capsuleZ),
+		"Fusion Coil", Color3.fromRGB(130, 140, 255), "💫", "fusion_coil"
+	)
+
 	local carpetTrigger = createItemCapsule(
-		Vector3.new(14, START_HEIGHT + 8, 12),
+		Vector3.new(capsuleSpacing, floorY + 10, capsuleZ),
 		"Magic Carpet", Color3.fromRGB(255, 180, 50), "🧞", "carpet"
+	)
+
+	local grappleTrigger = createItemCapsule(
+		Vector3.new(capsuleSpacing*2, floorY + 10, capsuleZ),
+		"Grapple Gun", Color3.fromRGB(255, 80, 80), "🪝", "grapple"
 	)
 
 	-- Build a coil-shaped tool handle
@@ -1429,6 +1631,69 @@ local function createCircularSpawn()
 					if bv then bv:Destroy() end
 				end
 			end)
+
+		elseif itemName == "Fusion Coil" then
+			makeCoilHandle(tool, Color3.fromRGB(80, 200, 255), Color3.fromRGB(180, 80, 255))
+			-- Fusion: speed + gravity combined
+			tool.Equipped:Connect(function()
+				if hum then hum.WalkSpeed = hum.WalkSpeed + 25 end
+				local rootPart = char:FindFirstChild("HumanoidRootPart")
+				if rootPart then
+					local bf = Instance.new("BodyForce")
+					bf.Name = "FusionGravityReducer"
+					local mass = 0
+					for _, part in char:GetDescendants() do
+						if part:IsA("BasePart") then mass += part:GetMass() end
+					end
+					bf.Force = Vector3.new(0, mass * workspace.Gravity * 0.5, 0)
+					bf.Parent = rootPart
+				end
+			end)
+			tool.Unequipped:Connect(function()
+				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 25, 28) end
+				local rootPart = char:FindFirstChild("HumanoidRootPart")
+				if rootPart then
+					local bf = rootPart:FindFirstChild("FusionGravityReducer")
+					if bf then bf:Destroy() end
+				end
+			end)
+
+		elseif itemName == "Grapple Gun" then
+			-- Gun-shaped handle
+			local handle = Instance.new("Part")
+			handle.Name = "Handle"
+			handle.Size = Vector3.new(0.6, 1.2, 2.5)
+			handle.Color = Color3.fromRGB(80, 80, 90)
+			handle.Material = Enum.Material.Metal
+			handle.Parent = tool
+
+			-- Barrel tip
+			local tipPart = Instance.new("Part")
+			tipPart.Name = "BarrelTip"
+			tipPart.Size = Vector3.new(0.7, 0.7, 0.3)
+			tipPart.Color = Color3.fromRGB(255, 80, 80)
+			tipPart.Material = Enum.Material.Neon
+			tipPart.CanCollide = false; tipPart.Parent = tool
+			local tw = Instance.new("Weld")
+			tw.Part0 = handle; tw.Part1 = tipPart
+			tw.C0 = CFrame.new(0, 0, -1.4); tw.Parent = tipPart
+
+			-- Grip
+			local gripPart = Instance.new("Part")
+			gripPart.Name = "Grip"
+			gripPart.Size = Vector3.new(0.5, 1.2, 0.5)
+			gripPart.Color = Color3.fromRGB(60, 60, 65)
+			gripPart.Material = Enum.Material.SmoothPlastic
+			gripPart.CanCollide = false; gripPart.Parent = tool
+			local gw = Instance.new("Weld")
+			gw.Part0 = handle; gw.Part1 = gripPart
+			gw.C0 = CFrame.new(0, -1, 0.3); gw.Parent = gripPart
+
+			tool.CanBeDropped = false
+			tool.RequiresHandle = true
+
+			-- Grapple activation: client fires GrappleShoot, server creates projectile
+			-- (client-side script handles the actual input)
 		end
 
 		tool.Parent = player.Backpack
@@ -1455,12 +1720,30 @@ local function createCircularSpawn()
 		end
 	end)
 
+	fusionTrigger.Touched:Connect(function(hit)
+		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
+		if plr and not debounces[plr.UserId.."fusion"] then
+			debounces[plr.UserId.."fusion"] = true
+			giveItem(plr, "Fusion Coil")
+			task.delay(2, function() debounces[plr.UserId.."fusion"] = nil end)
+		end
+	end)
+
 	carpetTrigger.Touched:Connect(function(hit)
 		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
 		if plr and not debounces[plr.UserId.."carpet"] then
 			debounces[plr.UserId.."carpet"] = true
 			giveItem(plr, "Magic Carpet")
 			task.delay(2, function() debounces[plr.UserId.."carpet"] = nil end)
+		end
+	end)
+
+	grappleTrigger.Touched:Connect(function(hit)
+		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
+		if plr and not debounces[plr.UserId.."grapple"] then
+			debounces[plr.UserId.."grapple"] = true
+			giveItem(plr, "Grapple Gun")
+			task.delay(2, function() debounces[plr.UserId.."grapple"] = nil end)
 		end
 	end)
 end
@@ -1539,24 +1822,26 @@ local function createHallway()
 			tile.Parent = hallwayFolder
 		end
 
-		-- Hanging candy from ceiling
-		if seg % 2 == 0 then
-			local ls = Instance.new("Part")
-			ls.Size = Vector3.new(0.6,10,0.6)
-			ls.Position = Vector3.new(math.random(-25,25), ceilY-6, segZ-WALL_SEGMENT_LENGTH/2)
-			ls.Anchored = true; ls.Color = Color3.fromRGB(240,230,200)
-			ls.Material = Enum.Material.SmoothPlastic; ls.CanCollide = false
-			ls.Parent = hallwayFolder
+		-- Centered ceiling lights (straight line down the middle)
+		local ls = Instance.new("Part")
+		ls.Size = Vector3.new(0.8,12,0.8)
+		ls.Position = Vector3.new(0, ceilY-6, segZ-WALL_SEGMENT_LENGTH/2)
+		ls.Anchored = true; ls.Color = Color3.fromRGB(240,230,200)
+		ls.Material = Enum.Material.SmoothPlastic; ls.CanCollide = false
+		ls.Parent = hallwayFolder
 
-			local lt = Instance.new("Part")
-			lt.Size = Vector3.new(2, 6, 6)
-			lt.Position = ls.Position + Vector3.new(0,-6,0)
-			lt.Anchored = true; lt.Color = wallColors[math.random(1,#wallColors)]
-			lt.Material = Enum.Material.Neon; lt.Shape = Enum.PartType.Cylinder
-			lt.Orientation = Vector3.new(0,0,90)
-			lt.CanCollide = false; lt.Transparency = 0.15
-			lt.Parent = hallwayFolder
-		end
+		local lt = Instance.new("Part")
+		lt.Size = Vector3.new(3, 8, 8)
+		lt.Position = Vector3.new(0, ceilY-14, segZ-WALL_SEGMENT_LENGTH/2)
+		lt.Anchored = true; lt.Color = wallColors[(seg % #wallColors) + 1]
+		lt.Material = Enum.Material.Neon; lt.Shape = Enum.PartType.Cylinder
+		lt.Orientation = Vector3.new(0,0,90)
+		lt.CanCollide = false; lt.Transparency = 0.1
+		lt.Parent = hallwayFolder
+
+		local pl = Instance.new("PointLight")
+		pl.Color = Color3.fromRGB(255,220,240); pl.Brightness = 2; pl.Range = 50
+		pl.Parent = lt
 
 		-- Wall candy canes
 		if seg % 3 == 0 then
@@ -1634,9 +1919,9 @@ end
 
 local function generateMap()
 	mapFolder:ClearAllChildren(); collectiblesFolder:ClearAllChildren()
-	checkpointPositions = {}; createCircularSpawn()
+	checkpointPositions = {}; createSpawnRoom()
 
-	local currentPos = Vector3.new(0, START_HEIGHT, -28)
+	local currentPos = Vector3.new(0, START_HEIGHT, -65) -- further out since spawn room is bigger
 	local maxX = HALLWAY_WIDTH/2 - 12
 
 	for i, level in ipairs(LEVELS) do
@@ -1696,8 +1981,157 @@ local function generateMap()
 		if i % 3 == 0 then createCollectible(currentPos, i) end
 	end
 
-	-- Finish
-	local fp = currentPos + Vector3.new(0,0,-30)
+	-- ============================================================
+	-- FINAL HALLWAY RUN (disappearing tiles before finish)
+	-- ============================================================
+	local hallwayStart = currentPos + Vector3.new(0, 0, -20)
+	local FINAL_W = 20     -- narrow corridor width
+	local FINAL_H = 40     -- corridor height
+	local FINAL_LEN = 300  -- corridor length
+	local TILE_SIZE = 6    -- tile dimensions
+	local TILES_X = math.floor(FINAL_W / TILE_SIZE)
+	local TILES_Z = math.floor(FINAL_LEN / TILE_SIZE)
+
+	-- Corridor walls
+	local fhWallColors = {Color3.fromRGB(255,120,160), Color3.fromRGB(200,100,255)}
+	for _, side in ipairs({-1, 1}) do
+		local wall = Instance.new("Part")
+		wall.Size = Vector3.new(4, FINAL_H, FINAL_LEN)
+		wall.Position = hallwayStart + Vector3.new(side*(FINAL_W/2+2), FINAL_H/2, -FINAL_LEN/2)
+		wall.Anchored = true; wall.Color = fhWallColors[if side==-1 then 1 else 2]
+		wall.Material = Enum.Material.SmoothPlastic; wall.Parent = mapFolder
+
+		-- Candy stripes on walls
+		for s = 1, 8 do
+			local stripe = Instance.new("Part")
+			stripe.Size = Vector3.new(1.5, 4, FINAL_LEN)
+			stripe.Position = hallwayStart + Vector3.new(side*(FINAL_W/2), s*5, -FINAL_LEN/2)
+			stripe.Anchored = true; stripe.Color = Color3.fromRGB(255,255,255)
+			stripe.Material = Enum.Material.SmoothPlastic
+			stripe.Transparency = 0.3; stripe.CanCollide = false
+			stripe.Parent = mapFolder
+		end
+	end
+
+	-- Corridor ceiling
+	local fhCeil = Instance.new("Part")
+	fhCeil.Size = Vector3.new(FINAL_W+8, 3, FINAL_LEN)
+	fhCeil.Position = hallwayStart + Vector3.new(0, FINAL_H, -FINAL_LEN/2)
+	fhCeil.Anchored = true; fhCeil.Color = Color3.fromRGB(220,170,255)
+	fhCeil.Material = Enum.Material.SmoothPlastic; fhCeil.Parent = mapFolder
+
+	-- Ceiling lights down center of final hallway
+	for lIdx = 1, math.floor(FINAL_LEN / 20) do
+		local lz = hallwayStart.Z - lIdx * 20
+		local rod = Instance.new("Part")
+		rod.Size = Vector3.new(0.6, 8, 0.6)
+		rod.Position = Vector3.new(hallwayStart.X, hallwayStart.Y + FINAL_H - 4, lz)
+		rod.Anchored = true; rod.Color = Color3.fromRGB(240,230,200)
+		rod.Material = Enum.Material.SmoothPlastic; rod.CanCollide = false
+		rod.Parent = mapFolder
+
+		local lamp = Instance.new("Part")
+		lamp.Size = Vector3.new(2.5, 6, 6)
+		lamp.Position = Vector3.new(hallwayStart.X, hallwayStart.Y + FINAL_H - 10, lz)
+		lamp.Anchored = true; lamp.Color = Color3.fromRGB(255,80,80)
+		lamp.Material = Enum.Material.Neon; lamp.Shape = Enum.PartType.Cylinder
+		lamp.Orientation = Vector3.new(0,0,90)
+		lamp.CanCollide = false; lamp.Transparency = 0.1
+		lamp.Parent = mapFolder
+
+		local pl = Instance.new("PointLight")
+		pl.Color = Color3.fromRGB(255,150,150); pl.Brightness = 2; pl.Range = 35
+		pl.Parent = lamp
+	end
+
+	-- "FINAL RUN" sign at entrance
+	local frSign = Instance.new("Part")
+	frSign.Size = Vector3.new(FINAL_W, 5, 1.5)
+	frSign.Position = hallwayStart + Vector3.new(0, FINAL_H-5, 2)
+	frSign.Anchored = true; frSign.Color = Color3.fromRGB(255,50,50)
+	frSign.Material = Enum.Material.Neon; frSign.Parent = mapFolder
+	local frGui = Instance.new("SurfaceGui"); frGui.Face = Enum.NormalId.Back; frGui.Parent = frSign
+	local frLbl = Instance.new("TextLabel"); frLbl.Size = UDim2.fromScale(1,1); frLbl.BackgroundTransparency = 1
+	frLbl.Text = "⚡ FINAL RUN ⚡"; frLbl.TextColor3 = Color3.fromRGB(255,255,255)
+	frLbl.TextScaled = true; frLbl.Font = Enum.Font.FredokaOne; frLbl.Parent = frGui
+
+	-- DISAPPEARING TILES
+	local tileColors = {
+		Color3.fromRGB(255,180,210), Color3.fromRGB(200,160,255),
+		Color3.fromRGB(160,210,255), Color3.fromRGB(255,210,160),
+	}
+
+	for tz = 0, TILES_Z - 1 do
+		for tx = 0, TILES_X - 1 do
+			local tile = Instance.new("Part")
+			tile.Name = "DisappearTile"
+			tile.Size = Vector3.new(TILE_SIZE - 0.3, 1.5, TILE_SIZE - 0.3)
+			tile.Position = hallwayStart + Vector3.new(
+				-FINAL_W/2 + tx*TILE_SIZE + TILE_SIZE/2,
+				-0.5,
+				-(tz*TILE_SIZE + TILE_SIZE/2)
+			)
+			tile.Anchored = true
+			tile.Color = tileColors[((tx+tz) % #tileColors) + 1]
+			tile.Material = Enum.Material.SmoothPlastic
+			tile.TopSurface = Enum.SurfaceType.Smooth
+			tile.BottomSurface = Enum.SurfaceType.Smooth
+			tile.Parent = mapFolder
+
+			-- Disappear logic
+			local tileActive = true
+			local tileFading = false
+			tile.Touched:Connect(function(hit)
+				if tileFading or not tileActive then return end
+				local ch = hit.Parent; local hum = ch and ch:FindFirstChild("Humanoid")
+				if not hum then return end
+				tileFading = true
+
+				-- Warning flash (turns red)
+				task.wait(0.5)
+				TweenService:Create(tile, TweenInfo.new(0.3), {
+					Color = Color3.fromRGB(255, 50, 50),
+				}):Play()
+
+				-- Crack particles
+				local crack = Instance.new("ParticleEmitter")
+				crack.Color = ColorSequence.new(Color3.fromRGB(255,100,100))
+				crack.Size = NumberSequence.new({NumberSequenceKeypoint.new(0,0.8),NumberSequenceKeypoint.new(1,0)})
+				crack.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.3),NumberSequenceKeypoint.new(1,1)})
+				crack.Lifetime = NumberRange.new(0.3,0.6); crack.Rate = 40
+				crack.Speed = NumberRange.new(2,6); crack.SpreadAngle = Vector2.new(60,60)
+				crack.Parent = tile
+
+				-- Fade out
+				task.wait(0.7)
+				crack:Destroy()
+				tileActive = false
+				tile.CanCollide = false
+				TweenService:Create(tile, TweenInfo.new(0.3), {Transparency = 1}):Play()
+
+				-- Respawn after 4 seconds
+				task.wait(4)
+				tile.Color = tileColors[((tx+tz) % #tileColors) + 1]
+				tile.Transparency = 0
+				tile.CanCollide = true
+				tileActive = true
+				tileFading = false
+			end)
+		end
+	end
+
+	-- Collectibles floating in final hallway
+	for ci = 1, 10 do
+		createCollectible(
+			hallwayStart + Vector3.new(math.random(-8,8), 5, -(ci*28)),
+			100 + ci
+		)
+	end
+
+	-- ============================================================
+	-- FINISH (at end of final hallway)
+	-- ============================================================
+	local fp = hallwayStart + Vector3.new(0, 0, -FINAL_LEN - 20)
 	local fb = Instance.new("Part"); fb.Name = "FinishPlatform"
 	fb.Size = Vector3.new(6,40,40); fb.Position = fp; fb.Anchored = true
 	fb.Color = Color3.fromRGB(255,215,0); fb.Material = Enum.Material.Neon
@@ -1777,9 +2211,115 @@ startGameEvent.OnServerEvent:Connect(function(player)
 	local character = player.Character
 	if character then
 		local rootPart = character:FindFirstChild("HumanoidRootPart")
-		if rootPart then rootPart.CFrame = CFrame.new(0, START_HEIGHT+7, 0) end
+		if rootPart then rootPart.CFrame = CFrame.new(0, START_HEIGHT+5, 20) end
 	end
 	timerStartEvent:FireClient(player)
+end)
+
+-- ============================================================
+-- GRAPPLE GUN SERVER HANDLER
+-- ============================================================
+
+local grappleCooldowns = {}
+
+grappleShootEvent.OnServerEvent:Connect(function(player, origin, direction)
+	-- Validate
+	if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" then return end
+	if grappleCooldowns[player] then return end
+	grappleCooldowns[player] = true
+	task.delay(2, function() grappleCooldowns[player] = nil end)
+
+	local char = player.Character
+	if not char then return end
+	local rootPart = char:FindFirstChild("HumanoidRootPart")
+	if not rootPart then return end
+
+	-- Ensure they have the grapple gun equipped
+	local hasGrapple = false
+	for _, tool in char:GetChildren() do
+		if tool:IsA("Tool") and tool.Name == "Grapple Gun" then hasGrapple = true; break end
+	end
+	if not hasGrapple then grappleCooldowns[player] = nil; return end
+
+	-- Normalize direction
+	direction = direction.Unit
+
+	-- Create projectile
+	local projectile = Instance.new("Part")
+	projectile.Name = "GrappleProjectile"
+	projectile.Size = Vector3.new(1.5, 1.5, 1.5)
+	projectile.Shape = Enum.PartType.Ball
+	projectile.Color = Color3.fromRGB(255, 200, 50)
+	projectile.Material = Enum.Material.Neon
+	projectile.CFrame = CFrame.new(origin)
+	projectile.Anchored = false
+	projectile.CanCollide = false
+	projectile.Parent = workspace
+
+	-- Glow
+	local pLight = Instance.new("PointLight")
+	pLight.Color = Color3.fromRGB(255, 200, 50)
+	pLight.Brightness = 2; pLight.Range = 15
+	pLight.Parent = projectile
+
+	-- Launch it
+	local bv = Instance.new("BodyVelocity")
+	bv.Velocity = direction * 150
+	bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+	bv.Parent = projectile
+
+	-- Beam (rope visual) from player to projectile
+	local att0 = Instance.new("Attachment"); att0.Parent = rootPart
+	local att1 = Instance.new("Attachment"); att1.Parent = projectile
+	local beam = Instance.new("Beam")
+	beam.Attachment0 = att0; beam.Attachment1 = att1
+	beam.Color = ColorSequence.new(Color3.fromRGB(255, 220, 100))
+	beam.Width0 = 0.3; beam.Width1 = 0.3
+	beam.FaceCamera = true; beam.Parent = rootPart
+
+	-- Tell client about the projectile for visual tracking
+	grappleHitEvent:FireClient(player, "fired", projectile)
+
+	local hitSomething = false
+
+	projectile.Touched:Connect(function(hit)
+		if hitSomething then return end
+		if hit:IsDescendantOf(char) then return end
+		if hit.Name == "GrappleProjectile" then return end
+		hitSomething = true
+
+		-- Stick projectile
+		bv:Destroy()
+		projectile.Anchored = true
+		local hitPos = projectile.Position
+
+		-- Boost player toward hit point + UP 5 blocks (25 studs)
+		local pullDir = (hitPos - rootPart.Position).Unit
+		local boostForce = pullDir * 60 + Vector3.new(0, 70, 0) -- upward + toward
+
+		rootPart.AssemblyLinearVelocity = boostForce
+
+		-- Tell client
+		grappleHitEvent:FireClient(player, "hit", hitPos)
+
+		-- Clean up after brief delay
+		task.delay(0.8, function()
+			if beam then beam:Destroy() end
+			if att0 then att0:Destroy() end
+			if att1 then att1:Destroy() end
+			if projectile and projectile.Parent then projectile:Destroy() end
+		end)
+	end)
+
+	-- Auto-destroy if it doesn't hit anything after 2 seconds
+	task.delay(2, function()
+		if not hitSomething then
+			if beam then beam:Destroy() end
+			if att0 then att0:Destroy() end
+			if att1 then att1:Destroy() end
+			if projectile and projectile.Parent then projectile:Destroy() end
+		end
+	end)
 end)
 
 Players.PlayerRemoving:Connect(function(player) playerData[player] = nil end)
@@ -1791,4 +2331,4 @@ Players.PlayerRemoving:Connect(function(player) playerData[player] = nil end)
 generateMap()
 createHallway()
 createDeathFloor()
-print("[CandyRun] Server v4 initialized!")
+print("[CandyRun] Server v6 initialized! Huge spawn room, fusion coil, grapple gun, final hallway run.")
