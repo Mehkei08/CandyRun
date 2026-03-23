@@ -44,12 +44,12 @@ grappleHitEvent.Name = "GrappleHit"; grappleHitEvent.Parent = ReplicatedStorage
 -- LIGHTING
 -- ============================================================
 
-Lighting.ClockTime = 21.5  -- evening/dusk
-Lighting.Brightness = 1.2
-Lighting.Ambient = Color3.fromRGB(60, 40, 70)
-Lighting.OutdoorAmbient = Color3.fromRGB(80, 55, 90)
-Lighting.FogColor = Color3.fromRGB(120, 80, 130)
-Lighting.FogEnd = 1800; Lighting.FogStart = 300
+Lighting.ClockTime = 15     -- bright afternoon
+Lighting.Brightness = 2.0
+Lighting.Ambient = Color3.fromRGB(120, 90, 130)
+Lighting.OutdoorAmbient = Color3.fromRGB(160, 130, 170)
+Lighting.FogColor = Color3.fromRGB(200, 170, 210)
+Lighting.FogEnd = 2500; Lighting.FogStart = 500
 
 local atmo = Instance.new("Atmosphere")
 atmo.Density = 0.35; atmo.Offset = 0.1
@@ -1054,190 +1054,370 @@ local BUILDERS = {
 -- extra = {{dx,dy,dz,candy,size}, ...} — additional candy blocks relative to the main one
 local LEVELS = {
 	-- ====== PHASE 1: WARM-UP (1-15) ======
-	{offset={0,-1,-33},candy="chocolate",size=1.4,
-		extra={{13,3,-16,"candycorn",1.0},{-11,1,-24,"gummy",1.1}}},
-	{offset={4,0,-30},candy="candycorn",size=1.3,
-		extra={{-15,1,-20,"lollipop",1.0},{8,-1,-24,"donut",1.1}}},
-	{offset={-6,1,-35},candy="donut",size=1.3,
-		extra={{11,3,-18,"chocolate",1.0}}},
-	{offset={3,-1,-30},candy="gummy",size=1.2,
-		extra={{-8,1,-22,"cupcake",1.0},{13,3,-24,"candycane",1.1}}},
-	{offset={-5,2,-33},candy="cupcake",size=1.3,
-		extra={{8,-1,-20,"jawbreaker",1.0}}},
-	{offset={7,0,-30},candy="lollipop",size=1.2,
-		extra={{-13,1,-24,"gummy",1.0},{-8,-2,-24,"candycorn",1.1}}},
-	{offset={-4,-2,-35},candy="jawbreaker",size=1.2,
-		extra={{11,1,-20,"chocolate",1.0}}},
-	{offset={2,1,-30},candy="candycane",size=1.3,
-		extra={{-11,-2,-22,"donut",0.95},{8,1,-24,"lollipop",1.0}}},
-	{offset={-6,0,-33},candy="chocolate",size=1.2,
-		extra={{15,-1,-20,"cupcake",1.0}}},
-	{offset={5,2,-30},candy="gummy",size=1.1,
-		extra={{-13,-2,-24,"jawbreaker",1.0},{-8,3,-24,"candycane",1.0}}},
-	{offset={-3,-1,-35},candy="lollipop",size=1.2,
-		extra={{11,1,-18,"candycorn",0.95}}},
-	{offset={7,1,-30},candy="donut",size=1.1,
-		extra={{-11,-2,-24,"gummy",1.0},{-17,1,-24,"cupcake",1.0}}},
-	{offset={-8,0,-33},candy="cupcake",size=1.2,
-		extra={{13,-1,-20,"chocolate",1.0}}},
-	{offset={5,2,-30},candy="candycorn",size=1.1,
-		extra={{-8,-2,-22,"lollipop",0.95},{-15,3,-24,"jawbreaker",1.0}}},
-	{offset={0,-1,-35},candy="jawbreaker",size=1.3,checkpoint=true}, -- 15: CHECKPOINT
+	{offset={0,-1,-42},candy="chocolate",size=1.4,
+		extra={{14,3,-20,"candycorn",1.0},{-12,1,-30,"gummy",1.1}}},
+	{offset={4,0,-39},candy="candycorn",size=1.3,
+		extra={{-17,1,-25,"lollipop",1.0},{10,-1,-30,"donut",1.1}}},
+	{offset={-6,1,-45},candy="donut",size=1.3,
+		extra={{12,3,-22,"chocolate",1.0}}},
+	{offset={3,-1,-39},candy="gummy",size=1.2,
+		extra={{-10,1,-27,"cupcake",1.0},{14,3,-30,"candycane",1.1}}},
+	{offset={-5,2,-42},candy="cupcake",size=1.3,
+		extra={{10,-1,-25,"jawbreaker",1.0}}},
+	{offset={7,0,-39},candy="lollipop",size=1.2,
+		extra={{-14,1,-30,"gummy",1.0},{-10,-2,-30,"candycorn",1.1}}},
+	{offset={-4,-2,-45},candy="jawbreaker",size=1.2,
+		extra={{12,1,-25,"chocolate",1.0}}},
+	{offset={2,1,-39},candy="candycane",size=1.3,
+		extra={{-12,-2,-27,"donut",0.95},{10,1,-30,"lollipop",1.0}}},
+	{offset={-6,0,-42},candy="chocolate",size=1.2,
+		extra={{17,-1,-25,"cupcake",1.0}}},
+	{offset={5,2,-39},candy="gummy",size=1.1,
+		extra={{-14,-2,-30,"jawbreaker",1.0},{-10,3,-30,"candycane",1.0}}},
+	{offset={-3,-1,-45},candy="lollipop",size=1.2,
+		extra={{12,1,-22,"candycorn",0.95}}},
+	{offset={7,1,-39},candy="donut",size=1.1,
+		extra={{-12,-2,-30,"gummy",1.0},{-19,1,-30,"cupcake",1.0}}},
+	{offset={-8,0,-42},candy="cupcake",size=1.2,
+		extra={{14,-1,-25,"chocolate",1.0}}},
+	{offset={5,2,-39},candy="candycorn",size=1.1,
+		extra={{-10,-2,-27,"lollipop",0.95},{-17,3,-30,"jawbreaker",1.0}}},
+	{offset={0,-1,-45},candy="jawbreaker",size=1.3,checkpoint=true}, -- 15: CHECKPOINT
 
 	-- ====== PHASE 2: MIXED PATHS (16-30) ======
-	{offset={-6,3,-36},candy="candycane",size=1.1,
-		extra={{11,-1,-20,"gummy",0.85},{17,1,-24,"lollipop",0.9}}},
-	{offset={8,-2,-33},candy="lollipop",size=1.0,
-		extra={{-13,3,-20,"chocolate",0.85},{-8,-2,-24,"candycorn",0.9}}},
-	{offset={-5,4,-35},candy="gummy",size=0.95,
-		extra={{13,-1,-22,"donut",0.85},{8,3,-24,"cupcake",0.9}}},
-	{offset={7,-3,-39},candy="chocolate",size=1.0,
-		extra={{-11,3,-18,"jawbreaker",0.8}}},
+	{offset={-6,3,-46},candy="candycane",size=1.1,
+		extra={{12,-1,-25,"gummy",0.85},{19,1,-30,"lollipop",0.9}}},
+	{offset={8,-2,-42},candy="lollipop",size=1.0,
+		extra={{-14,3,-25,"chocolate",0.85},{-10,-2,-30,"candycorn",0.9}}},
+	{offset={-5,4,-45},candy="gummy",size=0.95,
+		extra={{14,-1,-27,"donut",0.85},{10,3,-30,"cupcake",0.9}}},
+	{offset={7,-3,-50},candy="chocolate",size=1.0,
+		extra={{-12,3,-22,"jawbreaker",0.8}}},
 	-- Staircase 20-22
-	{offset={-3,3,-30},candy="candycorn",size=0.95,
-		extra={{-8,4,-20,"candycane",0.85},{8,4,-24,"lollipop",0.85}}},
-	{offset={-2,4,-30},candy="candycane",size=0.9,
-		extra={{8,-1,-18,"gummy",0.8}}},
-	{offset={0,4,-30},candy="lollipop",size=0.9,
-		extra={{-11,-3,-20,"chocolate",0.8},{11,1,-24,"donut",0.85}}},
-	{offset={4,-6,-39},candy="cupcake",size=0.95,moving=true,
-		extra={{-13,4,-20,"jawbreaker",0.8}}},
-	{offset={-7,3,-36},candy="jawbreaker",size=0.9,
-		extra={{13,-3,-22,"candycorn",0.8},{8,1,-24,"gummy",0.85}}},
-	{offset={8,-4,-35},candy="gummy",size=0.85,crumbling=true,
-		extra={{-15,4,-20,"cupcake",0.8}}},
-	{offset={-6,5,-39},candy="donut",size=0.9,moving=true,
-		extra={{11,-3,-22,"lollipop",0.8},{17,3,-24,"candycane",0.85}}},
-	{offset={5,-3,-33},candy="chocolate",size=0.95,
-		extra={{-13,3,-20,"jawbreaker",0.8}}},
-	{offset={-8,4,-36},candy="candycane",size=0.9,crumbling=true,
-		extra={{15,-4,-22,"gummy",0.8},{8,1,-24,"chocolate",0.85}}},
-	{offset={7,-5,-39},candy="lollipop",size=0.85,moving=true,
-		extra={{-13,4,-20,"donut",0.8}}},
-	{offset={0,2,-35},candy="cupcake",size=1.2,checkpoint=true}, -- 30: CHECKPOINT
+	{offset={-3,3,-39},candy="candycorn",size=0.95,
+		extra={{-10,4,-25,"candycane",0.85},{10,4,-30,"lollipop",0.85}}},
+	{offset={-2,4,-39},candy="candycane",size=0.9,
+		extra={{10,-1,-22,"gummy",0.8}}},
+	{offset={0,4,-39},candy="lollipop",size=0.9,
+		extra={{-12,-3,-25,"chocolate",0.8},{12,1,-30,"donut",0.85}}},
+	{offset={4,-6,-50},candy="cupcake",size=0.95,moving=true,
+		extra={{-14,4,-25,"jawbreaker",0.8}}},
+	{offset={-7,3,-46},candy="jawbreaker",size=0.9,
+		extra={{14,-3,-27,"candycorn",0.8},{10,1,-30,"gummy",0.85}}},
+	{offset={8,-4,-45},candy="gummy",size=0.85,crumbling=true,
+		extra={{-17,4,-25,"cupcake",0.8}}},
+	{offset={-6,5,-50},candy="donut",size=0.9,moving=true,
+		extra={{12,-3,-27,"lollipop",0.8},{19,3,-30,"candycane",0.85}}},
+	{offset={5,-3,-42},candy="chocolate",size=0.95,
+		extra={{-14,3,-25,"jawbreaker",0.8}}},
+	{offset={-8,4,-46},candy="candycane",size=0.9,crumbling=true,
+		extra={{17,-4,-27,"gummy",0.8},{10,1,-30,"chocolate",0.85}}},
+	{offset={7,-5,-50},candy="lollipop",size=0.85,moving=true,
+		extra={{-14,4,-25,"donut",0.8}}},
+	{offset={0,2,-45},candy="cupcake",size=1.2,checkpoint=true}, -- 30: CHECKPOINT
 
 	-- ====== PHASE 3: GAUNTLET (31-45) ======
-	{offset={-8,3,-30},candy="jawbreaker",size=0.8,moving=true,
-		extra={{13,-3,-20,"candycorn",0.65},{18,1,-24,"gummy",0.7}}},
-	{offset={10,-4,-39},candy="candycorn",size=0.75,
-		extra={{-17,4,-20,"chocolate",0.65},{-11,-1,-24,"lollipop",0.7}}},
-	{offset={-9,5,-30},candy="gummy",size=0.7,crumbling=true,
-		extra={{15,-4,-20,"cupcake",0.6},{8,3,-24,"candycane",0.65}}},
-	{offset={8,-6,-36},candy="chocolate",size=0.75,moving=true,
-		extra={{-15,6,-22,"donut",0.6}}},
+	{offset={-8,3,-39},candy="jawbreaker",size=0.8,moving=true,
+		extra={{14,-3,-25,"candycorn",0.65},{20,1,-30,"gummy",0.7}}},
+	{offset={10,-4,-50},candy="candycorn",size=0.75,
+		extra={{-19,4,-25,"chocolate",0.65},{-12,-1,-30,"lollipop",0.7}}},
+	{offset={-9,5,-39},candy="gummy",size=0.7,crumbling=true,
+		extra={{17,-4,-25,"cupcake",0.6},{10,3,-30,"candycane",0.65}}},
+	{offset={8,-6,-46},candy="chocolate",size=0.75,moving=true,
+		extra={{-17,6,-27,"donut",0.6}}},
 	-- Combo chain 35-38
-	{offset={-4,-5,-30},candy="lollipop",size=0.65,
-		extra={{8,4,-16,"jawbreaker",0.55},{-8,-3,-24,"candycorn",0.6}}},
-	{offset={5,6,-30},candy="candycane",size=0.6,
-		extra={{-11,-4,-18,"gummy",0.55},{8,6,-24,"chocolate",0.6}}},
-	{offset={-6,-5,-30},candy="donut",size=0.65,crumbling=true,
-		extra={{13,3,-18,"cupcake",0.55}}},
-	{offset={7,7,-30},candy="cupcake",size=0.6,moving=true,
-		extra={{-13,-6,-20,"lollipop",0.55},{-8,4,-24,"jawbreaker",0.6}}},
+	{offset={-4,-5,-39},candy="lollipop",size=0.65,
+		extra={{10,4,-20,"jawbreaker",0.55},{-10,-3,-30,"candycorn",0.6}}},
+	{offset={5,6,-39},candy="candycane",size=0.6,
+		extra={{-12,-4,-22,"gummy",0.55},{10,6,-30,"chocolate",0.6}}},
+	{offset={-6,-5,-39},candy="donut",size=0.65,crumbling=true,
+		extra={{14,3,-22,"cupcake",0.55}}},
+	{offset={7,7,-39},candy="cupcake",size=0.6,moving=true,
+		extra={{-14,-6,-25,"lollipop",0.55},{-10,4,-30,"jawbreaker",0.6}}},
 	-- Height rollercoaster 39-42
-	{offset={-8,8,-30},candy="jawbreaker",size=0.7,moving=true,
-		extra={{13,-4,-20,"candycane",0.6}}},
-	{offset={6,-10,-39},candy="gummy",size=0.65,crumbling=true,
-		extra={{-11,6,-20,"donut",0.55},{-17,1,-24,"candycorn",0.6}}},
-	{offset={-5,9,-36},candy="candycorn",size=0.7,moving=true,
-		extra={{13,-6,-20,"chocolate",0.55}}},
-	{offset={8,-8,-30},candy="chocolate",size=0.65,crumbling=true,
-		extra={{-15,6,-20,"gummy",0.55},{-8,3,-24,"lollipop",0.6}}},
+	{offset={-8,8,-39},candy="jawbreaker",size=0.7,moving=true,
+		extra={{14,-4,-25,"candycane",0.6}}},
+	{offset={6,-10,-50},candy="gummy",size=0.65,crumbling=true,
+		extra={{-12,6,-25,"donut",0.55},{-19,1,-30,"candycorn",0.6}}},
+	{offset={-5,9,-46},candy="candycorn",size=0.7,moving=true,
+		extra={{14,-6,-25,"chocolate",0.55}}},
+	{offset={8,-8,-39},candy="chocolate",size=0.65,crumbling=true,
+		extra={{-17,6,-25,"gummy",0.55},{-10,3,-30,"lollipop",0.6}}},
 	-- Zigzag
-	{offset={-10,5,-39},candy="lollipop",size=0.7,moving=true,
-		extra={{17,-4,-20,"cupcake",0.55}}},
-	{offset={10,-4,-36},candy="candycane",size=0.65,crumbling=true,
-		extra={{-17,6,-20,"jawbreaker",0.55},{-11,-3,-24,"donut",0.6}}},
-	{offset={0,2,-39},candy="donut",size=1.2,checkpoint=true}, -- 45: CHECKPOINT
+	{offset={-10,5,-50},candy="lollipop",size=0.7,moving=true,
+		extra={{19,-4,-25,"cupcake",0.55}}},
+	{offset={10,-4,-46},candy="candycane",size=0.65,crumbling=true,
+		extra={{-19,6,-25,"jawbreaker",0.55},{-12,-3,-30,"donut",0.6}}},
+	{offset={0,2,-50},candy="donut",size=1.2,checkpoint=true}, -- 45: CHECKPOINT
 
 	-- ====== PHASE 4: EXTREME (46-60) ======
-	{offset={-8,-4,-30},candy="cupcake",size=0.65,moving=true,
-		extra={{13,4,-18,"lollipop",0.5},{18,-1,-24,"jawbreaker",0.55}}},
-	{offset={10,6,-39},candy="jawbreaker",size=0.6,crumbling=true,
-		extra={{-17,-4,-20,"candycorn",0.5}}},
-	{offset={-7,-8,-32},candy="gummy",size=0.55,moving=true,
-		extra={{15,6,-20,"chocolate",0.5},{8,-3,-24,"candycane",0.5}}},
-	{offset={9,7,-39},candy="candycorn",size=0.6,crumbling=true,
-		extra={{-15,-4,-20,"donut",0.5}}},
-	{offset={-8,-6,-30},candy="chocolate",size=0.6,moving=true,
-		extra={{13,6,-18,"cupcake",0.5},{18,-3,-24,"gummy",0.5}}},
+	{offset={-8,-4,-39},candy="cupcake",size=0.65,moving=true,
+		extra={{14,4,-22,"lollipop",0.5},{20,-1,-30,"jawbreaker",0.55}}},
+	{offset={10,6,-50},candy="jawbreaker",size=0.6,crumbling=true,
+		extra={{-19,-4,-25,"candycorn",0.5}}},
+	{offset={-7,-8,-41},candy="gummy",size=0.55,moving=true,
+		extra={{17,6,-25,"chocolate",0.5},{10,-3,-30,"candycane",0.5}}},
+	{offset={9,7,-50},candy="candycorn",size=0.6,crumbling=true,
+		extra={{-17,-4,-25,"donut",0.5}}},
+	{offset={-8,-6,-39},candy="chocolate",size=0.6,moving=true,
+		extra={{14,6,-22,"cupcake",0.5},{20,-3,-30,"gummy",0.5}}},
 	-- Rapid fire 51-56
-	{offset={5,-5,-30},candy="lollipop",size=0.5,moving=true,
-		extra={{-8,4,-16,"jawbreaker",0.4}}},
-	{offset={-6,6,-30},candy="candycane",size=0.55,crumbling=true,
-		extra={{11,-4,-18,"candycorn",0.45},{8,3,-24,"chocolate",0.5}}},
-	{offset={7,-7,-30},candy="donut",size=0.5,moving=true,
-		extra={{-13,6,-16,"gummy",0.4}}},
-	{offset={-5,5,-30},candy="cupcake",size=0.55,crumbling=true,
-		extra={{11,-6,-18,"lollipop",0.45}}},
-	{offset={6,-6,-30},candy="jawbreaker",size=0.5,moving=true,
-		extra={{-11,4,-18,"candycane",0.4},{-8,-3,-24,"donut",0.45}}},
-	{offset={-7,7,-30},candy="gummy",size=0.5,crumbling=true,
-		extra={{13,-6,-16,"cupcake",0.4}}},
-	{offset={4,-9,-30},candy="candycorn",size=0.55,moving=true,
-		extra={{-11,6,-20,"chocolate",0.45},{-17,-2,-24,"lollipop",0.5}}},
-	{offset={-6,8,-39},candy="chocolate",size=0.55,crumbling=true,
-		extra={{15,-6,-18,"gummy",0.45}}},
-	{offset={8,-7,-32},candy="lollipop",size=0.5,moving=true,
-		extra={{-13,4,-20,"candycane",0.4},{-18,1,-24,"jawbreaker",0.45}}},
-	{offset={0,2,-36},candy="candycane",size=1.2,checkpoint=true}, -- 60: CHECKPOINT
+	{offset={5,-5,-39},candy="lollipop",size=0.5,moving=true,
+		extra={{-10,4,-20,"jawbreaker",0.4}}},
+	{offset={-6,6,-39},candy="candycane",size=0.55,crumbling=true,
+		extra={{12,-4,-22,"candycorn",0.45},{10,3,-30,"chocolate",0.5}}},
+	{offset={7,-7,-39},candy="donut",size=0.5,moving=true,
+		extra={{-14,6,-20,"gummy",0.4}}},
+	{offset={-5,5,-39},candy="cupcake",size=0.55,crumbling=true,
+		extra={{12,-6,-22,"lollipop",0.45}}},
+	{offset={6,-6,-39},candy="jawbreaker",size=0.5,moving=true,
+		extra={{-12,4,-22,"candycane",0.4},{-10,-3,-30,"donut",0.45}}},
+	{offset={-7,7,-39},candy="gummy",size=0.5,crumbling=true,
+		extra={{14,-6,-20,"cupcake",0.4}}},
+	{offset={4,-9,-39},candy="candycorn",size=0.55,moving=true,
+		extra={{-12,6,-25,"chocolate",0.45},{-19,-2,-30,"lollipop",0.5}}},
+	{offset={-6,8,-50},candy="chocolate",size=0.55,crumbling=true,
+		extra={{17,-6,-22,"gummy",0.45}}},
+	{offset={8,-7,-41},candy="lollipop",size=0.5,moving=true,
+		extra={{-14,4,-25,"candycane",0.4},{-20,1,-30,"jawbreaker",0.45}}},
+	{offset={0,2,-46},candy="candycane",size=1.2,checkpoint=true}, -- 60: CHECKPOINT
 
 	-- ====== PHASE 5: NIGHTMARE (61-75) ======
-	{offset={-9,-5,-32},candy="donut",size=0.5,moving=true,
-		extra={{15,4,-18,"gummy",0.4},{18,-3,-24,"candycorn",0.4}}},
-	{offset={10,7,-30},candy="cupcake",size=0.45,crumbling=true,
-		extra={{-17,-6,-18,"jawbreaker",0.35},{-11,3,-24,"chocolate",0.4}}},
-	{offset={-8,-9,-32},candy="jawbreaker",size=0.45,moving=true,
-		extra={{15,6,-18,"lollipop",0.35}}},
-	{offset={9,8,-39},candy="gummy",size=0.5,crumbling=true,
-		extra={{-15,-4,-20,"candycane",0.4},{-18,3,-24,"donut",0.4}}},
-	{offset={-10,-7,-34},candy="candycorn",size=0.45,moving=true,
-		extra={{17,6,-18,"cupcake",0.35}}},
-	{offset={8,6,-30},candy="chocolate",size=0.5,crumbling=true,
-		extra={{-13,-4,-20,"lollipop",0.35},{-18,1,-24,"jawbreaker",0.4}}},
-	{offset={-7,-10,-32},candy="lollipop",size=0.45,moving=true,
-		extra={{13,6,-18,"gummy",0.35}}},
-	{offset={9,9,-39},candy="candycane",size=0.45,crumbling=true,
-		extra={{-15,-6,-20,"chocolate",0.35},{-18,4,-24,"candycorn",0.4}}},
-	{offset={-10,-8,-34},candy="donut",size=0.4,moving=true,
-		extra={{17,6,-18,"cupcake",0.3}}},
-	{offset={8,7,-30},candy="cupcake",size=0.45,crumbling=true,
-		extra={{-15,-4,-20,"jawbreaker",0.35},{-18,3,-24,"gummy",0.35}}},
-	{offset={-9,-10,-32},candy="jawbreaker",size=0.4,moving=true,
-		extra={{15,6,-18,"lollipop",0.3}}},
-	{offset={10,8,-30},candy="gummy",size=0.4,crumbling=true,
-		extra={{-17,-6,-18,"candycane",0.3},{-11,3,-24,"chocolate",0.35}}},
-	{offset={-8,-9,-34},candy="candycorn",size=0.4,moving=true,
-		extra={{15,6,-18,"donut",0.3}}},
-	{offset={9,10,-39},candy="chocolate",size=0.4,crumbling=true,
-		extra={{-17,-6,-20,"cupcake",0.3},{-11,4,-24,"lollipop",0.35}}},
-	{offset={0,0,-30},candy="cupcake",size=1.4,checkpoint=true}, -- 75: FINAL CHECKPOINT
+	{offset={-9,-5,-41},candy="donut",size=0.5,moving=true,
+		extra={{17,4,-22,"gummy",0.4},{20,-3,-30,"candycorn",0.4}}},
+	{offset={10,7,-39},candy="cupcake",size=0.45,crumbling=true,
+		extra={{-19,-6,-22,"jawbreaker",0.35},{-12,3,-30,"chocolate",0.4}}},
+	{offset={-8,-9,-41},candy="jawbreaker",size=0.45,moving=true,
+		extra={{17,6,-22,"lollipop",0.35}}},
+	{offset={9,8,-50},candy="gummy",size=0.5,crumbling=true,
+		extra={{-17,-4,-25,"candycane",0.4},{-20,3,-30,"donut",0.4}}},
+	{offset={-10,-7,-44},candy="candycorn",size=0.45,moving=true,
+		extra={{19,6,-22,"cupcake",0.35}}},
+	{offset={8,6,-39},candy="chocolate",size=0.5,crumbling=true,
+		extra={{-14,-4,-25,"lollipop",0.35},{-20,1,-30,"jawbreaker",0.4}}},
+	{offset={-7,-10,-41},candy="lollipop",size=0.45,moving=true,
+		extra={{14,6,-22,"gummy",0.35}}},
+	{offset={9,9,-50},candy="candycane",size=0.45,crumbling=true,
+		extra={{-17,-6,-25,"chocolate",0.35},{-20,4,-30,"candycorn",0.4}}},
+	{offset={-10,-8,-44},candy="donut",size=0.4,moving=true,
+		extra={{19,6,-22,"cupcake",0.3}}},
+	{offset={8,7,-39},candy="cupcake",size=0.45,crumbling=true,
+		extra={{-17,-4,-25,"jawbreaker",0.35},{-20,3,-30,"gummy",0.35}}},
+	{offset={-9,-10,-41},candy="jawbreaker",size=0.4,moving=true,
+		extra={{17,6,-22,"lollipop",0.3}}},
+	{offset={10,8,-39},candy="gummy",size=0.4,crumbling=true,
+		extra={{-19,-6,-22,"candycane",0.3},{-12,3,-30,"chocolate",0.35}}},
+	{offset={-8,-9,-44},candy="candycorn",size=0.4,moving=true,
+		extra={{17,6,-22,"donut",0.3}}},
+	{offset={9,10,-50},candy="chocolate",size=0.4,crumbling=true,
+		extra={{-19,-6,-25,"cupcake",0.3},{-12,4,-30,"lollipop",0.35}}},
+	{offset={0,0,-39},candy="cupcake",size=1.4,checkpoint=true}, -- 75: FINAL CHECKPOINT
 }
 
 -- ============================================================
 -- COLLECTIBLE
 -- ============================================================
 
+-- Item prices (in candy)
+local ITEM_PRICES = {
+	["Speed Coil"] = 5,
+	["Gravity Coil"] = 8,
+	["Fusion Coil"] = 15,
+	["Magic Carpet"] = 20,
+	["Grapple Gun"] = 12,
+}
+
+-- Remote for purchase system
+local purchaseEvent = Instance.new("RemoteEvent")
+purchaseEvent.Name = "PurchaseItem"; purchaseEvent.Parent = ReplicatedStorage
+
+local candyUpdateEvent = Instance.new("RemoteEvent")
+candyUpdateEvent.Name = "CandyUpdate"; candyUpdateEvent.Parent = ReplicatedStorage
+
 local function createCollectible(position, index)
-	local cols = {Color3.fromRGB(255,100,150),Color3.fromRGB(150,100,255),Color3.fromRGB(100,200,255),Color3.fromRGB(255,200,100)}
-	local c = Instance.new("Part")
-	c.Name = "Collectible_"..index; c.Size = Vector3.new(2.5,2.5,2.5)
-	c.Position = position + Vector3.new(0,8,0)
-	c.Anchored = true; c.CanCollide = false; c.Shape = Enum.PartType.Ball
-	c.Color = cols[math.random(1,#cols)]; c.Material = Enum.Material.Neon
-	c.Parent = collectiblesFolder
-	local light = Instance.new("PointLight"); light.Color = c.Color; light.Brightness = 1; light.Range = 10; light.Parent = c
-	local bp = c.Position
+	-- 3D candy model instead of simple ball
+	local model = Instance.new("Model")
+	model.Name = "CandyCollectible_"..index
+
+	local candyTypes = {"wrapper", "lollipop", "gummy", "jawbreaker"}
+	local ctype = candyTypes[math.random(1, #candyTypes)]
+	local baseColor = ({
+		Color3.fromRGB(255,80,140), Color3.fromRGB(140,80,255),
+		Color3.fromRGB(80,200,255), Color3.fromRGB(255,180,50),
+	})[math.random(1,4)]
+
+	local pos = position + Vector3.new(0, 8, 0)
+
+	if ctype == "wrapper" then
+		-- Wrapped candy: cylinder body + twisted ends
+		local body = Instance.new("Part")
+		body.Name = "CandyBody"; body.Size = Vector3.new(2, 3, 3)
+		body.Position = pos; body.Anchored = true; body.CanCollide = false
+		body.Color = baseColor; body.Material = Enum.Material.SmoothPlastic
+		body.Shape = Enum.PartType.Cylinder
+		body.Orientation = Vector3.new(0,0,90)
+		body.Parent = model
+
+		-- Wrapper twist left
+		local twL = Instance.new("Part")
+		twL.Size = Vector3.new(1.5, 2, 2)
+		twL.Position = pos + Vector3.new(-2, 0, 0)
+		twL.Anchored = true; twL.CanCollide = false
+		twL.Color = Color3.new(baseColor.R*0.8, baseColor.G*0.8, baseColor.B*0.8)
+		twL.Material = Enum.Material.Foil
+		twL.Rotation = Vector3.new(0, 0, 25)
+		twL.Parent = model
+
+		-- Wrapper twist right
+		local twR = Instance.new("Part")
+		twR.Size = Vector3.new(1.5, 2, 2)
+		twR.Position = pos + Vector3.new(2, 0, 0)
+		twR.Anchored = true; twR.CanCollide = false
+		twR.Color = Color3.new(baseColor.R*0.8, baseColor.G*0.8, baseColor.B*0.8)
+		twR.Material = Enum.Material.Foil
+		twR.Rotation = Vector3.new(0, 0, -25)
+		twR.Parent = model
+
+		-- Stripe
+		local stripe = Instance.new("Part")
+		stripe.Size = Vector3.new(0.3, 3.2, 3.2)
+		stripe.Position = pos; stripe.Anchored = true; stripe.CanCollide = false
+		stripe.Color = Color3.fromRGB(255,255,255)
+		stripe.Material = Enum.Material.SmoothPlastic
+		stripe.Shape = Enum.PartType.Cylinder
+		stripe.Orientation = Vector3.new(0,0,90)
+		stripe.Transparency = 0.3; stripe.Parent = model
+
+	elseif ctype == "lollipop" then
+		-- Mini lollipop: disc + stick
+		local stick = Instance.new("Part")
+		stick.Size = Vector3.new(0.3, 3, 0.3)
+		stick.Position = pos + Vector3.new(0, -2, 0)
+		stick.Anchored = true; stick.CanCollide = false
+		stick.Color = Color3.fromRGB(240,230,200)
+		stick.Material = Enum.Material.SmoothPlastic
+		stick.Parent = model
+
+		local disc = Instance.new("Part")
+		disc.Name = "CandyBody"; disc.Size = Vector3.new(1, 3.5, 3.5)
+		disc.Position = pos; disc.Anchored = true; disc.CanCollide = false
+		disc.Color = baseColor; disc.Material = Enum.Material.SmoothPlastic
+		disc.Shape = Enum.PartType.Cylinder
+		disc.Orientation = Vector3.new(0,0,90)
+		disc.Parent = model
+
+		-- Swirl
+		local swirl = Instance.new("Part")
+		swirl.Size = Vector3.new(1.2, 2.5, 2.5)
+		swirl.Position = pos; swirl.Anchored = true; swirl.CanCollide = false
+		swirl.Color = Color3.fromRGB(255,255,255)
+		swirl.Material = Enum.Material.SmoothPlastic
+		swirl.Shape = Enum.PartType.Cylinder
+		swirl.Orientation = Vector3.new(0,0,90)
+		swirl.Transparency = 0.4; swirl.Parent = model
+
+	elseif ctype == "gummy" then
+		-- Mini gummy bear shape
+		local body = Instance.new("Part")
+		body.Name = "CandyBody"; body.Size = Vector3.new(2.5, 1.5, 2)
+		body.Position = pos; body.Anchored = true; body.CanCollide = false
+		body.Color = baseColor; body.Material = Enum.Material.SmoothPlastic
+		body.Transparency = 0.15; body.Parent = model
+
+		local head = Instance.new("Part")
+		head.Size = Vector3.new(1.8, 1.5, 1.5)
+		head.Position = pos + Vector3.new(0, 1.5, 0)
+		head.Anchored = true; head.CanCollide = false
+		head.Color = baseColor; head.Material = Enum.Material.SmoothPlastic
+		head.Shape = Enum.PartType.Ball
+		head.Transparency = 0.15; head.Parent = model
+
+		-- Ears
+		for _, side in ipairs({-1, 1}) do
+			local ear = Instance.new("Part")
+			ear.Size = Vector3.new(0.6, 0.6, 0.6)
+			ear.Position = pos + Vector3.new(side*0.7, 2.3, 0)
+			ear.Anchored = true; ear.CanCollide = false
+			ear.Color = baseColor; ear.Shape = Enum.PartType.Ball
+			ear.Material = Enum.Material.SmoothPlastic
+			ear.Transparency = 0.15; ear.Parent = model
+		end
+
+	else -- jawbreaker
+		local sphere = Instance.new("Part")
+		sphere.Name = "CandyBody"; sphere.Size = Vector3.new(3, 3, 3)
+		sphere.Position = pos; sphere.Anchored = true; sphere.CanCollide = false
+		sphere.Color = baseColor; sphere.Material = Enum.Material.SmoothPlastic
+		sphere.Shape = Enum.PartType.Ball; sphere.Parent = model
+
+		-- Inner layers
+		for li, info in ipairs({{2.2, Color3.fromRGB(255,255,100)}, {1.4, Color3.fromRGB(100,200,255)}}) do
+			local layer = Instance.new("Part")
+			layer.Size = Vector3.new(info[1], info[1], info[1])
+			layer.Position = pos; layer.Anchored = true; layer.CanCollide = false
+			layer.Color = info[2]; layer.Material = Enum.Material.SmoothPlastic
+			layer.Shape = Enum.PartType.Ball
+			layer.Transparency = 0.2; layer.Parent = model
+		end
+
+		-- Glass sheen
+		local glass = Instance.new("Part")
+		glass.Size = Vector3.new(3.2, 3.2, 3.2)
+		glass.Position = pos; glass.Anchored = true; glass.CanCollide = false
+		glass.Color = Color3.fromRGB(255,255,255)
+		glass.Material = Enum.Material.Glass
+		glass.Shape = Enum.PartType.Ball
+		glass.Transparency = 0.85; glass.Parent = model
+	end
+
+	-- Glow light
+	local light = Instance.new("PointLight")
+	light.Color = baseColor; light.Brightness = 1.5; light.Range = 14
+	light.Parent = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+
+	-- Floating + spinning animation
+	model.Parent = collectiblesFolder
+	local bp = pos
 	task.spawn(function()
-		while c and c.Parent do
-			c.Orientation += Vector3.new(0,4,0)
-			c.Position = bp + Vector3.new(0, math.sin(tick()*2.5)*1.5, 0)
+		while model and model.Parent do
+			for _, p in model:GetDescendants() do
+				if p:IsA("BasePart") then
+					p.Orientation += Vector3.new(0, 3, 0)
+				end
+			end
+			local yOff = math.sin(tick()*2.5)*1.5
+			model:PivotTo(CFrame.new(bp + Vector3.new(0, yOff, 0)) * CFrame.Angles(0, math.rad(tick()*60 % 360), 0))
 			task.wait(0.03)
 		end
 	end)
-	c.Touched:Connect(function(hit)
+
+	-- Touch to collect
+	local touchPart = Instance.new("Part")
+	touchPart.Name = "CollectTrigger"
+	touchPart.Size = Vector3.new(6, 6, 6)
+	touchPart.Position = pos
+	touchPart.Anchored = true; touchPart.Transparency = 1; touchPart.CanCollide = false
+	touchPart.Parent = model
+
+	touchPart.Touched:Connect(function(hit)
 		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
-		if plr and c.Parent then c.Parent = nil; candyCollectedEvent:FireClient(plr) end
+		if plr and model.Parent then
+			model.Parent = nil
+			-- Add candy to player's balance
+			local data = playerData[plr]
+			if data then
+				data.candies = (data.candies or 0) + 1
+				candyUpdateEvent:FireClient(plr, data.candies)
+			end
+			candyCollectedEvent:FireClient(plr)
+
+			-- Respawn collectible after 15 seconds
+			task.delay(15, function()
+				if collectiblesFolder and collectiblesFolder.Parent then
+					model.Parent = collectiblesFolder
+				end
+			end)
+		end
 	end)
 end
 
@@ -2127,52 +2307,52 @@ local function createSpawnRoom()
 		tool.Parent = player.Backpack
 	end
 
-	-- Touch detection for capsules
+	-- Touch detection for capsules (purchase with candy)
 	local debounces = {}
+
+	local function tryPurchase(plr, itemName, triggerKey)
+		if not plr or debounces[plr.UserId..triggerKey] then return end
+		debounces[plr.UserId..triggerKey] = true
+		task.delay(2, function() debounces[plr.UserId..triggerKey] = nil end)
+
+		local data = playerData[plr]
+		if not data then return end
+		local price = ITEM_PRICES[itemName] or 0
+		local candies = data.candies or 0
+
+		if candies >= price then
+			data.candies = candies - price
+			candyUpdateEvent:FireClient(plr, data.candies)
+			giveItem(plr, itemName)
+			purchaseEvent:FireClient(plr, "success", itemName, price, data.candies)
+		else
+			purchaseEvent:FireClient(plr, "fail", itemName, price, candies)
+		end
+	end
 
 	speedTrigger.Touched:Connect(function(hit)
 		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
-		if plr and not debounces[plr.UserId.."speed"] then
-			debounces[plr.UserId.."speed"] = true
-			giveItem(plr, "Speed Coil")
-			task.delay(2, function() debounces[plr.UserId.."speed"] = nil end)
-		end
+		tryPurchase(plr, "Speed Coil", "speed")
 	end)
 
 	gravityTrigger.Touched:Connect(function(hit)
 		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
-		if plr and not debounces[plr.UserId.."gravity"] then
-			debounces[plr.UserId.."gravity"] = true
-			giveItem(plr, "Gravity Coil")
-			task.delay(2, function() debounces[plr.UserId.."gravity"] = nil end)
-		end
+		tryPurchase(plr, "Gravity Coil", "gravity")
 	end)
 
 	fusionTrigger.Touched:Connect(function(hit)
 		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
-		if plr and not debounces[plr.UserId.."fusion"] then
-			debounces[plr.UserId.."fusion"] = true
-			giveItem(plr, "Fusion Coil")
-			task.delay(2, function() debounces[plr.UserId.."fusion"] = nil end)
-		end
+		tryPurchase(plr, "Fusion Coil", "fusion")
 	end)
 
 	carpetTrigger.Touched:Connect(function(hit)
 		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
-		if plr and not debounces[plr.UserId.."carpet"] then
-			debounces[plr.UserId.."carpet"] = true
-			giveItem(plr, "Magic Carpet")
-			task.delay(2, function() debounces[plr.UserId.."carpet"] = nil end)
-		end
+		tryPurchase(plr, "Magic Carpet", "carpet")
 	end)
 
 	grappleTrigger.Touched:Connect(function(hit)
 		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
-		if plr and not debounces[plr.UserId.."grapple"] then
-			debounces[plr.UserId.."grapple"] = true
-			giveItem(plr, "Grapple Gun")
-			task.delay(2, function() debounces[plr.UserId.."grapple"] = nil end)
-		end
+		tryPurchase(plr, "Grapple Gun", "grapple")
 	end)
 	print("[CandyRun] Spawn room created! Capsules placed at Z=35, floorY=" .. tostring(START_HEIGHT))
 end

@@ -13,6 +13,8 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 local timerEvent = ReplicatedStorage:WaitForChild("TimerUpdate")
 local candyCollectedEvent = ReplicatedStorage:WaitForChild("CandyCollected")
+local candyUpdateEvent = ReplicatedStorage:WaitForChild("CandyUpdate")
+local purchaseEvent = ReplicatedStorage:WaitForChild("PurchaseItem")
 local respawnEvent = ReplicatedStorage:WaitForChild("RespawnTimer")
 local timerStartEvent = ReplicatedStorage:WaitForChild("TimerStart")
 
@@ -170,6 +172,53 @@ candyCollectedEvent.OnClientEvent:Connect(function()
 		TextTransparency = 1,
 	}):Play()
 	task.delay(0.7, function() plusOne:Destroy() end)
+end)
+
+-- Sync candy balance from server
+candyUpdateEvent.OnClientEvent:Connect(function(newBalance)
+	candiesCollected = newBalance
+	candyLabel.Text = "🍬 " .. candiesCollected
+end)
+
+-- Purchase feedback
+purchaseEvent.OnClientEvent:Connect(function(status, itemName, price, balance)
+	if status == "success" then
+		-- Green flash + text
+		local msg = Instance.new("TextLabel")
+		msg.Size = UDim2.fromScale(0.3, 0.06)
+		msg.Position = UDim2.fromScale(0.35, 0.45)
+		msg.BackgroundColor3 = Color3.fromRGB(30, 100, 40)
+		msg.BackgroundTransparency = 0.3
+		msg.Text = "✅ Bought " .. itemName .. "! (-" .. price .. " 🍬)"
+		msg.TextColor3 = Color3.fromRGB(100, 255, 120)
+		msg.TextScaled = true; msg.Font = Enum.Font.FredokaOne
+		msg.Parent = hudGui
+		Instance.new("UICorner", msg).CornerRadius = UDim.new(0, 10)
+		TweenService:Create(msg, TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.fromScale(0.35, 0.38),
+			TextTransparency = 1,
+			BackgroundTransparency = 1,
+		}):Play()
+		task.delay(2.2, function() msg:Destroy() end)
+	elseif status == "fail" then
+		-- Red flash
+		local msg = Instance.new("TextLabel")
+		msg.Size = UDim2.fromScale(0.3, 0.06)
+		msg.Position = UDim2.fromScale(0.35, 0.45)
+		msg.BackgroundColor3 = Color3.fromRGB(100, 30, 30)
+		msg.BackgroundTransparency = 0.3
+		msg.Text = "❌ Need " .. price .. " 🍬 for " .. itemName .. " (have " .. balance .. ")"
+		msg.TextColor3 = Color3.fromRGB(255, 100, 100)
+		msg.TextScaled = true; msg.Font = Enum.Font.FredokaOne
+		msg.Parent = hudGui
+		Instance.new("UICorner", msg).CornerRadius = UDim.new(0, 10)
+		TweenService:Create(msg, TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.fromScale(0.35, 0.38),
+			TextTransparency = 1,
+			BackgroundTransparency = 1,
+		}):Play()
+		task.delay(2.7, function() msg:Destroy() end)
+	end
 end)
 
 -- ============================================================
