@@ -1053,98 +1053,99 @@ local BUILDERS = {
 
 local LEVELS = {
 	-- ====== PHASE 1: WARM-UP (1-15) ======
-	-- Generous spacing, large platforms, introduce candy types gradually
-	{offset={0,-1,-20},candy="chocolate",size=1.3},          -- 1: easy opener
-	{offset={2,0,-19},candy="candycorn",size=1.2},           -- 2: slight right
-	{offset={-3,1,-20},candy="donut",size=1.2},              -- 3: left, slight rise
-	{offset={1,-1,-18},candy="gummy",size=1.1},              -- 4: easy hop
-	{offset={-2,0,-21},candy="cupcake",size=1.2},            -- 5: introduce cupcake
-	{offset={3,1,-19},candy="lollipop",size=1.1},            -- 6: introduce lollipop
-	{offset={-1,-2,-20},candy="jawbreaker",size=1.1},        -- 7: introduce jawbreaker
-	{offset={0,1,-22},candy="candycane",size=1.2,checkpoint=true}, -- 8: CHECKPOINT
-	{offset={2,-1,-19},candy="chocolate",size=1.1},          -- 9: back to basics
-	{offset={-3,0,-20},candy="candycorn",size=1.0},          -- 10: steady
-	{offset={3,2,-21},candy="gummy",size=1.1},               -- 11: slight climb
-	{offset={-2,-1,-19},candy="lollipop",size=1.0},          -- 12: easy descent
-	{offset={1,0,-22},candy="donut",size=1.1},               -- 13: longer gap
-	{offset={-3,1,-20},candy="cupcake",size=1.0},            -- 14: approaching checkpoint
-	{offset={2,0,-21},candy="jawbreaker",size=1.1,checkpoint=true}, -- 15: CHECKPOINT
+	-- Large scale, generous spacing, multiple candy types per sequence
+	{offset={0,-1,-24},candy="chocolate",size=1.4},          -- 1: big easy opener
+	{offset={4,0,-22},candy="candycorn",size=1.3},           -- 2: wide right
+	{offset={-6,1,-25},candy="donut",size=1.3},              -- 3: big swing left
+	{offset={3,-1,-20},candy="gummy",size=1.2},              -- 4: forward hop
+	{offset={-5,2,-24},candy="cupcake",size=1.3},            -- 5: climbing left
+	{offset={7,0,-22},candy="lollipop",size=1.2},            -- 6: wide right swing
+	{offset={-4,-2,-25},candy="jawbreaker",size=1.2},        -- 7: descent left
+	{offset={2,1,-20},candy="candycane",size=1.3},           -- 8: easy bridge
+	{offset={-6,0,-24},candy="chocolate",size=1.2},          -- 9: wide left
+	{offset={5,2,-22},candy="gummy",size=1.1},               -- 10: climbing right
+	{offset={-3,-1,-25},candy="lollipop",size=1.2},          -- 11: forward descent
+	{offset={7,1,-20},candy="donut",size=1.1},               -- 12: swing right
+	{offset={-8,0,-24},candy="cupcake",size=1.2},            -- 13: far left
+	{offset={5,2,-22},candy="candycorn",size=1.1},           -- 14: climb right
+	{offset={0,-1,-25},candy="jawbreaker",size=1.3,checkpoint=true}, -- 15: CHECKPOINT
 
-	-- ====== PHASE 2: MIXED PATHS (16-35) ======
-	-- Tighter, medium platforms, height variation, moving/crumbling introduced
-	{offset={-4,2,-22},candy="candycane",size=0.95},         -- 16: tighter spacing
-	{offset={5,-1,-20},candy="lollipop",size=0.9},           -- 17: wide swing right
-	{offset={-3,3,-21},candy="gummy",size=0.85},             -- 18: climbing
-	{offset={4,-2,-23},candy="chocolate",size=0.9},          -- 19: drop and leap
-	{offset={0,1,-20},candy="donut",size=1.1,checkpoint=true}, -- 20: CHECKPOINT
-	-- Staircase sequence 21-24
-	{offset={-2,2,-14},candy="candycorn",size=0.85},         -- 21: stair step 1
-	{offset={-1,3,-13},candy="candycane",size=0.8},          -- 22: stair step 2
-	{offset={0,3,-14},candy="lollipop",size=0.8},            -- 23: stair step 3
-	{offset={1,2,-15},candy="cupcake",size=0.85,moving=true}, -- 24: first moving!
-	{offset={-5,-3,-24},candy="jawbreaker",size=0.8},        -- 25: big drop, first crumbling
-	{offset={6,4,-22},candy="gummy",size=0.75,crumbling=true}, -- 26: crumbling intro
-	{offset={-4,-2,-23},candy="chocolate",size=0.8,moving=true}, -- 27: moving + gap
-	{offset={3,1,-21},candy="candycorn",size=1.0,checkpoint=true}, -- 28: CHECKPOINT
-	{offset={-6,5,-22},candy="lollipop",size=0.8},           -- 29: high climb left
-	{offset={5,-4,-24},candy="donut",size=0.75,crumbling=true}, -- 30: crumbling drop
-	{offset={-3,3,-21},candy="candycane",size=0.8,moving=true}, -- 31: moving climb
-	-- Staircase sequence 32-34
-	{offset={2,2,-13},candy="jawbreaker",size=0.75},         -- 32: rapid stair 1
-	{offset={1,4,-12},candy="cupcake",size=0.7},             -- 33: rapid stair 2
-	{offset={-1,3,-14},candy="gummy",size=0.75,crumbling=true}, -- 34: crumbling stair
-	{offset={-2,0,-22},candy="chocolate",size=1.0,checkpoint=true}, -- 35: CHECKPOINT
+	-- ====== PHASE 2: MIXED PATHS (16-30) ======
+	-- Medium platforms, more height variation, moving/crumbling introduced
+	{offset={-6,3,-26},candy="candycane",size=1.1},          -- 16: bigger gaps
+	{offset={8,-2,-24},candy="lollipop",size=1.0},           -- 17: wide swing
+	{offset={-5,4,-25},candy="gummy",size=0.95},             -- 18: climbing
+	{offset={7,-3,-28},candy="chocolate",size=1.0},          -- 19: drop and leap
+	-- Staircase up 20-22
+	{offset={-3,3,-16},candy="candycorn",size=0.95},         -- 20: stair up 1
+	{offset={-2,4,-15},candy="candycane",size=0.9},          -- 21: stair up 2
+	{offset={0,4,-16},candy="lollipop",size=0.9},            -- 22: stair up 3
+	{offset={4,-6,-28},candy="cupcake",size=0.95,moving=true}, -- 23: first moving!
+	{offset={-7,3,-26},candy="jawbreaker",size=0.9},         -- 24: recovery
+	{offset={8,-4,-25},candy="gummy",size=0.85,crumbling=true}, -- 25: first crumbling!
+	{offset={-6,5,-28},candy="donut",size=0.9,moving=true},  -- 26: moving climb
+	{offset={5,-3,-24},candy="chocolate",size=0.95},         -- 27: stable landing
+	{offset={-8,4,-26},candy="candycane",size=0.9,crumbling=true}, -- 28: crumble left
+	{offset={7,-5,-28},candy="lollipop",size=0.85,moving=true}, -- 29: moving right
+	{offset={0,2,-25},candy="cupcake",size=1.2,checkpoint=true}, -- 30: CHECKPOINT
 
-	-- ====== PHASE 3: GAUNTLET (36-55) ======
-	-- Small platforms, moving+crumbling, zigzags, combo chains, rollercoasters
-	{offset={5,-3,-26},candy="candycane",size=0.7,moving=true}, -- 36: gauntlet begins
-	{offset={-7,4,-24},candy="lollipop",size=0.65},          -- 37: big swing left
-	{offset={6,-5,-27},candy="gummy",size=0.6,crumbling=true}, -- 38: crumble drop
-	{offset={-8,8,-25},candy="jawbreaker",size=0.65,moving=true}, -- 39: huge climb
-	{offset={3,-2,-24},candy="donut",size=1.0,checkpoint=true}, -- 40: CHECKPOINT
-	-- Combo chain 41-45
-	{offset={-2,-6,-11},candy="candycorn",size=0.55},        -- 41: rapid 1
-	{offset={3,5,-12},candy="chocolate",size=0.5},           -- 42: rapid 2
-	{offset={-4,-5,-10},candy="cupcake",size=0.55},          -- 43: rapid 3
-	{offset={5,7,-13},candy="candycane",size=0.5},           -- 44: rapid 4
-	{offset={-3,-6,-11},candy="lollipop",size=0.55},         -- 45: rapid 5 end chain
-	-- Height rollercoaster 46-48
-	{offset={6,8,-28},candy="gummy",size=0.65,moving=true},  -- 46: launch up
-	{offset={-7,-7,-26},candy="jawbreaker",size=0.6,crumbling=true}, -- 47: plummet
-	{offset={4,5,-25},candy="donut",size=1.0,checkpoint=true}, -- 48: CHECKPOINT
-	-- Zigzag gauntlet 49-54
-	{offset={-8,-4,-28},candy="candycorn",size=0.6,moving=true}, -- 49: zig left
-	{offset={8,6,-26},candy="chocolate",size=0.55,crumbling=true}, -- 50: zag right up
-	{offset={-7,-5,-29},candy="cupcake",size=0.6,moving=true}, -- 51: zig left down
-	{offset={7,5,-27},candy="candycane",size=0.55},          -- 52: zag right up
-	{offset={-6,-7,-30},candy="lollipop",size=0.6,crumbling=true}, -- 53: zig drop
-	{offset={5,6,-26},candy="gummy",size=0.6,moving=true},   -- 54: zag recover
-	{offset={-2,0,-24},candy="jawbreaker",size=1.1,checkpoint=true}, -- 55: CHECKPOINT
+	-- ====== PHASE 3: GAUNTLET (31-45) ======
+	-- Smaller platforms, combos, zigzags, heavy moving+crumbling
+	{offset={-8,3,-30},candy="jawbreaker",size=0.8,moving=true}, -- 31: gauntlet opens
+	{offset={10,-4,-28},candy="candycorn",size=0.75},        -- 32: huge swing right
+	{offset={-9,5,-30},candy="gummy",size=0.7,crumbling=true}, -- 33: crumble climb
+	{offset={8,-6,-26},candy="chocolate",size=0.75,moving=true}, -- 34: moving drop
+	-- Combo chain 35-38
+	{offset={-4,-5,-14},candy="lollipop",size=0.65},         -- 35: rapid 1
+	{offset={5,6,-13},candy="candycane",size=0.6},           -- 36: rapid 2
+	{offset={-6,-5,-12},candy="donut",size=0.65,crumbling=true}, -- 37: rapid crumble
+	{offset={7,7,-15},candy="cupcake",size=0.6,moving=true}, -- 38: rapid moving
+	-- Height rollercoaster 39-42
+	{offset={-8,8,-30},candy="jawbreaker",size=0.7,moving=true}, -- 39: launch up
+	{offset={6,-10,-28},candy="gummy",size=0.65,crumbling=true}, -- 40: plummet
+	{offset={-5,9,-26},candy="candycorn",size=0.7,moving=true}, -- 41: rocket back up
+	{offset={8,-8,-30},candy="chocolate",size=0.65,crumbling=true}, -- 42: drop again
+	-- Zigzag finish
+	{offset={-10,5,-28},candy="lollipop",size=0.7,moving=true}, -- 43: zig left
+	{offset={10,-4,-26},candy="candycane",size=0.65,crumbling=true}, -- 44: zag right
+	{offset={0,2,-28},candy="donut",size=1.2,checkpoint=true}, -- 45: CHECKPOINT
 
-	-- ====== PHASE 4: NIGHTMARE (56-75) ======
-	-- Tiny platforms, almost all moving/crumbling, extreme precision
-	{offset={-6,-4,-28},candy="chocolate",size=0.6,moving=true}, -- 56: nightmare starts
-	{offset={7,5,-26},candy="candycane",size=0.55,crumbling=true}, -- 57: crumble climb
-	{offset={-5,-8,-30},candy="lollipop",size=0.5,moving=true}, -- 58: trust fall!
-	{offset={8,6,-27},candy="cupcake",size=0.5,crumbling=true}, -- 59: tiny crumble
-	{offset={-3,1,-24},candy="donut",size=1.0,checkpoint=true}, -- 60: CHECKPOINT
-	-- Rapid fire sequence 61-66
-	{offset={4,-6,-11},candy="gummy",size=0.45,moving=true},  -- 61: rapid tiny 1
-	{offset={-5,5,-10},candy="jawbreaker",size=0.5,crumbling=true}, -- 62: rapid tiny 2
-	{offset={6,-7,-12},candy="candycorn",size=0.45,moving=true}, -- 63: rapid tiny 3
-	{offset={-4,6,-11},candy="chocolate",size=0.5,crumbling=true}, -- 64: rapid tiny 4
-	{offset={5,-5,-10},candy="candycane",size=0.45,moving=true}, -- 65: rapid tiny 5
-	{offset={-6,7,-13},candy="lollipop",size=0.5,crumbling=true}, -- 66: rapid tiny 6
-	{offset={3,-9,-28},candy="cupcake",size=0.55,moving=true}, -- 67: trust fall drop
-	{offset={-2,2,-22},candy="gummy",size=1.0,checkpoint=true}, -- 68: CHECKPOINT
-	-- Final gauntlet 69-74: the hardest jumps
-	{offset={7,-10,-30},candy="jawbreaker",size=0.45,moving=true}, -- 69: extreme drop
-	{offset={-8,8,-28},candy="donut",size=0.4,crumbling=true}, -- 70: tiny crumble climb
-	{offset={6,-9,-30},candy="candycorn",size=0.4,moving=true}, -- 71: precision hell
-	{offset={-7,7,-29},candy="chocolate",size=0.45,crumbling=true}, -- 72: crumble zigzag
-	{offset={8,-8,-28},candy="candycane",size=0.4,moving=true}, -- 73: moving precision
-	{offset={-6,6,-30},candy="lollipop",size=0.4,crumbling=true}, -- 74: near impossible
-	{offset={0,0,-26},candy="cupcake",size=1.2,checkpoint=true}, -- 75: FINISH CHECKPOINT
+	-- ====== PHASE 4: EXTREME (46-60) ======
+	-- Small/tiny platforms, almost all moving or crumbling
+	{offset={-8,-4,-30},candy="cupcake",size=0.65,moving=true}, -- 46: extreme begins
+	{offset={10,6,-28},candy="jawbreaker",size=0.6,crumbling=true}, -- 47: crumble swing
+	{offset={-7,-8,-32},candy="gummy",size=0.55,moving=true}, -- 48: trust fall
+	{offset={9,7,-28},candy="candycorn",size=0.6,crumbling=true}, -- 49: tiny crumble
+	{offset={-8,-6,-30},candy="chocolate",size=0.6,moving=true}, -- 50: moving drop
+	-- Rapid fire 51-56
+	{offset={5,-5,-13},candy="lollipop",size=0.5,moving=true}, -- 51: rapid 1
+	{offset={-6,6,-12},candy="candycane",size=0.55,crumbling=true}, -- 52: rapid 2
+	{offset={7,-7,-14},candy="donut",size=0.5,moving=true},  -- 53: rapid 3
+	{offset={-5,5,-11},candy="cupcake",size=0.55,crumbling=true}, -- 54: rapid 4
+	{offset={6,-6,-13},candy="jawbreaker",size=0.5,moving=true}, -- 55: rapid 5
+	{offset={-7,7,-15},candy="gummy",size=0.5,crumbling=true}, -- 56: rapid 6
+	{offset={4,-9,-30},candy="candycorn",size=0.55,moving=true}, -- 57: trust fall
+	{offset={-6,8,-28},candy="chocolate",size=0.55,crumbling=true}, -- 58: crumble climb
+	{offset={8,-7,-32},candy="lollipop",size=0.5,moving=true}, -- 59: precision
+	{offset={0,2,-26},candy="candycane",size=1.2,checkpoint=true}, -- 60: CHECKPOINT
+
+	-- ====== PHASE 5: NIGHTMARE (61-75) ======
+	-- Tiniest platforms, everything moves or crumbles, maximum challenge
+	{offset={-9,-5,-32},candy="donut",size=0.5,moving=true}, -- 61: nightmare starts
+	{offset={10,7,-30},candy="cupcake",size=0.45,crumbling=true}, -- 62: ultra tiny
+	{offset={-8,-9,-32},candy="jawbreaker",size=0.45,moving=true}, -- 63: trust fall hell
+	{offset={9,8,-28},candy="gummy",size=0.5,crumbling=true}, -- 64: crumble climb
+	{offset={-10,-7,-34},candy="candycorn",size=0.45,moving=true}, -- 65: widest swing
+	{offset={8,6,-30},candy="chocolate",size=0.5,crumbling=true}, -- 66: crumble right
+	{offset={-7,-10,-32},candy="lollipop",size=0.45,moving=true}, -- 67: huge drop
+	{offset={9,9,-28},candy="candycane",size=0.45,crumbling=true}, -- 68: crumble rocket
+	{offset={-10,-8,-34},candy="donut",size=0.4,moving=true}, -- 69: extreme precision
+	{offset={8,7,-30},candy="cupcake",size=0.45,crumbling=true}, -- 70: micro crumble
+	{offset={-9,-10,-32},candy="jawbreaker",size=0.4,moving=true}, -- 71: death drop
+	{offset={10,8,-30},candy="gummy",size=0.4,crumbling=true}, -- 72: impossible crumble
+	{offset={-8,-9,-34},candy="candycorn",size=0.4,moving=true}, -- 73: pixel perfect
+	{offset={9,10,-28},candy="chocolate",size=0.4,crumbling=true}, -- 74: near impossible
+	{offset={0,0,-30},candy="cupcake",size=1.4,checkpoint=true}, -- 75: FINAL CHECKPOINT
 }
 
 -- ============================================================
@@ -2312,14 +2313,123 @@ local function generateMap()
 
 		if level.checkpoint then
 			checkpointPositions[i] = currentPos + Vector3.new(0,5,0)
-			local cp = Instance.new("Part"); cp.Size = Vector3.new(1,10,10)
-			cp.Position = currentPos + Vector3.new(0,5,0); cp.Anchored = true
-			cp.Color = Color3.fromRGB(100,255,100); cp.Material = Enum.Material.Neon
-			cp.Transparency = 0.3; cp.CanCollide = false; cp.Shape = Enum.PartType.Cylinder
-			cp.Orientation = Vector3.new(0,0,90); cp.Parent = mapFolder
 
-			local cpt = Instance.new("Part"); cpt.Size = Vector3.new(18,14,18)
-			cpt.Position = currentPos + Vector3.new(0,7,0); cpt.Anchored = true
+			-- ============================================================
+			-- CHECKPOINT PLATFORM: Large decorated candy spawn pad
+			-- ============================================================
+
+			-- Main platform (big, solid, safe landing)
+			local cpBase = Instance.new("Part")
+			cpBase.Name = "CheckpointBase_"..i
+			cpBase.Size = Vector3.new(5, 40, 40)
+			cpBase.Position = currentPos + Vector3.new(0, 0, 0)
+			cpBase.Anchored = true; cpBase.Color = Color3.fromRGB(255, 220, 180)
+			cpBase.Material = Enum.Material.SmoothPlastic
+			cpBase.Shape = Enum.PartType.Cylinder
+			cpBase.Orientation = Vector3.new(0,0,90)
+			cpBase.TopSurface = Enum.SurfaceType.Smooth
+			cpBase.BottomSurface = Enum.SurfaceType.Smooth
+			cpBase.Parent = mapFolder
+
+			-- Frosting top layer
+			local cpFrost = Instance.new("Part")
+			cpFrost.Size = Vector3.new(2.5, 38, 38)
+			cpFrost.Position = currentPos + Vector3.new(0, 3, 0)
+			cpFrost.Anchored = true; cpFrost.Color = Color3.fromRGB(255, 180, 220)
+			cpFrost.Material = Enum.Material.SmoothPlastic
+			cpFrost.Shape = Enum.PartType.Cylinder
+			cpFrost.Orientation = Vector3.new(0,0,90)
+			cpFrost.CanCollide = true; cpFrost.Parent = mapFolder
+
+			-- Neon ring border
+			local cpRing = Instance.new("Part")
+			cpRing.Size = Vector3.new(1.5, 44, 44)
+			cpRing.Position = currentPos + Vector3.new(0, -1, 0)
+			cpRing.Anchored = true; cpRing.Color = Color3.fromRGB(100, 255, 150)
+			cpRing.Material = Enum.Material.Neon
+			cpRing.Shape = Enum.PartType.Cylinder
+			cpRing.Orientation = Vector3.new(0,0,90)
+			cpRing.Transparency = 0.2; cpRing.CanCollide = false
+			cpRing.Parent = mapFolder
+
+			-- Inner glow ring
+			local cpGlow = Instance.new("Part")
+			cpGlow.Size = Vector3.new(0.5, 30, 30)
+			cpGlow.Position = currentPos + Vector3.new(0, 4, 0)
+			cpGlow.Anchored = true; cpGlow.Color = Color3.fromRGB(255, 255, 200)
+			cpGlow.Material = Enum.Material.Neon
+			cpGlow.Shape = Enum.PartType.Cylinder
+			cpGlow.Orientation = Vector3.new(0,0,90)
+			cpGlow.Transparency = 0.5; cpGlow.CanCollide = false
+			cpGlow.Parent = mapFolder
+
+			-- Bright light
+			local cpLight = Instance.new("PointLight")
+			cpLight.Color = Color3.fromRGB(100, 255, 150)
+			cpLight.Brightness = 3; cpLight.Range = 60
+			cpLight.Parent = cpBase
+
+			-- 4 candy cane pillars around the checkpoint
+			for pi = 1, 4 do
+				local angle = (pi/4)*math.pi*2
+				local px = math.cos(angle)*18
+				local pz = math.sin(angle)*18
+				local pillar = Instance.new("Part")
+				pillar.Size = Vector3.new(2, 20, 2)
+				pillar.Position = currentPos + Vector3.new(px, 12, pz)
+				pillar.Anchored = true; pillar.Color = Color3.fromRGB(255,30,30)
+				pillar.Material = Enum.Material.SmoothPlastic; pillar.Parent = mapFolder
+
+				local pStripe = Instance.new("Part")
+				pStripe.Size = Vector3.new(1.5, 20.5, 1.5)
+				pStripe.Position = currentPos + Vector3.new(px, 12, pz)
+				pStripe.Anchored = true; pStripe.Color = Color3.fromRGB(255,255,255)
+				pStripe.Transparency = 0.35; pStripe.CanCollide = false
+				pStripe.Material = Enum.Material.SmoothPlastic; pStripe.Parent = mapFolder
+
+				local topBall = Instance.new("Part")
+				topBall.Size = Vector3.new(3,3,3)
+				topBall.Position = currentPos + Vector3.new(px, 23, pz)
+				topBall.Anchored = true; topBall.Color = Color3.fromRGB(100,255,150)
+				topBall.Shape = Enum.PartType.Ball
+				topBall.Material = Enum.Material.Neon
+				topBall.CanCollide = false; topBall.Parent = mapFolder
+			end
+
+			-- Sprinkles on platform
+			local sprCols = {Color3.fromRGB(255,80,80),Color3.fromRGB(80,255,80),Color3.fromRGB(80,80,255),Color3.fromRGB(255,255,80)}
+			for si = 1, 20 do
+				local sa = (si/20)*math.pi*2
+				local sr = math.random(3, 16)
+				local spr = Instance.new("Part")
+				spr.Size = Vector3.new(0.4,0.4,1.4)
+				spr.Position = currentPos + Vector3.new(math.cos(sa)*sr, 4.5, math.sin(sa)*sr)
+				spr.Rotation = Vector3.new(0, math.random(0,360), 0)
+				spr.Anchored = true; spr.CanCollide = false
+				spr.Color = sprCols[math.random(1,#sprCols)]
+				spr.Material = Enum.Material.SmoothPlastic
+				spr.Parent = mapFolder
+			end
+
+			-- Checkpoint sign
+			local cpSign = Instance.new("Part")
+			cpSign.Size = Vector3.new(14, 5, 1.5)
+			cpSign.Position = currentPos + Vector3.new(0, 26, -18)
+			cpSign.Anchored = true; cpSign.Color = Color3.fromRGB(100,255,150)
+			cpSign.Material = Enum.Material.Neon; cpSign.Parent = mapFolder
+			local sGui = Instance.new("SurfaceGui"); sGui.Face = Enum.NormalId.Front; sGui.Parent = cpSign
+			local sLbl = Instance.new("TextLabel"); sLbl.Size = UDim2.fromScale(1,1); sLbl.BackgroundTransparency = 1
+			sLbl.Text = "✓ CHECKPOINT " .. i; sLbl.TextColor3 = Color3.fromRGB(255,255,255)
+			sLbl.TextScaled = true; sLbl.Font = Enum.Font.FredokaOne; sLbl.Parent = sGui
+			-- Back face too
+			local sGui2 = Instance.new("SurfaceGui"); sGui2.Face = Enum.NormalId.Back; sGui2.Parent = cpSign
+			local sLbl2 = Instance.new("TextLabel"); sLbl2.Size = UDim2.fromScale(1,1); sLbl2.BackgroundTransparency = 1
+			sLbl2.Text = "✓ CHECKPOINT " .. i; sLbl2.TextColor3 = Color3.fromRGB(255,255,255)
+			sLbl2.TextScaled = true; sLbl2.Font = Enum.Font.FredokaOne; sLbl2.Parent = sGui2
+
+			-- Trigger zone (sets spawn point)
+			local cpt = Instance.new("Part"); cpt.Size = Vector3.new(40,20,40)
+			cpt.Position = currentPos + Vector3.new(0,10,0); cpt.Anchored = true
 			cpt.Transparency = 1; cpt.CanCollide = false; cpt.Parent = mapFolder
 			cpt.Touched:Connect(function(hit)
 				local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
@@ -2328,18 +2438,6 @@ local function generateMap()
 					if data and (not data.checkpoint or data.checkpoint < i) then data.checkpoint = i end
 				end
 			end)
-
-			local pole = Instance.new("Part"); pole.Size = Vector3.new(0.5,14,0.5)
-			pole.Position = currentPos + Vector3.new(6,11,0); pole.Anchored = true
-			pole.Color = Color3.fromRGB(255,255,255); pole.Material = Enum.Material.SmoothPlastic; pole.Parent = mapFolder
-
-			local flag = Instance.new("Part"); flag.Size = Vector3.new(5,3,0.3)
-			flag.Position = currentPos + Vector3.new(8.5,17,0); flag.Anchored = true
-			flag.Color = Color3.fromRGB(255,100,150); flag.Material = Enum.Material.Neon; flag.Parent = mapFolder
-			local fG = Instance.new("SurfaceGui"); fG.Face = Enum.NormalId.Front; fG.Parent = flag
-			local fL = Instance.new("TextLabel"); fL.Size = UDim2.fromScale(1,1); fL.BackgroundTransparency = 1
-			fL.Text = "✓ "..i; fL.TextColor3 = Color3.fromRGB(255,255,255)
-			fL.TextScaled = true; fL.Font = Enum.Font.FredokaOne; fL.Parent = fG
 		end
 
 		if i % 3 == 0 then createCollectible(currentPos, i) end
@@ -2442,7 +2540,7 @@ local function generateMap()
 			tile.BottomSurface = Enum.SurfaceType.Smooth
 			tile.Parent = mapFolder
 
-			-- Disappear logic
+			-- Disappear logic: 0.5s after touch, tile vanishes instantly
 			local tileActive = true
 			local tileFading = false
 			tile.Touched:Connect(function(hit)
@@ -2451,27 +2549,22 @@ local function generateMap()
 				if not hum then return end
 				tileFading = true
 
-				-- Warning flash (turns red)
-				task.wait(0.5)
-				TweenService:Create(tile, TweenInfo.new(0.3), {
-					Color = Color3.fromRGB(255, 50, 50),
-				}):Play()
-
-				-- Crack particles
+				-- Instant red flash + crack particles
+				tile.Color = Color3.fromRGB(255, 50, 50)
 				local crack = Instance.new("ParticleEmitter")
 				crack.Color = ColorSequence.new(Color3.fromRGB(255,100,100))
 				crack.Size = NumberSequence.new({NumberSequenceKeypoint.new(0,0.8),NumberSequenceKeypoint.new(1,0)})
 				crack.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.3),NumberSequenceKeypoint.new(1,1)})
-				crack.Lifetime = NumberRange.new(0.3,0.6); crack.Rate = 40
-				crack.Speed = NumberRange.new(2,6); crack.SpreadAngle = Vector2.new(60,60)
+				crack.Lifetime = NumberRange.new(0.3,0.6); crack.Rate = 60
+				crack.Speed = NumberRange.new(3,8); crack.SpreadAngle = Vector2.new(60,60)
 				crack.Parent = tile
 
-				-- Fade out
-				task.wait(0.7)
+				-- Disappear after 0.5 seconds
+				task.wait(0.5)
 				crack:Destroy()
 				tileActive = false
 				tile.CanCollide = false
-				TweenService:Create(tile, TweenInfo.new(0.3), {Transparency = 1}):Play()
+				TweenService:Create(tile, TweenInfo.new(0.15), {Transparency = 1}):Play()
 
 				-- Respawn after 4 seconds
 				task.wait(4)
