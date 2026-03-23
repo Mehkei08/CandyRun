@@ -1012,7 +1012,7 @@ local function createItemCapsule(position, itemName, itemColor, itemEmoji, displ
 	capsule.CanCollide = false
 	capsule.Parent = model
 
-	-- Base pedestal
+	-- Base pedestal (non-collidable so player can walk in)
 	local basePed = Instance.new("Part")
 	basePed.Size = Vector3.new(2.5, 12, 12)
 	basePed.Position = position + Vector3.new(0, -6.5, 0)
@@ -1020,6 +1020,7 @@ local function createItemCapsule(position, itemName, itemColor, itemEmoji, displ
 	basePed.Material = Enum.Material.SmoothPlastic
 	basePed.Shape = Enum.PartType.Cylinder
 	basePed.Orientation = Vector3.new(0, 0, 90)
+	basePed.CanCollide = false
 	basePed.Parent = model
 
 	-- Base accent ring
@@ -1101,11 +1102,11 @@ local function createItemCapsule(position, itemName, itemColor, itemEmoji, displ
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = itemColor; stroke.Thickness = 2; stroke.Parent = lbl
 
-	-- Walk-in trigger zone
+	-- Walk-in trigger zone (tall + wide so player reliably touches it)
 	local trigger = Instance.new("Part")
 	trigger.Name = "Trigger_"..itemName
-	trigger.Size = Vector3.new(10, 14, 10)
-	trigger.Position = position
+	trigger.Size = Vector3.new(14, 20, 14)
+	trigger.Position = position + Vector3.new(0, -3, 0)
 	trigger.Anchored = true; trigger.Transparency = 1; trigger.CanCollide = false
 	trigger.Parent = model
 
@@ -1548,6 +1549,7 @@ local function createSpawnRoom()
 
 	-- Item give logic
 	local function giveItem(player, itemName)
+		print("[CandyRun] Giving item:", itemName, "to", player.Name)
 		local char = player.Character
 		if not char then return end
 		local hum = char:FindFirstChild("Humanoid")
