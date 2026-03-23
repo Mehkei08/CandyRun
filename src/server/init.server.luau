@@ -45,7 +45,7 @@ grappleHitEvent.Name = "GrappleHit"; grappleHitEvent.Parent = ReplicatedStorage
 -- ============================================================
 
 Lighting.ClockTime = 21.5  -- evening/dusk
-Lighting.Brightness = 0.8
+Lighting.Brightness = 1.2
 Lighting.Ambient = Color3.fromRGB(60, 40, 70)
 Lighting.OutdoorAmbient = Color3.fromRGB(80, 55, 90)
 Lighting.FogColor = Color3.fromRGB(120, 80, 130)
@@ -1055,162 +1055,162 @@ local BUILDERS = {
 local LEVELS = {
 	-- ====== PHASE 1: WARM-UP (1-15) ======
 	{offset={0,-1,-24},candy="chocolate",size=1.4,
-		extra={{6,0,-8,"candycorn",1.0},{-5,1,-14,"gummy",1.1}}},
+		extra={{13,3,-16,"candycorn",1.0},{-11,1,-28,"gummy",1.1}}},
 	{offset={4,0,-22},candy="candycorn",size=1.3,
-		extra={{-7,1,-10,"lollipop",1.0},{3,-1,-16,"donut",1.1}}},
+		extra={{-15,1,-20,"lollipop",1.0},{6,-1,-32,"donut",1.1}}},
 	{offset={-6,1,-25},candy="donut",size=1.3,
-		extra={{5,0,-9,"chocolate",1.0}}},
+		extra={{11,3,-18,"chocolate",1.0}}},
 	{offset={3,-1,-20},candy="gummy",size=1.2,
-		extra={{-4,1,-11,"cupcake",1.0},{6,0,-18,"candycane",1.1}}},
+		extra={{-8,1,-22,"cupcake",1.0},{13,3,-36,"candycane",1.1}}},
 	{offset={-5,2,-24},candy="cupcake",size=1.3,
-		extra={{4,-1,-10,"jawbreaker",1.0}}},
+		extra={{8,-1,-20,"jawbreaker",1.0}}},
 	{offset={7,0,-22},candy="lollipop",size=1.2,
-		extra={{-6,1,-12,"gummy",1.0},{-2,0,-20,"candycorn",1.1}}},
+		extra={{-13,1,-24,"gummy",1.0},{-4,-2,-40,"candycorn",1.1}}},
 	{offset={-4,-2,-25},candy="jawbreaker",size=1.2,
-		extra={{5,1,-10,"chocolate",1.0}}},
+		extra={{11,1,-20,"chocolate",1.0}}},
 	{offset={2,1,-20},candy="candycane",size=1.3,
-		extra={{-5,0,-11,"donut",0.95},{4,1,-18,"lollipop",1.0}}},
+		extra={{-11,-2,-22,"donut",0.95},{8,1,-36,"lollipop",1.0}}},
 	{offset={-6,0,-24},candy="chocolate",size=1.2,
-		extra={{7,-1,-10,"cupcake",1.0}}},
+		extra={{15,-1,-20,"cupcake",1.0}}},
 	{offset={5,2,-22},candy="gummy",size=1.1,
-		extra={{-6,0,-12,"jawbreaker",1.0},{-2,2,-20,"candycane",1.0}}},
+		extra={{-13,-2,-24,"jawbreaker",1.0},{-4,3,-40,"candycane",1.0}}},
 	{offset={-3,-1,-25},candy="lollipop",size=1.2,
-		extra={{5,1,-9,"candycorn",0.95}}},
+		extra={{11,1,-18,"candycorn",0.95}}},
 	{offset={7,1,-20},candy="donut",size=1.1,
-		extra={{-5,0,-12,"gummy",1.0},{-8,1,-20,"cupcake",1.0}}},
+		extra={{-11,-2,-24,"gummy",1.0},{-17,1,-40,"cupcake",1.0}}},
 	{offset={-8,0,-24},candy="cupcake",size=1.2,
-		extra={{6,-1,-10,"chocolate",1.0}}},
+		extra={{13,-1,-20,"chocolate",1.0}}},
 	{offset={5,2,-22},candy="candycorn",size=1.1,
-		extra={{-4,0,-11,"lollipop",0.95},{-7,2,-18,"jawbreaker",1.0}}},
+		extra={{-8,-2,-22,"lollipop",0.95},{-15,3,-36,"jawbreaker",1.0}}},
 	{offset={0,-1,-25},candy="jawbreaker",size=1.3,checkpoint=true}, -- 15: CHECKPOINT
 
 	-- ====== PHASE 2: MIXED PATHS (16-30) ======
 	{offset={-6,3,-26},candy="candycane",size=1.1,
-		extra={{5,-1,-10,"gummy",0.85},{8,1,-18,"lollipop",0.9}}},
+		extra={{11,-1,-20,"gummy",0.85},{17,1,-36,"lollipop",0.9}}},
 	{offset={8,-2,-24},candy="lollipop",size=1.0,
-		extra={{-6,2,-10,"chocolate",0.85},{-3,0,-17,"candycorn",0.9}}},
+		extra={{-13,3,-20,"chocolate",0.85},{-6,-2,-34,"candycorn",0.9}}},
 	{offset={-5,4,-25},candy="gummy",size=0.95,
-		extra={{6,-1,-11,"donut",0.85},{3,2,-19,"cupcake",0.9}}},
+		extra={{13,-1,-22,"donut",0.85},{6,3,-38,"cupcake",0.9}}},
 	{offset={7,-3,-28},candy="chocolate",size=1.0,
-		extra={{-5,2,-9,"jawbreaker",0.8}}},
+		extra={{-11,3,-18,"jawbreaker",0.8}}},
 	-- Staircase 20-22
 	{offset={-3,3,-16},candy="candycorn",size=0.95,
-		extra={{-2,3,-10,"candycane",0.85},{0,3,-18,"lollipop",0.85}}},
+		extra={{-4,4,-20,"candycane",0.85},{0,4,-36,"lollipop",0.85}}},
 	{offset={-2,4,-15},candy="candycane",size=0.9,
-		extra={{4,-1,-9,"gummy",0.8}}},
+		extra={{8,-1,-18,"gummy",0.8}}},
 	{offset={0,4,-16},candy="lollipop",size=0.9,
-		extra={{-5,-2,-10,"chocolate",0.8},{5,1,-17,"donut",0.85}}},
+		extra={{-11,-3,-20,"chocolate",0.8},{11,1,-34,"donut",0.85}}},
 	{offset={4,-6,-28},candy="cupcake",size=0.95,moving=true,
-		extra={{-6,3,-10,"jawbreaker",0.8}}},
+		extra={{-13,4,-20,"jawbreaker",0.8}}},
 	{offset={-7,3,-26},candy="jawbreaker",size=0.9,
-		extra={{6,-2,-11,"candycorn",0.8},{3,1,-18,"gummy",0.85}}},
+		extra={{13,-3,-22,"candycorn",0.8},{6,1,-36,"gummy",0.85}}},
 	{offset={8,-4,-25},candy="gummy",size=0.85,crumbling=true,
-		extra={{-7,3,-10,"cupcake",0.8}}},
+		extra={{-15,4,-20,"cupcake",0.8}}},
 	{offset={-6,5,-28},candy="donut",size=0.9,moving=true,
-		extra={{5,-2,-11,"lollipop",0.8},{8,0,-18,"candycane",0.85}}},
+		extra={{11,-3,-22,"lollipop",0.8},{17,3,-36,"candycane",0.85}}},
 	{offset={5,-3,-24},candy="chocolate",size=0.95,
-		extra={{-6,2,-10,"jawbreaker",0.8}}},
+		extra={{-13,3,-20,"jawbreaker",0.8}}},
 	{offset={-8,4,-26},candy="candycane",size=0.9,crumbling=true,
-		extra={{7,-3,-11,"gummy",0.8},{4,1,-18,"chocolate",0.85}}},
+		extra={{15,-4,-22,"gummy",0.8},{8,1,-36,"chocolate",0.85}}},
 	{offset={7,-5,-28},candy="lollipop",size=0.85,moving=true,
-		extra={{-6,3,-10,"donut",0.8}}},
+		extra={{-13,4,-20,"donut",0.8}}},
 	{offset={0,2,-25},candy="cupcake",size=1.2,checkpoint=true}, -- 30: CHECKPOINT
 
 	-- ====== PHASE 3: GAUNTLET (31-45) ======
 	{offset={-8,3,-30},candy="jawbreaker",size=0.8,moving=true,
-		extra={{6,-2,-10,"candycorn",0.65},{10,1,-18,"gummy",0.7}}},
+		extra={{13,-3,-20,"candycorn",0.65},{22,1,-36,"gummy",0.7}}},
 	{offset={10,-4,-28},candy="candycorn",size=0.75,
-		extra={{-8,3,-10,"chocolate",0.65},{-5,-1,-17,"lollipop",0.7}}},
+		extra={{-17,4,-20,"chocolate",0.65},{-11,-1,-34,"lollipop",0.7}}},
 	{offset={-9,5,-30},candy="gummy",size=0.7,crumbling=true,
-		extra={{7,-3,-10,"cupcake",0.6},{4,2,-16,"candycane",0.65}}},
+		extra={{15,-4,-20,"cupcake",0.6},{8,3,-32,"candycane",0.65}}},
 	{offset={8,-6,-26},candy="chocolate",size=0.75,moving=true,
-		extra={{-7,4,-11,"donut",0.6}}},
+		extra={{-15,6,-22,"donut",0.6}}},
 	-- Combo chain 35-38
 	{offset={-4,-5,-14},candy="lollipop",size=0.65,
-		extra={{4,3,-8,"jawbreaker",0.55},{-3,-2,-14,"candycorn",0.6}}},
+		extra={{8,4,-16,"jawbreaker",0.55},{-6,-3,-28,"candycorn",0.6}}},
 	{offset={5,6,-13},candy="candycane",size=0.6,
-		extra={{-5,-3,-9,"gummy",0.55},{4,4,-15,"chocolate",0.6}}},
+		extra={{-11,-4,-18,"gummy",0.55},{8,6,-30,"chocolate",0.6}}},
 	{offset={-6,-5,-12},candy="donut",size=0.65,crumbling=true,
-		extra={{6,2,-9,"cupcake",0.55}}},
+		extra={{13,3,-18,"cupcake",0.55}}},
 	{offset={7,7,-15},candy="cupcake",size=0.6,moving=true,
-		extra={{-6,-4,-10,"lollipop",0.55},{-3,3,-16,"jawbreaker",0.6}}},
+		extra={{-13,-6,-20,"lollipop",0.55},{-6,4,-32,"jawbreaker",0.6}}},
 	-- Height rollercoaster 39-42
 	{offset={-8,8,-30},candy="jawbreaker",size=0.7,moving=true,
-		extra={{6,-3,-10,"candycane",0.6}}},
+		extra={{13,-4,-20,"candycane",0.6}}},
 	{offset={6,-10,-28},candy="gummy",size=0.65,crumbling=true,
-		extra={{-5,4,-10,"donut",0.55},{-8,1,-17,"candycorn",0.6}}},
+		extra={{-11,6,-20,"donut",0.55},{-17,1,-34,"candycorn",0.6}}},
 	{offset={-5,9,-26},candy="candycorn",size=0.7,moving=true,
-		extra={{6,-4,-10,"chocolate",0.55}}},
+		extra={{13,-6,-20,"chocolate",0.55}}},
 	{offset={8,-8,-30},candy="chocolate",size=0.65,crumbling=true,
-		extra={{-7,5,-10,"gummy",0.55},{-3,2,-17,"lollipop",0.6}}},
+		extra={{-15,7,-20,"gummy",0.55},{-6,3,-34,"lollipop",0.6}}},
 	-- Zigzag
 	{offset={-10,5,-28},candy="lollipop",size=0.7,moving=true,
-		extra={{8,-3,-10,"cupcake",0.55}}},
+		extra={{17,-4,-20,"cupcake",0.55}}},
 	{offset={10,-4,-26},candy="candycane",size=0.65,crumbling=true,
-		extra={{-8,4,-10,"jawbreaker",0.55},{-5,-2,-16,"donut",0.6}}},
+		extra={{-17,6,-20,"jawbreaker",0.55},{-11,-3,-32,"donut",0.6}}},
 	{offset={0,2,-28},candy="donut",size=1.2,checkpoint=true}, -- 45: CHECKPOINT
 
 	-- ====== PHASE 4: EXTREME (46-60) ======
 	{offset={-8,-4,-30},candy="cupcake",size=0.65,moving=true,
-		extra={{6,3,-9,"lollipop",0.5},{10,-1,-16,"jawbreaker",0.55}}},
+		extra={{13,4,-18,"lollipop",0.5},{22,-1,-32,"jawbreaker",0.55}}},
 	{offset={10,6,-28},candy="jawbreaker",size=0.6,crumbling=true,
-		extra={{-8,-3,-10,"candycorn",0.5}}},
+		extra={{-17,-4,-20,"candycorn",0.5}}},
 	{offset={-7,-8,-32},candy="gummy",size=0.55,moving=true,
-		extra={{7,4,-10,"chocolate",0.5},{4,-2,-17,"candycane",0.5}}},
+		extra={{15,6,-20,"chocolate",0.5},{8,-3,-34,"candycane",0.5}}},
 	{offset={9,7,-28},candy="candycorn",size=0.6,crumbling=true,
-		extra={{-7,-3,-10,"donut",0.5}}},
+		extra={{-15,-4,-20,"donut",0.5}}},
 	{offset={-8,-6,-30},candy="chocolate",size=0.6,moving=true,
-		extra={{6,4,-9,"cupcake",0.5},{9,-2,-16,"gummy",0.5}}},
+		extra={{13,6,-18,"cupcake",0.5},{19,-3,-32,"gummy",0.5}}},
 	-- Rapid fire 51-56
 	{offset={5,-5,-13},candy="lollipop",size=0.5,moving=true,
-		extra={{-4,3,-8,"jawbreaker",0.4}}},
+		extra={{-8,4,-16,"jawbreaker",0.4}}},
 	{offset={-6,6,-12},candy="candycane",size=0.55,crumbling=true,
-		extra={{5,-3,-9,"candycorn",0.45},{3,2,-15,"chocolate",0.5}}},
+		extra={{11,-4,-18,"candycorn",0.45},{6,3,-30,"chocolate",0.5}}},
 	{offset={7,-7,-14},candy="donut",size=0.5,moving=true,
-		extra={{-6,4,-8,"gummy",0.4}}},
+		extra={{-13,6,-16,"gummy",0.4}}},
 	{offset={-5,5,-11},candy="cupcake",size=0.55,crumbling=true,
-		extra={{5,-4,-9,"lollipop",0.45}}},
+		extra={{11,-6,-18,"lollipop",0.45}}},
 	{offset={6,-6,-13},candy="jawbreaker",size=0.5,moving=true,
-		extra={{-5,3,-9,"candycane",0.4},{-3,-2,-15,"donut",0.45}}},
+		extra={{-11,4,-18,"candycane",0.4},{-6,-3,-30,"donut",0.45}}},
 	{offset={-7,7,-15},candy="gummy",size=0.5,crumbling=true,
-		extra={{6,-4,-8,"cupcake",0.4}}},
+		extra={{13,-6,-16,"cupcake",0.4}}},
 	{offset={4,-9,-30},candy="candycorn",size=0.55,moving=true,
-		extra={{-5,5,-10,"chocolate",0.45},{-8,0,-17,"lollipop",0.5}}},
+		extra={{-11,7,-20,"chocolate",0.45},{-17,-2,-34,"lollipop",0.5}}},
 	{offset={-6,8,-28},candy="chocolate",size=0.55,crumbling=true,
-		extra={{7,-4,-9,"gummy",0.45}}},
+		extra={{15,-6,-18,"gummy",0.45}}},
 	{offset={8,-7,-32},candy="lollipop",size=0.5,moving=true,
-		extra={{-6,3,-10,"candycane",0.4},{-9,1,-17,"jawbreaker",0.45}}},
+		extra={{-13,4,-20,"candycane",0.4},{-19,1,-34,"jawbreaker",0.45}}},
 	{offset={0,2,-26},candy="candycane",size=1.2,checkpoint=true}, -- 60: CHECKPOINT
 
 	-- ====== PHASE 5: NIGHTMARE (61-75) ======
 	{offset={-9,-5,-32},candy="donut",size=0.5,moving=true,
-		extra={{7,3,-9,"gummy",0.4},{10,-2,-16,"candycorn",0.4}}},
+		extra={{15,4,-18,"gummy",0.4},{22,-3,-32,"candycorn",0.4}}},
 	{offset={10,7,-30},candy="cupcake",size=0.45,crumbling=true,
-		extra={{-8,-4,-9,"jawbreaker",0.35},{-5,2,-15,"chocolate",0.4}}},
+		extra={{-17,-6,-18,"jawbreaker",0.35},{-11,3,-30,"chocolate",0.4}}},
 	{offset={-8,-9,-32},candy="jawbreaker",size=0.45,moving=true,
-		extra={{7,5,-9,"lollipop",0.35}}},
+		extra={{15,7,-18,"lollipop",0.35}}},
 	{offset={9,8,-28},candy="gummy",size=0.5,crumbling=true,
-		extra={{-7,-3,-10,"candycane",0.4},{-10,2,-16,"donut",0.4}}},
+		extra={{-15,-4,-20,"candycane",0.4},{-22,3,-32,"donut",0.4}}},
 	{offset={-10,-7,-34},candy="candycorn",size=0.45,moving=true,
-		extra={{8,4,-9,"cupcake",0.35}}},
+		extra={{17,6,-18,"cupcake",0.35}}},
 	{offset={8,6,-30},candy="chocolate",size=0.5,crumbling=true,
-		extra={{-6,-3,-10,"lollipop",0.35},{-9,1,-16,"jawbreaker",0.4}}},
+		extra={{-13,-4,-20,"lollipop",0.35},{-19,1,-32,"jawbreaker",0.4}}},
 	{offset={-7,-10,-32},candy="lollipop",size=0.45,moving=true,
-		extra={{6,5,-9,"gummy",0.35}}},
+		extra={{13,7,-18,"gummy",0.35}}},
 	{offset={9,9,-28},candy="candycane",size=0.45,crumbling=true,
-		extra={{-7,-5,-10,"chocolate",0.35},{-10,3,-16,"candycorn",0.4}}},
+		extra={{-15,-7,-20,"chocolate",0.35},{-22,4,-32,"candycorn",0.4}}},
 	{offset={-10,-8,-34},candy="donut",size=0.4,moving=true,
-		extra={{8,4,-9,"cupcake",0.3}}},
+		extra={{17,6,-18,"cupcake",0.3}}},
 	{offset={8,7,-30},candy="cupcake",size=0.45,crumbling=true,
-		extra={{-7,-3,-10,"jawbreaker",0.35},{-10,2,-16,"gummy",0.35}}},
+		extra={{-15,-4,-20,"jawbreaker",0.35},{-22,3,-32,"gummy",0.35}}},
 	{offset={-9,-10,-32},candy="jawbreaker",size=0.4,moving=true,
-		extra={{7,5,-9,"lollipop",0.3}}},
+		extra={{15,7,-18,"lollipop",0.3}}},
 	{offset={10,8,-30},candy="gummy",size=0.4,crumbling=true,
-		extra={{-8,-4,-9,"candycane",0.3},{-5,2,-15,"chocolate",0.35}}},
+		extra={{-17,-6,-18,"candycane",0.3},{-11,3,-30,"chocolate",0.35}}},
 	{offset={-8,-9,-34},candy="candycorn",size=0.4,moving=true,
-		extra={{7,4,-9,"donut",0.3}}},
+		extra={{15,6,-18,"donut",0.3}}},
 	{offset={9,10,-28},candy="chocolate",size=0.4,crumbling=true,
-		extra={{-8,-5,-10,"cupcake",0.3},{-5,3,-16,"lollipop",0.35}}},
+		extra={{-17,-7,-20,"cupcake",0.3},{-11,4,-32,"lollipop",0.35}}},
 	{offset={0,0,-30},candy="cupcake",size=1.4,checkpoint=true}, -- 75: FINAL CHECKPOINT
 }
 
@@ -1278,18 +1278,21 @@ local function makeCrumbling(model, walkable)
 	walkable.Touched:Connect(function(hit)
 		if crumbling then return end
 		local ch = hit.Parent; local hum = ch and ch:FindFirstChild("Humanoid")
-		if not hum then return end; crumbling = true; task.wait(0.8)
+		if not hum then return end; crumbling = true; task.wait(0.5)
 		local parts = {}
 		for _, p in model:GetDescendants() do
 			if p:IsA("BasePart") then table.insert(parts, {part=p, oT=p.Transparency, oC=p.CanCollide}) end
 		end
-		for step = 1,5 do
-			for _, i in ipairs(parts) do i.part.Transparency = i.oT+(1-i.oT)*(step/5) end; task.wait(0.06)
+		-- Quick fade out
+		for step = 1,3 do
+			for _, i in ipairs(parts) do i.part.Transparency = i.oT+(1-i.oT)*(step/3) end; task.wait(0.05)
 		end
-		for _, i in ipairs(parts) do i.part.CanCollide = false end; task.wait(4)
+		for _, i in ipairs(parts) do i.part.CanCollide = false end
+		-- Reappear after 2 seconds
+		task.wait(2)
 		for _, i in ipairs(parts) do i.part.CanCollide = i.oC end
-		for step = 5,0,-1 do
-			for _, i in ipairs(parts) do i.part.Transparency = i.oT+(1-i.oT)*(step/5) end; task.wait(0.06)
+		for step = 3,0,-1 do
+			for _, i in ipairs(parts) do i.part.Transparency = i.oT+(1-i.oT)*(step/3) end; task.wait(0.05)
 		end
 		crumbling = false
 	end)
@@ -2377,6 +2380,11 @@ local function generateMap()
 		if level.moving then makeMoving(mdl) end
 		if level.crumbling then makeCrumbling(mdl, walkable) end
 
+		-- 40% chance: make this main block permeable (disappear/reappear)
+		if not level.checkpoint and math.random() < 0.4 then
+			makeCrumbling(mdl, walkable)
+		end
+
 		-- Spawn extra candy blocks for this level (multi-block paths)
 		if level.extra then
 			for ei, ex in ipairs(level.extra) do
@@ -2385,7 +2393,10 @@ local function generateMap()
 				local exSize = ex[5] or 0.8
 				local exBuilder = BUILDERS[exCandy] or buildChocolateBar
 				local exWalkable, exMdl = exBuilder(i*100+ei, exPos, exSize)
-				-- Extra blocks don't move/crumble (they're stepping stones)
+				-- 40% of extra blocks are also permeable
+				if math.random() < 0.4 then
+					makeCrumbling(exMdl, exWalkable)
+				end
 			end
 		end
 
