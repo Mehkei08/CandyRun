@@ -996,6 +996,53 @@ local function buildCarpetDisplay(parent, position)
 	return carpetModel
 end
 
+-- Build a grappling gun display model
+local function buildGrappleDisplay(parent, position)
+	local gunModel = Instance.new("Model")
+	gunModel.Name = "GrappleDisplay"; gunModel.Parent = parent
+
+	local barrel = Instance.new("Part")
+	barrel.Size = Vector3.new(1.2, 1.2, 4)
+	barrel.Position = position + Vector3.new(0, 0, 1)
+	barrel.Anchored = true; barrel.CanCollide = false
+	barrel.Color = Color3.fromRGB(80, 80, 90)
+	barrel.Material = Enum.Material.Metal; barrel.Parent = gunModel
+
+	local tip = Instance.new("Part")
+	tip.Size = Vector3.new(1.4, 1.4, 0.5)
+	tip.Position = position + Vector3.new(0, 0, 3.2)
+	tip.Anchored = true; tip.CanCollide = false
+	tip.Color = Color3.fromRGB(255, 80, 80)
+	tip.Material = Enum.Material.Neon; tip.Parent = gunModel
+
+	local grip = Instance.new("Part")
+	grip.Size = Vector3.new(0.8, 2, 0.8)
+	grip.Position = position + Vector3.new(0, -1.2, 0)
+	grip.Anchored = true; grip.CanCollide = false
+	grip.Color = Color3.fromRGB(60, 60, 65)
+	grip.Material = Enum.Material.SmoothPlastic; grip.Parent = gunModel
+
+	local hook = Instance.new("Part")
+	hook.Size = Vector3.new(0.6, 0.6, 0.6)
+	hook.Position = position + Vector3.new(0, 0, 3.8)
+	hook.Anchored = true; hook.CanCollide = false
+	hook.Color = Color3.fromRGB(255, 200, 50)
+	hook.Material = Enum.Material.Neon
+	hook.Shape = Enum.PartType.Ball; hook.Parent = gunModel
+
+	local light = Instance.new("PointLight")
+	light.Color = Color3.fromRGB(255, 100, 100)
+	light.Brightness = 1.2; light.Range = 12
+	light.Parent = barrel
+
+	return gunModel
+end
+
+-- Build a fusion coil display (alternating blue + purple)
+local function buildFusionCoilDisplay(parent, position)
+	buildCoilDisplay(parent, position, Color3.fromRGB(80, 200, 255), Color3.fromRGB(180, 80, 255))
+end
+
 local function createItemCapsule(position, itemName, itemColor, itemEmoji, displayType)
 	local model = Instance.new("Model"); model.Name = itemName.."Capsule"
 
@@ -1114,59 +1161,8 @@ local function createItemCapsule(position, itemName, itemColor, itemEmoji, displ
 	return trigger
 end
 
--- Build a grappling gun display model
-local function buildGrappleDisplay(parent, position)
-	local gunModel = Instance.new("Model")
-	gunModel.Name = "GrappleDisplay"; gunModel.Parent = parent
-
-	-- Barrel
-	local barrel = Instance.new("Part")
-	barrel.Size = Vector3.new(1.2, 1.2, 4)
-	barrel.Position = position + Vector3.new(0, 0, 1)
-	barrel.Anchored = true; barrel.CanCollide = false
-	barrel.Color = Color3.fromRGB(80, 80, 90)
-	barrel.Material = Enum.Material.Metal; barrel.Parent = gunModel
-
-	-- Barrel tip (neon)
-	local tip = Instance.new("Part")
-	tip.Size = Vector3.new(1.4, 1.4, 0.5)
-	tip.Position = position + Vector3.new(0, 0, 3.2)
-	tip.Anchored = true; tip.CanCollide = false
-	tip.Color = Color3.fromRGB(255, 80, 80)
-	tip.Material = Enum.Material.Neon; tip.Parent = gunModel
-
-	-- Handle/grip
-	local grip = Instance.new("Part")
-	grip.Size = Vector3.new(0.8, 2, 0.8)
-	grip.Position = position + Vector3.new(0, -1.2, 0)
-	grip.Anchored = true; grip.CanCollide = false
-	grip.Color = Color3.fromRGB(60, 60, 65)
-	grip.Material = Enum.Material.SmoothPlastic; grip.Parent = gunModel
-
-	-- Hook decoration
-	local hook = Instance.new("Part")
-	hook.Size = Vector3.new(0.6, 0.6, 0.6)
-	hook.Position = position + Vector3.new(0, 0, 3.8)
-	hook.Anchored = true; hook.CanCollide = false
-	hook.Color = Color3.fromRGB(255, 200, 50)
-	hook.Material = Enum.Material.Neon
-	hook.Shape = Enum.PartType.Ball; hook.Parent = gunModel
-
-	-- Glow
-	local light = Instance.new("PointLight")
-	light.Color = Color3.fromRGB(255, 100, 100)
-	light.Brightness = 1.2; light.Range = 12
-	light.Parent = barrel
-
-	return gunModel
-end
-
--- Build a fusion coil display (alternating blue + purple)
-local function buildFusionCoilDisplay(parent, position)
-	buildCoilDisplay(parent, position, Color3.fromRGB(80, 200, 255), Color3.fromRGB(180, 80, 255))
-end
-
 local function createSpawnRoom()
+	print("[CandyRun] Creating spawn room...")
 	local model = Instance.new("Model"); model.Name = "SpawnRoom"
 
 	-- Room dimensions
@@ -1748,6 +1744,7 @@ local function createSpawnRoom()
 			task.delay(2, function() debounces[plr.UserId.."grapple"] = nil end)
 		end
 	end)
+	print("[CandyRun] Spawn room created! Capsules placed at Z=35, floorY=" .. tostring(START_HEIGHT))
 end
 
 -- ============================================================
@@ -2332,7 +2329,13 @@ Players.PlayerRemoving:Connect(function(player) playerData[player] = nil end)
 -- INIT
 -- ============================================================
 
-generateMap()
-createHallway()
-createDeathFloor()
+local ok, err = pcall(generateMap)
+if not ok then warn("[CandyRun] ERROR in generateMap: " .. tostring(err)) end
+
+local ok2, err2 = pcall(createHallway)
+if not ok2 then warn("[CandyRun] ERROR in createHallway: " .. tostring(err2)) end
+
+local ok3, err3 = pcall(createDeathFloor)
+if not ok3 then warn("[CandyRun] ERROR in createDeathFloor: " .. tostring(err3)) end
+
 print("[CandyRun] Server v6 initialized! Huge spawn room, fusion coil, grapple gun, final hallway run.")
