@@ -2040,13 +2040,10 @@ local function createSpawnRoom()
 
 		elseif itemName == "Magic Carpet" then
 			makeCarpetHandle(tool)
-			-- Carpet: tell client to enable flight mode
+			-- Carpet: tell client carpet is equipped (M1 to mount/dismount)
 			tool.Equipped:Connect(function()
 				carpetFlyEvent:FireClient(player, true)
-				-- Sit on carpet: force sit
-				if hum then
-					hum.Sit = true
-				end
+				-- Don't force sit here — client handles mount on M1
 			end)
 			tool.Unequipped:Connect(function()
 				carpetFlyEvent:FireClient(player, false)
@@ -2056,10 +2053,10 @@ local function createSpawnRoom()
 				-- Clean up any flight forces
 				local rootPart = char:FindFirstChild("HumanoidRootPart")
 				if rootPart then
-					local bg = rootPart:FindFirstChild("CarpetGyro")
-					if bg then bg:Destroy() end
-					local bv = rootPart:FindFirstChild("CarpetVelocity")
-					if bv then bv:Destroy() end
+					for _, name in ipairs({"CarpetGyro","CarpetVelocity","CarpetAntiGrav","MountAntiGrav","MountVelocity","MountGyro"}) do
+						local obj = rootPart:FindFirstChild(name)
+						if obj then obj:Destroy() end
+					end
 				end
 			end)
 

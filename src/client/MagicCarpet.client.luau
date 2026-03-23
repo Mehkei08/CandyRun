@@ -1,8 +1,9 @@
 --[[
 	Magic Carpet - Client Flight Controller
-	Equip carpet → sit mount animation → then full flight.
-	WASD = horizontal movement, Space = ascend, LeftControl = descend
-	Click M1 to pull out, character sits on it with mount-up anim before flying.
+	Equip carpet tool → press M1 (click) → mount animation → sit + fly.
+	Press M1 again to dismount.
+	WASD = horizontal, Space = ascend, LeftControl = descend.
+	Leaves a rainbow trail behind.
 ]]
 
 local Players = game:GetService("Players")
@@ -18,10 +19,11 @@ local carpetFlyEvent = ReplicatedStorage:WaitForChild("CarpetFlyToggle")
 
 local isFlying = false
 local isMounting = false
-local FLY_SPEED = 80         -- carpet speed (+20 from before)
+local carpetEquipped = false
+local FLY_SPEED = 80
 local FLY_ASCEND_SPEED = 50
 local FLY_DESCEND_SPEED = 45
-local MOUNT_DURATION = 1.5   -- seconds to mount before flying
+local MOUNT_DURATION = 1.2
 
 -- Track input
 local keysDown = {}
@@ -35,8 +37,80 @@ UserInputService.InputEnded:Connect(function(input)
 	keysDown[input.KeyCode] = nil
 end)
 
--- Flight connection
 local flyConnection = nil
+local trailPart = nil
+local trail = nil
+
+-- ============================================================
+-- TRAIL (rainbow trail behind the carpet)
+-- ============================================================
+
+local function createTrail(character)
+	local rootPart = character:FindFirstChild("HumanoidRootPart")
+	if not rootPart then return end
+
+	-- Trail attachment points
+	local att0 = Instance.new("Attachment")
+	att0.Name = "CarpetTrailAtt0"
+	att0.Position = Vector3.new(0, -2, 2)
+	att0.Parent = rootPart
+
+	local att1 = Instance.new("Attachment")
+	att1.Name = "CarpetTrailAtt1"
+	att1.Position = Vector3.new(0, -2, -2)
+	att1.Parent = rootPart
+
+	trail = Instance.new("Trail")
+	trail.Name = "CarpetTrail"
+	trail.Attachment0 = att0
+	trail.Attachment1 = att1
+	trail.Lifetime = 1.5
+	trail.MinLength = 0.1
+	trail.FaceCamera = true
+	trail.LightEmission = 0.5
+	trail.LightInfluence = 0.3
+	trail.Enabled = true
+
+	-- Rainbow color
+	trail.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 50, 50)),
+		ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 160, 0)),
+		ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255, 255, 50)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(50, 255, 50)),
+		ColorSequenceKeypoint.new(0.67, Color3.fromRGB(50, 150, 255)),
+		ColorSequenceKeypoint.new(0.83, Color3.fromRGB(130, 50, 255)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 50, 255)),
+	})
+
+	trail.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.1),
+		NumberSequenceKeypoint.new(0.5, 0.3),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+
+	trail.WidthScale = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(0.5, 0.6),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+
+	trail.Parent = rootPart
+	return att0, att1
+end
+
+local function destroyTrail(character)
+	if not character then return end
+	local rootPart = character:FindFirstChild("HumanoidRootPart")
+	if rootPart then
+		local t = rootPart:FindFirstChild("CarpetTrail")
+		if t then t:Destroy() end
+		local a0 = rootPart:FindFirstChild("CarpetTrailAtt0")
+		if a0 then a0:Destroy() end
+		local a1 = rootPart:FindFirstChild("CarpetTrailAtt1")
+		if a1 then a1:Destroy() end
+	end
+	trail = nil
+end
 
 -- ============================================================
 -- MOUNT ANIMATION
@@ -46,24 +120,18 @@ local function playMountAnimation()
 	isMounting = true
 
 	local character = player.Character
-	if not character then isMounting = false; return end
+	if not character then isMounting = false; return false end
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
 	local humanoid = character:FindFirstChild("Humanoid")
-	if not rootPart or not humanoid then isMounting = false; return end
+	if not rootPart or not humanoid then isMounting = false; return false end
 
-	-- Force sit pose
+	-- Force sit
 	humanoid.Sit = true
-
-	-- Freeze movement during mount
 	local origSpeed = humanoid.WalkSpeed
 	humanoid.WalkSpeed = 0
 	humanoid.JumpPower = 0
 
-	-- Hover effect: slowly rise 3 studs with a gentle spin
-	local startPos = rootPart.Position
-	local startCF = rootPart.CFrame
-
-	-- Anti-gravity to hold in place during mount
+	-- Anti-gravity during mount
 	local mountForce = Instance.new("BodyForce")
 	mountForce.Name = "MountAntiGrav"
 	local mass = 0
@@ -73,58 +141,49 @@ local function playMountAnimation()
 	mountForce.Force = Vector3.new(0, mass * workspace.Gravity, 0)
 	mountForce.Parent = rootPart
 
-	-- Gentle upward velocity during mount
+	-- Gentle rise
 	local mountVel = Instance.new("BodyVelocity")
 	mountVel.Name = "MountVelocity"
 	mountVel.MaxForce = Vector3.new(50000, 50000, 50000)
-	mountVel.Velocity = Vector3.new(0, 4, 0) -- slow rise
+	mountVel.Velocity = Vector3.new(0, 5, 0)
 	mountVel.Parent = rootPart
 
-	-- Gyro for gentle spin
+	-- Gyro for orientation
 	local mountGyro = Instance.new("BodyGyro")
 	mountGyro.Name = "MountGyro"
 	mountGyro.MaxTorque = Vector3.new(400000, 400000, 400000)
 	mountGyro.P = 5000; mountGyro.D = 300
 	mountGyro.Parent = rootPart
 
-	-- Sparkle particles during mount
+	-- Mount sparkles
 	local mountParticles = Instance.new("ParticleEmitter")
 	mountParticles.Name = "MountParticles"
 	mountParticles.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 220, 100)),
-		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 180, 50)),
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 200)),
 	})
 	mountParticles.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.5, 0.5),
-		NumberSequenceKeypoint.new(1, 0),
+		NumberSequenceKeypoint.new(0, 0.8), NumberSequenceKeypoint.new(1, 0),
 	})
 	mountParticles.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0),
-		NumberSequenceKeypoint.new(1, 1),
+		NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1),
 	})
 	mountParticles.Lifetime = NumberRange.new(0.4, 0.8)
-	mountParticles.Rate = 60
-	mountParticles.Speed = NumberRange.new(3, 8)
+	mountParticles.Rate = 50; mountParticles.Speed = NumberRange.new(3, 8)
 	mountParticles.SpreadAngle = Vector2.new(180, 180)
-	mountParticles.Rotation = NumberRange.new(-180, 180)
 	mountParticles.Parent = rootPart
 
-	-- Gentle spin animation over mount duration
-	local spinSteps = math.ceil(MOUNT_DURATION * 30)
-	for step = 1, spinSteps do
+	-- Animate over mount duration
+	local steps = math.ceil(MOUNT_DURATION * 30)
+	for step = 1, steps do
 		if not isMounting then break end
-		local t = step / spinSteps
-		-- Slow spin: quarter rotation
-		local spinAngle = t * math.pi * 0.5
+		local t = step / steps
 		local camLook = camera.CFrame.LookVector
 		local flatLook = Vector3.new(camLook.X, 0, camLook.Z)
 		if flatLook.Magnitude > 0.1 then
-			mountGyro.CFrame = CFrame.lookAt(Vector3.zero, flatLook.Unit) * CFrame.Angles(0, spinAngle, 0)
+			mountGyro.CFrame = CFrame.lookAt(Vector3.zero, flatLook.Unit)
 		end
-		-- Slow the rise toward end
-		mountVel.Velocity = Vector3.new(0, 4 * (1 - t * 0.7), 0)
+		mountVel.Velocity = Vector3.new(0, 5 * (1 - t * 0.8), 0)
 		task.wait(1/30)
 	end
 
@@ -139,10 +198,9 @@ local function playMountAnimation()
 		end)
 	end
 
-	-- Restore movement
 	humanoid.WalkSpeed = origSpeed
-
 	isMounting = false
+	return true
 end
 
 -- ============================================================
@@ -152,11 +210,11 @@ end
 local function startFlying()
 	if isFlying or isMounting then return end
 
-	-- Play mount animation first
-	playMountAnimation()
-
-	-- After mount, begin flight
+	-- Mount animation first
+	local mounted = playMountAnimation()
+	if not mounted then return end
 	if not player.Character then return end
+
 	isFlying = true
 
 	local character = player.Character
@@ -164,15 +222,17 @@ local function startFlying()
 	local humanoid = character:FindFirstChild("Humanoid")
 	if not rootPart or not humanoid then isFlying = false; return end
 
-	-- Create BodyGyro to keep upright
+	-- Keep sitting
+	humanoid.Sit = true
+
+	-- BodyGyro
 	local gyro = Instance.new("BodyGyro")
 	gyro.Name = "CarpetGyro"
 	gyro.MaxTorque = Vector3.new(400000, 400000, 400000)
-	gyro.P = 10000
-	gyro.D = 500
+	gyro.P = 10000; gyro.D = 500
 	gyro.Parent = rootPart
 
-	-- Create BodyVelocity for movement
+	-- BodyVelocity
 	local bv = Instance.new("BodyVelocity")
 	bv.Name = "CarpetVelocity"
 	bv.MaxForce = Vector3.new(100000, 100000, 100000)
@@ -180,7 +240,7 @@ local function startFlying()
 	bv.P = 5000
 	bv.Parent = rootPart
 
-	-- Disable normal gravity effect
+	-- Anti-gravity
 	local antigrav = Instance.new("BodyForce")
 	antigrav.Name = "CarpetAntiGrav"
 	local mass = 0
@@ -190,7 +250,7 @@ local function startFlying()
 	antigrav.Force = Vector3.new(0, mass * workspace.Gravity, 0)
 	antigrav.Parent = rootPart
 
-	-- Flight particles (subtler than mount)
+	-- Flight particles
 	local particles = Instance.new("ParticleEmitter")
 	particles.Name = "CarpetParticles"
 	particles.Color = ColorSequence.new({
@@ -199,24 +259,21 @@ local function startFlying()
 		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 100, 200)),
 	})
 	particles.Size = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.5),
-		NumberSequenceKeypoint.new(1, 0),
+		NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 0),
 	})
 	particles.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.3),
-		NumberSequenceKeypoint.new(1, 1),
+		NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 1),
 	})
 	particles.Lifetime = NumberRange.new(0.5, 1)
-	particles.Rate = 25
-	particles.Speed = NumberRange.new(1, 3)
+	particles.Rate = 20; particles.Speed = NumberRange.new(1, 3)
 	particles.SpreadAngle = Vector2.new(30, 30)
 	particles.Acceleration = Vector3.new(0, -5, 0)
 	particles.Parent = rootPart
 
-	-- Keep sit pose during flight
-	humanoid.Sit = true
+	-- Create rainbow trail
+	createTrail(character)
 
-	-- Flight update loop
+	-- Flight loop
 	flyConnection = RunService.Heartbeat:Connect(function()
 		if not isFlying or not rootPart or not rootPart.Parent then return end
 
@@ -224,19 +281,17 @@ local function startFlying()
 		local lookVector = camCF.LookVector
 		local rightVector = camCF.RightVector
 
-		-- Flatten for horizontal movement
 		local flatLook = Vector3.new(lookVector.X, 0, lookVector.Z).Unit
 		local flatRight = Vector3.new(rightVector.X, 0, rightVector.Z).Unit
 
 		local moveDir = Vector3.new(0, 0, 0)
 
-		-- WASD horizontal
 		if keysDown[Enum.KeyCode.W] then moveDir += flatLook end
 		if keysDown[Enum.KeyCode.S] then moveDir -= flatLook end
 		if keysDown[Enum.KeyCode.D] then moveDir += flatRight end
 		if keysDown[Enum.KeyCode.A] then moveDir -= flatRight end
 
-		-- Vertical
+		-- Space = ascend, LeftControl = descend
 		if keysDown[Enum.KeyCode.Space] then
 			moveDir += Vector3.new(0, 1, 0) * (FLY_ASCEND_SPEED / FLY_SPEED)
 		end
@@ -244,7 +299,6 @@ local function startFlying()
 			moveDir -= Vector3.new(0, 1, 0) * (FLY_DESCEND_SPEED / FLY_SPEED)
 		end
 
-		-- Normalize and apply speed
 		if moveDir.Magnitude > 0.01 then
 			moveDir = moveDir.Unit * FLY_SPEED
 		else
@@ -253,7 +307,6 @@ local function startFlying()
 
 		bv.Velocity = moveDir
 
-		-- Point gyro in movement direction (or camera direction if stationary)
 		if moveDir.Magnitude > 1 then
 			local flatMove = Vector3.new(moveDir.X, 0, moveDir.Z)
 			if flatMove.Magnitude > 0.1 then
@@ -266,21 +319,19 @@ local function startFlying()
 			end
 		end
 
-		-- Slight tilt in movement direction for visual flair
+		-- Tilt for visual flair
 		local tiltAngle = 0
 		if keysDown[Enum.KeyCode.W] then tiltAngle = -0.18 end
 		if keysDown[Enum.KeyCode.S] then tiltAngle = 0.12 end
 		gyro.CFrame = gyro.CFrame * CFrame.Angles(tiltAngle, 0, 0)
 
-		-- Keep sit pose
-		if humanoid and not humanoid.Sit then
-			humanoid.Sit = true
-		end
+		-- Keep sit
+		if humanoid and not humanoid.Sit then humanoid.Sit = true end
 	end)
 end
 
 local function stopFlying()
-	isMounting = false -- cancel mount if in progress
+	isMounting = false
 	if not isFlying then return end
 	isFlying = false
 
@@ -293,24 +344,15 @@ local function stopFlying()
 	if not character then return end
 	local rootPart = character:FindFirstChild("HumanoidRootPart")
 	local humanoid = character:FindFirstChild("Humanoid")
+
+	-- Destroy trail
+	destroyTrail(character)
+
 	if rootPart then
-		local gyro = rootPart:FindFirstChild("CarpetGyro")
-		if gyro then gyro:Destroy() end
-		local bv = rootPart:FindFirstChild("CarpetVelocity")
-		if bv then bv:Destroy() end
-		local ag = rootPart:FindFirstChild("CarpetAntiGrav")
-		if ag then ag:Destroy() end
-		local particles = rootPart:FindFirstChild("CarpetParticles")
-		if particles then particles:Destroy() end
-		-- Clean up any leftover mount forces
-		local mf = rootPart:FindFirstChild("MountAntiGrav")
-		if mf then mf:Destroy() end
-		local mv = rootPart:FindFirstChild("MountVelocity")
-		if mv then mv:Destroy() end
-		local mg = rootPart:FindFirstChild("MountGyro")
-		if mg then mg:Destroy() end
-		local mp = rootPart:FindFirstChild("MountParticles")
-		if mp then mp:Destroy() end
+		for _, name in ipairs({"CarpetGyro","CarpetVelocity","CarpetAntiGrav","CarpetParticles","MountAntiGrav","MountVelocity","MountGyro","MountParticles"}) do
+			local obj = rootPart:FindFirstChild(name)
+			if obj then obj:Destroy() end
+		end
 	end
 	if humanoid then
 		humanoid.Sit = false
@@ -318,12 +360,44 @@ local function stopFlying()
 	end
 end
 
--- Listen for server toggle
+-- ============================================================
+-- M1 TOGGLE: Click to mount/dismount (server sends equip event)
+-- ============================================================
+
+-- Server fires CarpetFlyToggle(true) on equip, (false) on unequip.
+-- We intercept: on equip, DON'T fly yet — wait for M1 click.
+-- On unequip, always stop.
+
+local waitingForClick = false
+
 carpetFlyEvent.OnClientEvent:Connect(function(enabled)
 	if enabled then
-		task.spawn(startFlying) -- spawn so mount anim doesn't block
+		-- Carpet equipped — wait for M1 to mount
+		carpetEquipped = true
+		waitingForClick = true
+		-- Don't start flying yet
 	else
+		-- Carpet unequipped — stop everything
+		carpetEquipped = false
+		waitingForClick = false
 		stopFlying()
+	end
+end)
+
+-- Listen for M1 click while carpet is equipped
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+	if not carpetEquipped then return end
+
+	if waitingForClick and not isFlying and not isMounting then
+		-- M1 pressed with carpet equipped: mount and fly
+		waitingForClick = false
+		task.spawn(startFlying)
+	elseif isFlying then
+		-- M1 pressed while flying: dismount
+		stopFlying()
+		waitingForClick = true -- can click again to remount
 	end
 end)
 
@@ -331,6 +405,8 @@ end)
 local function onCharacterAdded(character)
 	character:WaitForChild("Humanoid").Died:Connect(function()
 		stopFlying()
+		carpetEquipped = false
+		waitingForClick = false
 	end)
 end
 
@@ -339,4 +415,4 @@ if player.Character then
 	onCharacterAdded(player.Character)
 end
 
-print("[CandyRun] Magic Carpet flight controller loaded! Speed: 80, Mount animation: ON")
+print("[CandyRun] Magic Carpet loaded! M1 to mount/dismount, speed 80, rainbow trail.")
