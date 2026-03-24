@@ -94,7 +94,7 @@ local collectiblesFolder = Instance.new("Folder"); collectiblesFolder.Name = "Co
 local hallwayFolder = Instance.new("Folder"); hallwayFolder.Name = "Hallway"; hallwayFolder.Parent = workspace
 
 local START_HEIGHT = 250
-local HALLWAY_WIDTH = 90
+local HALLWAY_WIDTH = 140
 local HALLWAY_HEIGHT = 130
 local WALL_SEGMENT_LENGTH = 60
 local DEATH_Y = 20
@@ -137,9 +137,9 @@ end
 
 -- Fallback colors/shapes if model not found in ServerStorage
 local CANDY_FALLBACK = {
-	candycane  = {Color3.fromRGB(220, 20, 20), Enum.PartType.Cylinder, Vector3.new(22, 6, 6)},
-	candycorn  = {Color3.fromRGB(255, 200, 40), Enum.PartType.Ball, Vector3.new(14, 14, 14)},
-	chocolate  = {Color3.fromRGB(85, 45, 18), Enum.PartType.Block, Vector3.new(20, 5, 14)},
+	icecream   = {Color3.fromRGB(85, 45, 18), Enum.PartType.Ball, Vector3.new(14, 14, 14)}, -- brown ball (scoop)
+	candycane  = {Color3.fromRGB(220, 20, 20), Enum.PartType.Cylinder, Vector3.new(22, 6, 6)}, -- red+white striped cylinder
+	peppermint = {Color3.fromRGB(255, 20, 20), Enum.PartType.Cylinder, Vector3.new(5, 18, 18)}, -- red+white flat cylinder
 	lollipop   = {Color3.fromRGB(255, 60, 140), Enum.PartType.Cylinder, Vector3.new(5, 18, 18)},
 	gummy      = {Color3.fromRGB(50, 220, 50), Enum.PartType.Ball, Vector3.new(16, 12, 14)},
 	donut      = {Color3.fromRGB(255, 140, 190), Enum.PartType.Cylinder, Vector3.new(5, 18, 18)},
@@ -245,16 +245,17 @@ local function buildCandyFromModel(candyType, index, pos, m)
 	return walkable or model:FindFirstChildWhichIsA("BasePart"), model
 end
 
--- Wrapper functions matching the old signatures
+-- Wrapper functions matching the new candy types
+local function buildIceCream(index, pos, m)
+	return buildCandyFromModel("icecream", index, pos, m)
+end
+
 local function buildCandyCane(index, pos, m)
 	return buildCandyFromModel("candycane", index, pos, m)
 end
 
-local function buildCandyCorn(index, pos, m)
-	return buildCandyFromModel("candycorn", index, pos, m)
-end
-local function buildChocolateBar(index, pos, m)
-	return buildCandyFromModel("chocolate", index, pos, m)
+local function buildPeppermint(index, pos, m)
+	return buildCandyFromModel("peppermint", index, pos, m)
 end
 local function buildLollipop(index, pos, m)
 	return buildCandyFromModel("lollipop", index, pos, m)
@@ -843,8 +844,8 @@ end
 ]=]
 
 local BUILDERS = {
-	candycane = buildCandyCane, candycorn = buildCandyCorn,
-	chocolate = buildChocolateBar, lollipop = buildLollipop,
+	icecream = buildIceCream, candycane = buildCandyCane,
+	peppermint = buildPeppermint, lollipop = buildLollipop,
 	gummy = buildGummyBear, donut = buildDonut,
 	cupcake = buildCupcake, jawbreaker = buildJawbreaker,
 }
@@ -854,93 +855,354 @@ local BUILDERS = {
 -- ============================================================
 
 -- Candy parkour — platforms made from your candy models at different scales
-local CANDY_TYPES = {"candycane","candycorn","chocolate","lollipop","gummy","donut","cupcake","jawbreaker"}
+local CANDY_TYPES = {"icecream","candycane","peppermint","lollipop","gummy","donut","cupcake","jawbreaker"}
 
 local LEVELS = {
-	-- ====== PHASE 1: WARM-UP (1-15) — giant candy, easy hops ======
-	{offset={0,-1,-28},  candy="chocolate",  size=2.0},
-	{offset={6,0,-26},   candy="lollipop",   size=1.8},
-	{offset={-7,1,-28},  candy="cupcake",    size=1.7},
-	{offset={5,-1,-26},  candy="candycane",  size=1.6},
-	{offset={-4,2,-28},  candy="donut",      size=1.8},
-	{offset={8,0,-26},   candy="gummy",      size=1.5},
-	{offset={-6,-1,-28}, candy="jawbreaker", size=1.6},
-	{offset={4,1,-26},   candy="candycorn",  size=1.5},
-	{offset={-5,0,-28},  candy="chocolate",  size=1.4},
-	{offset={7,2,-26},   candy="lollipop",   size=1.4},
-	{offset={-3,-1,-28}, candy="cupcake",    size=1.5},
-	{offset={6,1,-26},   candy="candycane",  size=1.3},
-	{offset={-8,0,-28},  candy="donut",      size=1.4},
-	{offset={5,2,-26},   candy="gummy",      size=1.3},
-	{offset={0,-1,-28},  candy="jawbreaker", size=2.0, checkpoint=true},
+	-- ====== PHASE 1: EASY (1-10) — 2-3 big pieces, large sizes, short jumps ======
+	{
+		pieces = {
+			{offset={0,-1,-28}, candy="icecream", size=2.0},
+			{offset={-12,0,-2}, candy="lollipop", size=1.8},
+		},
+	},
+	{
+		pieces = {
+			{offset={8,2,-26}, candy="candycane", size=1.9},
+			{offset={-14,1,3}, candy="gummy", size=1.7},
+			{offset={10,-1,-5}, candy="donut", size=1.6},
+		},
+	},
+	{
+		pieces = {
+			{offset={-6,0,-28}, candy="cupcake", size=2.1},
+			{offset={16,3,0}, candy="peppermint", size=1.8},
+		},
+	},
+	{
+		pieces = {
+			{offset={4,1,-26}, candy="jawbreaker", size=1.9},
+			{offset={-12,-2,4}, candy="icecream", size=1.7},
+			{offset={8,3,-3}, candy="lollipop", size=1.5},
+		},
+	},
+	{
+		pieces = {
+			{offset={-8,-1,-28}, candy="candycane", size=2.2},
+			{offset={18,2,2}, candy="gummy", size=1.8},
+		},
+	},
+	{
+		pieces = {
+			{offset={6,3,-26}, candy="donut", size=2.0},
+			{offset={-10,0,5}, candy="cupcake", size=1.6},
+			{offset={15,-1,-2}, candy="peppermint", size=1.7},
+		},
+	},
+	{
+		pieces = {
+			{offset={-4,0,-28}, candy="jawbreaker", size=1.8},
+			{offset={20,1,3}, candy="icecream", size=1.9},
+		},
+	},
+	{
+		pieces = {
+			{offset={7,2,-26}, candy="lollipop", size=2.1},
+			{offset={-14,4,0}, candy="candycane", size=1.7},
+			{offset={9,-2,-4}, candy="gummy", size=1.6},
+		},
+	},
+	{
+		pieces = {
+			{offset={-5,-1,-28}, candy="donut", size=2.0},
+			{offset={16,3,2}, candy="cupcake", size=1.8},
+		},
+	},
+	{
+		pieces = {
+			{offset={0,2,-30}, candy="peppermint", size=2.5},
+		},
+		checkpoint = true,
+	},
 
-	-- ====== PHASE 2: MIX IT UP (16-30) — medium candy, longer jumps ======
-	{offset={-7,3,-30},  candy="candycorn",  size=1.2},
-	{offset={9,-2,-28},  candy="chocolate",  size=1.1},
-	{offset={-6,4,-30},  candy="lollipop",   size=1.1},
-	{offset={8,-3,-32},  candy="cupcake",    size=1.0},
-	{offset={-4,3,-28},  candy="candycane",  size=1.1},
-	{offset={-2,4,-28},  candy="donut",      size=1.0},
-	{offset={0,4,-28},   candy="gummy",      size=1.0},
-	{offset={5,-6,-32},  candy="jawbreaker", size=1.0, moving=true},
-	{offset={-8,3,-30},  candy="candycorn",  size=0.95},
-	{offset={9,-4,-28},  candy="chocolate",  size=0.95},
-	{offset={-7,5,-32},  candy="lollipop",   size=0.95, moving=true},
-	{offset={6,-3,-28},  candy="cupcake",    size=1.0},
-	{offset={-9,4,-30},  candy="candycane",  size=0.9},
-	{offset={8,-5,-32},  candy="donut",      size=0.9, moving=true},
-	{offset={0,2,-28},   candy="gummy",      size=1.6, checkpoint=true},
+	-- ====== PHASE 2: MEDIUM (11-20) — 2-4 pieces, medium sizes, wider gaps ======
+	{
+		pieces = {
+			{offset={-12,1,-26}, candy="jawbreaker", size=1.5},
+			{offset={18,-2,4}, candy="icecream", size=1.3},
+			{offset={-8,3,2}, candy="lollipop", size=1.4},
+		},
+	},
+	{
+		pieces = {
+			{offset={10,0,-28}, candy="candycane", size=1.6},
+			{offset={-20,2,0}, candy="gummy", size=1.2},
+			{offset={14,4,-3}, candy="donut", size=1.3},
+			{offset={-6,-1,5}, candy="cupcake", size=1.1},
+		},
+	},
+	{
+		pieces = {
+			{offset={-8,3,-30}, candy="peppermint", size=1.4},
+			{offset={22,-1,2}, candy="jawbreaker", size=1.3},
+		},
+	},
+	{
+		pieces = {
+			{offset={6,-2,-26}, candy="icecream", size=1.5},
+			{offset={-16,4,3}, candy="lollipop", size=1.2},
+			{offset={12,1,-4}, candy="candycane", size=1.3},
+		},
+	},
+	{
+		pieces = {
+			{offset={-14,2,-28}, candy="gummy", size=1.4},
+			{offset={24,0,1}, candy="donut", size=1.3},
+			{offset={-10,5,0}, candy="cupcake", size=1.1},
+		},
+	},
+	{
+		pieces = {
+			{offset={8,-1,-30}, candy="peppermint", size=1.6},
+			{offset={-18,3,4}, candy="jawbreaker", size=1.2},
+		},
+	},
+	{
+		pieces = {
+			{offset={-4,4,-26}, candy="icecream", size=1.3},
+			{offset={20,-3,2}, candy="lollipop", size=1.4},
+			{offset={-12,2,5}, candy="candycane", size=1.1},
+			{offset={16,1,-3}, candy="gummy", size=1.2},
+		},
+	},
+	{
+		pieces = {
+			{offset={12,0,-28}, candy="donut", size=1.5},
+			{offset={-26,3,1}, candy="cupcake", size=1.3},
+		},
+	},
+	{
+		pieces = {
+			{offset={-6,-2,-30}, candy="peppermint", size=1.4},
+			{offset={18,4,3}, candy="jawbreaker", size=1.2},
+			{offset={-14,1,0}, candy="icecream", size=1.3},
+		},
+	},
+	{
+		pieces = {
+			{offset={0,2,-28}, candy="lollipop", size=2.0},
+		},
+		checkpoint = true,
+	},
 
-	-- ====== PHASE 3: GAUNTLET (31-45) — small candy, some moving ======
-	{offset={-9,3,-26},  candy="jawbreaker", size=0.85, moving=true},
-	{offset={11,-4,-32}, candy="candycorn",  size=0.8},
-	{offset={-10,5,-26}, candy="chocolate",  size=0.75},
-	{offset={9,-6,-30},  candy="lollipop",   size=0.8, moving=true},
-	{offset={-5,-5,-26}, candy="cupcake",    size=0.75},
-	{offset={6,6,-26},   candy="candycane",  size=0.7},
-	{offset={-7,-5,-26}, candy="donut",      size=0.75},
-	{offset={8,7,-26},   candy="gummy",      size=0.7, moving=true},
-	{offset={-9,8,-26},  candy="jawbreaker", size=0.75, moving=true},
-	{offset={7,-10,-32}, candy="candycorn",  size=0.7},
-	{offset={-6,9,-30},  candy="chocolate",  size=0.7, moving=true},
-	{offset={9,-8,-26},  candy="lollipop",   size=0.7},
-	{offset={-11,5,-32}, candy="cupcake",    size=0.7, moving=true},
-	{offset={11,-4,-30}, candy="candycane",  size=0.65},
-	{offset={0,2,-32},   candy="donut",      size=1.6, checkpoint=true},
+	-- ====== PHASE 3: HARD (21-35) — 2-4 pieces, some moving, bigger gaps ======
+	{
+		pieces = {
+			{offset={-18,3,-26}, candy="candycane", size=1.2},
+			{offset={28,-1,4}, candy="gummy", size=1.0},
+		},
+	},
+	{
+		pieces = {
+			{offset={14,1,-30}, candy="donut", size=1.1},
+			{offset={-22,5,2}, candy="cupcake", size=0.9},
+			{offset={16,-3,-4}, candy="peppermint", size=1.0},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={-10,-2,-26}, candy="jawbreaker", size=1.3},
+			{offset={24,4,3}, candy="icecream", size=0.9},
+		},
+	},
+	{
+		pieces = {
+			{offset={6,0,-28}, candy="lollipop", size=1.1},
+			{offset={-20,3,5}, candy="candycane", size=1.0},
+			{offset={18,-2,1}, candy="gummy", size=0.8},
+			{offset={-12,4,-3}, candy="donut", size=0.9},
+		},
+	},
+	{
+		pieces = {
+			{offset={-16,2,-30}, candy="cupcake", size=1.2},
+			{offset={30,-1,2}, candy="peppermint", size=0.9},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={12,5,-26}, candy="jawbreaker", size=1.0},
+			{offset={-26,1,4}, candy="icecream", size=1.1},
+			{offset={20,-3,0}, candy="lollipop", size=0.8},
+		},
+	},
+	{
+		pieces = {
+			{offset={-8,-1,-28}, candy="candycane", size=1.0},
+			{offset={24,4,3}, candy="gummy", size=0.9},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={16,2,-30}, candy="donut", size=1.1},
+			{offset={-28,0,5}, candy="cupcake", size=0.8},
+			{offset={14,-4,1}, candy="peppermint", size=0.9},
+			{offset={-10,3,-2}, candy="jawbreaker", size=0.7},
+		},
+	},
+	{
+		pieces = {
+			{offset={-14,-3,-26}, candy="icecream", size=1.0},
+			{offset={32,5,2}, candy="lollipop", size=0.8},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={8,1,-28}, candy="candycane", size=0.9},
+			{offset={-24,4,4}, candy="gummy", size=1.0},
+			{offset={18,-2,0}, candy="donut", size=0.8},
+		},
+	},
+	{
+		pieces = {
+			{offset={-12,3,-30}, candy="cupcake", size=1.1},
+			{offset={26,-1,3}, candy="peppermint", size=0.9},
+		},
+	},
+	{
+		pieces = {
+			{offset={4,-4,-26}, candy="jawbreaker", size=0.8},
+			{offset={-20,5,5}, candy="icecream", size=0.9},
+			{offset={22,0,1}, candy="lollipop", size=0.7},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={-18,2,-28}, candy="candycane", size=1.0},
+			{offset={34,-3,2}, candy="gummy", size=0.8},
+		},
+	},
+	{
+		pieces = {
+			{offset={10,4,-30}, candy="donut", size=0.9},
+			{offset={-28,1,4}, candy="cupcake", size=0.8},
+			{offset={16,-2,0}, candy="peppermint", size=0.7},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={0,2,-32}, candy="jawbreaker", size=2.0},
+		},
+		checkpoint = true,
+	},
 
-	-- ====== PHASE 4: EXTREME (46-60) — tiny candy, most moving ======
-	{offset={-9,-4,-26}, candy="gummy",      size=0.65, moving=true},
-	{offset={11,6,-32},  candy="jawbreaker", size=0.6},
-	{offset={-8,-8,-26}, candy="candycorn",  size=0.6, moving=true},
-	{offset={10,7,-32},  candy="chocolate",  size=0.6},
-	{offset={-9,-6,-26}, candy="lollipop",   size=0.6, moving=true},
-	{offset={6,-5,-26},  candy="cupcake",    size=0.55, moving=true},
-	{offset={-7,6,-26},  candy="candycane",  size=0.55},
-	{offset={8,-7,-26},  candy="donut",      size=0.55, moving=true},
-	{offset={-6,5,-26},  candy="gummy",      size=0.55},
-	{offset={7,-6,-26},  candy="jawbreaker", size=0.5, moving=true},
-	{offset={-8,7,-26},  candy="candycorn",  size=0.55},
-	{offset={5,-9,-26},  candy="chocolate",  size=0.55, moving=true},
-	{offset={-7,8,-32},  candy="lollipop",   size=0.55},
-	{offset={9,-7,-26},  candy="cupcake",    size=0.5, moving=true},
-	{offset={0,2,-30},   candy="candycane",  size=1.6, checkpoint=true},
+	-- ====== PHASE 4: VERY HARD (36-45) — 1-3 pieces, most moving ======
+	{
+		pieces = {
+			{offset={-24,-2,-26}, candy="icecream", size=0.7},
+			{offset={36,5,3}, candy="lollipop", size=0.6},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={14,1,-28}, candy="candycane", size=0.8},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={-20,4,-30}, candy="gummy", size=0.6},
+			{offset={30,-3,4}, candy="donut", size=0.7},
+			{offset={-14,2,1}, candy="cupcake", size=0.5},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={8,-1,-26}, candy="peppermint", size=0.9},
+			{offset={-26,5,2}, candy="jawbreaker", size=0.6},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={-16,3,-28}, candy="icecream", size=0.7},
+		},
+	},
+	{
+		pieces = {
+			{offset={22,-4,-30}, candy="lollipop", size=0.8},
+			{offset={-34,2,5}, candy="candycane", size=0.6},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={12,0,-26}, candy="gummy", size=0.5},
+			{offset={-28,4,3}, candy="donut", size=0.7},
+			{offset={20,-2,0}, candy="cupcake", size=0.6},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={-6,-3,-28}, candy="peppermint", size=0.8},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={18,5,-30}, candy="jawbreaker", size=0.6},
+			{offset={-32,1,4}, candy="icecream", size=0.7},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={0,2,-30}, candy="lollipop", size=2.0},
+		},
+		checkpoint = true,
+	},
 
-	-- ====== PHASE 5: NIGHTMARE (61-75) — smallest candy, all moving ======
-	{offset={-10,-5,-26},candy="donut",      size=0.5, moving=true},
-	{offset={11,7,-26},  candy="gummy",      size=0.5, moving=true},
-	{offset={-9,-9,-26}, candy="jawbreaker", size=0.5, moving=true},
-	{offset={10,8,-32},  candy="candycorn",  size=0.5, moving=true},
-	{offset={-11,-7,-28},candy="chocolate",  size=0.45, moving=true},
-	{offset={9,6,-26},   candy="lollipop",   size=0.5, moving=true},
-	{offset={-8,-10,-26},candy="cupcake",    size=0.45, moving=true},
-	{offset={10,9,-32},  candy="candycane",  size=0.45, moving=true},
-	{offset={-11,-8,-28},candy="donut",      size=0.45, moving=true},
-	{offset={9,7,-26},   candy="gummy",      size=0.45, moving=true},
-	{offset={-10,-10,-26},candy="jawbreaker",size=0.4, moving=true},
-	{offset={11,8,-26},  candy="candycorn",  size=0.4, moving=true},
-	{offset={-9,-9,-28}, candy="chocolate",  size=0.4, moving=true},
-	{offset={10,10,-32}, candy="lollipop",   size=0.4, moving=true},
-	{offset={0,0,-26},   candy="cupcake",    size=2.0, checkpoint=true},
+	-- ====== PHASE 5: EXTREME (46-50) — 1-2 pieces, all moving, smallest sizes ======
+	{
+		pieces = {
+			{offset={-28,-1,-26}, candy="candycane", size=0.5},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={36,4,-28}, candy="gummy", size=0.4},
+			{offset={-20,-3,5}, candy="donut", size=0.6},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={-14,2,-30}, candy="cupcake", size=0.5},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={24,-4,-26}, candy="peppermint", size=0.4},
+			{offset={-38,5,3}, candy="jawbreaker", size=0.7},
+		},
+		moving = true,
+	},
+	{
+		pieces = {
+			{offset={0,0,-32}, candy="icecream", size=2.5},
+		},
+		checkpoint = true,
+	},
 }
 
 -- ============================================================
@@ -2121,160 +2383,222 @@ local function createSpawnRoom()
 	chestPromptR.Triggered:Connect(function(plr) handleTrailChest(plr) end)
 
 	-- ============================================================
-	-- DAILY SPIN WHEEL (front-left, carnival style, pie-cut segments)
+	-- DAILY SPIN WHEEL (front-left, carnival style, HORIZONTAL facing UP)
+	-- Pizza-slice segments with black text labels, slow idle rotation,
+	-- carnival ribbons, no floating 3D objects
 	-- ============================================================
 	local SPIN_X = -55
-	local SPIN_Z = -40  -- near front/start of race
+	local SPIN_Z = -40
 	local WHEEL_RADIUS = 16
+	local NUM_SEGMENTS = #SPIN_REWARDS
 	local wheelModel = Instance.new("Model"); wheelModel.Name = "DailySpinWheel"
 
-	-- Carnival booth frame (striped pillars + canopy)
+	-- Wheel center height: pedestal top + clearance
+	local PEDESTAL_HEIGHT = 12
+	local wheelCenterY = floorY + PEDESTAL_HEIGHT + 1
+
+	-- ---- CARNIVAL BOOTH FRAME (striped pillars + canopy + ribbons) ----
 	for _, sx in ipairs({-1, 1}) do
 		local pillar = Instance.new("Part")
 		pillar.Size = Vector3.new(3, 50, 3)
-		pillar.Position = Vector3.new(SPIN_X + sx * 20, floorY + 25, SPIN_Z)
+		pillar.Position = Vector3.new(SPIN_X + sx * 22, floorY + 25, SPIN_Z)
 		pillar.Anchored = true; pillar.Color = Color3.fromRGB(255, 40, 40)
 		pillar.Material = Enum.Material.SmoothPlastic; pillar.Parent = wheelModel
-		-- White stripe on pillar
 		local pStripe = Instance.new("Part")
 		pStripe.Size = Vector3.new(2.5, 50, 2.5)
 		pStripe.Position = pillar.Position; pStripe.Anchored = true
 		pStripe.Color = Color3.fromRGB(255,255,255); pStripe.Transparency = 0.4
 		pStripe.Material = Enum.Material.SmoothPlastic; pStripe.CanCollide = false; pStripe.Parent = wheelModel
 	end
-	-- Canopy
 	local canopy = Instance.new("Part")
-	canopy.Size = Vector3.new(44, 3, 20)
+	canopy.Size = Vector3.new(48, 3, 22)
 	canopy.Position = Vector3.new(SPIN_X, floorY + 51, SPIN_Z)
 	canopy.Anchored = true; canopy.Color = Color3.fromRGB(255, 220, 50)
 	canopy.Material = Enum.Material.Fabric; canopy.Parent = wheelModel
-	-- Canopy stripe
 	local canopyStripe = Instance.new("Part")
-	canopyStripe.Size = Vector3.new(44, 1, 20)
+	canopyStripe.Size = Vector3.new(48, 1, 22)
 	canopyStripe.Position = Vector3.new(SPIN_X, floorY + 52.5, SPIN_Z)
 	canopyStripe.Anchored = true; canopyStripe.Color = Color3.fromRGB(255, 50, 50)
 	canopyStripe.Material = Enum.Material.Fabric; canopyStripe.CanCollide = false; canopyStripe.Parent = wheelModel
 
-	-- Pedestal (carnival base)
+	-- ---- CARNIVAL RIBBONS ----
+	local ribbonColors = {
+		Color3.fromRGB(255, 80, 80), Color3.fromRGB(255, 200, 50),
+		Color3.fromRGB(80, 200, 255), Color3.fromRGB(255, 100, 200),
+		Color3.fromRGB(100, 255, 150), Color3.fromRGB(200, 100, 255),
+	}
+	for ri = 1, 12 do
+		local ribbonX = SPIN_X - 22 + (ri - 1) * 4
+		for _, zSide in ipairs({-1, 1}) do
+			local ribbon = Instance.new("Part")
+			ribbon.Size = Vector3.new(0.6, math.random(8, 16), 0.15)
+			ribbon.Position = Vector3.new(ribbonX, floorY + 51 - ribbon.Size.Y / 2, SPIN_Z + zSide * 11)
+			ribbon.Anchored = true
+			ribbon.Color = ribbonColors[(ri % #ribbonColors) + 1]
+			ribbon.Material = Enum.Material.Fabric
+			ribbon.CanCollide = false
+			ribbon.Rotation = Vector3.new(0, 0, math.random(-8, 8))
+			ribbon.Parent = wheelModel
+		end
+	end
+	for _, sx in ipairs({-1, 1}) do
+		for ci = 1, 3 do
+			local cornerRibbon = Instance.new("Part")
+			cornerRibbon.Size = Vector3.new(0.8, math.random(14, 22), 0.2)
+			cornerRibbon.Position = Vector3.new(
+				SPIN_X + sx * 22 + ci * sx * 1.5,
+				floorY + 50 - cornerRibbon.Size.Y / 2,
+				SPIN_Z + math.random(-3, 3)
+			)
+			cornerRibbon.Anchored = true
+			cornerRibbon.Color = ribbonColors[(ci + (if sx == -1 then 0 else 3)) % #ribbonColors + 1]
+			cornerRibbon.Material = Enum.Material.Fabric
+			cornerRibbon.CanCollide = false
+			cornerRibbon.Rotation = Vector3.new(math.random(-5, 5), 0, math.random(-12, 12))
+			cornerRibbon.Parent = wheelModel
+		end
+	end
+
+	-- ---- PEDESTAL ----
 	local pedestal = Instance.new("Part")
 	pedestal.Name = "SpinPedestal"
-	pedestal.Size = Vector3.new(10, 8, 10)
-	pedestal.Position = Vector3.new(SPIN_X, floorY + 4, SPIN_Z)
+	pedestal.Size = Vector3.new(PEDESTAL_HEIGHT, 14, 14)
+	pedestal.Position = Vector3.new(SPIN_X, floorY + PEDESTAL_HEIGHT / 2, SPIN_Z)
 	pedestal.Anchored = true; pedestal.Color = Color3.fromRGB(80, 30, 30)
 	pedestal.Material = Enum.Material.Wood
-	pedestal.Shape = Enum.PartType.Cylinder; pedestal.Orientation = Vector3.new(0,0,90)
+	pedestal.Shape = Enum.PartType.Cylinder; pedestal.Orientation = Vector3.new(0, 0, 90)
 	pedestal.Parent = wheelModel
 
-	-- Wheel backing disc (circular face, vertical, facing player)
-	local wheelBack = Instance.new("Part")
-	wheelBack.Name = "WheelBack"
-	wheelBack.Size = Vector3.new(2, WHEEL_RADIUS*2 + 4, WHEEL_RADIUS*2 + 4)
-	wheelBack.Position = Vector3.new(SPIN_X, floorY + 8 + WHEEL_RADIUS, SPIN_Z)
-	wheelBack.Anchored = true; wheelBack.Color = Color3.fromRGB(40, 25, 50)
-	wheelBack.Material = Enum.Material.SmoothPlastic
-	wheelBack.Shape = Enum.PartType.Cylinder; wheelBack.Orientation = Vector3.new(0,0,90)
-	wheelBack.Parent = wheelModel
+	-- ---- SPINNING WHEEL SUB-MODEL (all rotating parts go here) ----
+	local spinningParts = Instance.new("Model")
+	spinningParts.Name = "SpinningWheel"
+	spinningParts.Parent = wheelModel
 
-	-- Outer rim ring (neon)
+	-- Main wheel disc (horizontal, face-up)
+	-- Roblox PartType.Cylinder: axis = local Y, diameter from Size.X
+	-- For a face-up disc: axis points up (Y), so default orientation is correct.
+	local wheelDisc = Instance.new("Part")
+	wheelDisc.Name = "WheelDisc"
+	wheelDisc.Size = Vector3.new(WHEEL_RADIUS * 2 + 2, 2, WHEEL_RADIUS * 2 + 2)
+	wheelDisc.Position = Vector3.new(SPIN_X, wheelCenterY, SPIN_Z)
+	wheelDisc.Anchored = true; wheelDisc.Color = Color3.fromRGB(245, 235, 220)
+	wheelDisc.Material = Enum.Material.SmoothPlastic
+	wheelDisc.Shape = Enum.PartType.Cylinder
+	wheelDisc.Parent = spinningParts
+
+	-- Gold neon outer rim
 	local rim = Instance.new("Part")
-	rim.Size = Vector3.new(3, WHEEL_RADIUS*2 + 6, WHEEL_RADIUS*2 + 6)
-	rim.Position = wheelBack.Position
+	rim.Size = Vector3.new(WHEEL_RADIUS * 2 + 6, 3, WHEEL_RADIUS * 2 + 6)
+	rim.Position = Vector3.new(SPIN_X, wheelCenterY - 0.5, SPIN_Z)
 	rim.Anchored = true; rim.Color = Color3.fromRGB(255, 215, 0)
 	rim.Material = Enum.Material.Neon; rim.Transparency = 0.3
-	rim.Shape = Enum.PartType.Cylinder; rim.Orientation = Vector3.new(0,0,90)
-	rim.CanCollide = false; rim.Parent = wheelModel
+	rim.Shape = Enum.PartType.Cylinder
+	rim.CanCollide = false; rim.Parent = spinningParts
 
-	-- Carnival lights around the rim (16 neon bulbs)
+	-- Carnival lights around the rim (horizontal plane)
 	for i = 1, 16 do
 		local bAngle = (i / 16) * math.pi * 2
 		local bulb = Instance.new("Part")
 		bulb.Size = Vector3.new(1.5, 1.5, 1.5)
 		bulb.Position = Vector3.new(
-			SPIN_X,
-			floorY + 8 + WHEEL_RADIUS + math.cos(bAngle) * (WHEEL_RADIUS + 3),
-			SPIN_Z + math.sin(bAngle) * (WHEEL_RADIUS + 3)
+			SPIN_X + math.cos(bAngle) * (WHEEL_RADIUS + 4),
+			wheelCenterY + 1,
+			SPIN_Z + math.sin(bAngle) * (WHEEL_RADIUS + 4)
 		)
 		bulb.Anchored = true; bulb.Shape = Enum.PartType.Ball
 		bulb.Color = if i % 2 == 0 then Color3.fromRGB(255, 50, 50) else Color3.fromRGB(255, 255, 80)
-		bulb.Material = Enum.Material.Neon; bulb.CanCollide = false; bulb.Parent = wheelModel
+		bulb.Material = Enum.Material.Neon; bulb.CanCollide = false; bulb.Parent = spinningParts
 	end
 
-	-- PIE-CUT SEGMENTS (8 colored wedges using elongated parts radiating from center)
-	local wheelCenterY = floorY + 8 + WHEEL_RADIUS
-	for i, reward in ipairs(SPIN_REWARDS) do
-		local angle = ((i - 1) / 8) * math.pi * 2
-		local midAngle = angle + math.pi / 8 -- center of the wedge
+	-- ---- PIE-CUT SEGMENTS (flat, equally distributed, text labels) ----
+	local altColors = {
+		Color3.fromRGB(255, 200, 50),  Color3.fromRGB(80, 200, 255),
+		Color3.fromRGB(255, 100, 200), Color3.fromRGB(100, 255, 150),
+		Color3.fromRGB(255, 140, 60),  Color3.fromRGB(180, 80, 255),
+		Color3.fromRGB(255, 220, 100), Color3.fromRGB(100, 220, 220),
+	}
 
-		-- Each pie slice: a wide part positioned radially
+	for i, reward in ipairs(SPIN_REWARDS) do
+		local angle = ((i - 1) / NUM_SEGMENTS) * math.pi * 2
+		local midAngle = angle + math.pi / NUM_SEGMENTS
+		local segColor = altColors[((i - 1) % #altColors) + 1]
+
+		-- Pie slice (flat block radiating from center, rotated around Y)
 		local seg = Instance.new("Part")
 		seg.Name = "Segment_" .. i
-		seg.Size = Vector3.new(2.2, WHEEL_RADIUS * 0.85, 5.5)
-		seg.Position = Vector3.new(
-			SPIN_X,
-			wheelCenterY + math.cos(midAngle) * (WHEEL_RADIUS * 0.45),
-			SPIN_Z + math.sin(midAngle) * (WHEEL_RADIUS * 0.45)
-		)
-		seg.Rotation = Vector3.new(0, 0, math.deg(midAngle) - 90)
-		seg.Anchored = true; seg.Color = reward.color
+		seg.Size = Vector3.new(5.5, 1.8, WHEEL_RADIUS * 0.85)
+		seg.CFrame = CFrame.new(
+			SPIN_X + math.cos(midAngle) * (WHEEL_RADIUS * 0.42),
+			wheelCenterY + 0.2,
+			SPIN_Z + math.sin(midAngle) * (WHEEL_RADIUS * 0.42)
+		) * CFrame.Angles(0, -midAngle + math.pi / 2, 0)
+		seg.Anchored = true; seg.Color = segColor
 		seg.Material = Enum.Material.SmoothPlastic; seg.CanCollide = false
-		seg.Parent = wheelModel
+		seg.Parent = spinningParts
 
-		-- Divider line between segments
+		-- Pizza-cut divider line
 		local divider = Instance.new("Part")
-		divider.Size = Vector3.new(2.4, WHEEL_RADIUS, 0.3)
-		divider.Position = Vector3.new(
-			SPIN_X,
-			wheelCenterY + math.cos(angle) * (WHEEL_RADIUS * 0.45),
+		divider.Size = Vector3.new(0.3, 2, WHEEL_RADIUS * 0.95)
+		divider.CFrame = CFrame.new(
+			SPIN_X + math.cos(angle) * (WHEEL_RADIUS * 0.45),
+			wheelCenterY + 0.3,
 			SPIN_Z + math.sin(angle) * (WHEEL_RADIUS * 0.45)
-		)
-		divider.Rotation = Vector3.new(0, 0, math.deg(angle) - 90)
+		) * CFrame.Angles(0, -angle + math.pi / 2, 0)
 		divider.Anchored = true; divider.Color = Color3.fromRGB(40, 25, 50)
-		divider.Material = Enum.Material.SmoothPlastic; divider.CanCollide = false; divider.Parent = wheelModel
+		divider.Material = Enum.Material.SmoothPlastic; divider.CanCollide = false
+		divider.Parent = spinningParts
 
-		-- Reward icon label on each segment
+		-- Reward NAME label (BLACK text on a face-up SurfaceGui)
 		local segLblP = Instance.new("Part")
-		segLblP.Size = Vector3.new(0.1,1,1)
-		segLblP.Position = Vector3.new(
-			SPIN_X + 1.5,
-			wheelCenterY + math.cos(midAngle) * (WHEEL_RADIUS * 0.6),
-			SPIN_Z + math.sin(midAngle) * (WHEEL_RADIUS * 0.6)
-		)
-		segLblP.Anchored = true; segLblP.Transparency = 1; segLblP.CanCollide = false; segLblP.Parent = wheelModel
-		local segBB = Instance.new("BillboardGui")
-		segBB.Size = UDim2.fromOffset(60, 30); segBB.AlwaysOnTop = false; segBB.Parent = segLblP
+		segLblP.Name = "SegLabel_" .. i
+		segLblP.Size = Vector3.new(5, 0.1, 2.5)
+		segLblP.CFrame = CFrame.new(
+			SPIN_X + math.cos(midAngle) * (WHEEL_RADIUS * 0.55),
+			wheelCenterY + 1.2,
+			SPIN_Z + math.sin(midAngle) * (WHEEL_RADIUS * 0.55)
+		) * CFrame.Angles(0, -midAngle + math.pi / 2, 0)
+		segLblP.Anchored = true; segLblP.Transparency = 0.95; segLblP.CanCollide = false
+		segLblP.Parent = spinningParts
+
+		local sGui = Instance.new("SurfaceGui")
+		sGui.Face = Enum.NormalId.Top; sGui.Parent = segLblP
 		local segLbl = Instance.new("TextLabel")
-		segLbl.Size = UDim2.fromScale(1,1); segLbl.BackgroundTransparency = 1
-		segLbl.Text = reward.icon; segLbl.TextColor3 = Color3.fromRGB(255,255,255)
-		segLbl.TextScaled = true; segLbl.Font = Enum.Font.FredokaOne; segLbl.Parent = segBB
+		segLbl.Size = UDim2.fromScale(1, 1); segLbl.BackgroundTransparency = 1
+		segLbl.Text = reward.name
+		segLbl.TextColor3 = Color3.fromRGB(0, 0, 0) -- BLACK text
+		segLbl.TextScaled = true; segLbl.Font = Enum.Font.FredokaOne
+		segLbl.Parent = sGui
 	end
 
-	-- Center hub
+	-- Center hub (gold)
 	local hub = Instance.new("Part")
-	hub.Size = Vector3.new(3, 5, 5)
-	hub.Position = Vector3.new(SPIN_X, wheelCenterY, SPIN_Z)
+	hub.Size = Vector3.new(5, 3, 5)
+	hub.Position = Vector3.new(SPIN_X, wheelCenterY + 0.5, SPIN_Z)
 	hub.Anchored = true; hub.Color = Color3.fromRGB(255, 215, 0)
 	hub.Material = Enum.Material.Metal; hub.Shape = Enum.PartType.Cylinder
-	hub.Orientation = Vector3.new(0,0,90); hub.Parent = wheelModel
+	hub.Parent = spinningParts
 
-	-- Pointer arrow at the top
+	-- ---- STATIC PARTS (pointer, label) ----
+	-- Pointer arrow at one edge (does NOT rotate)
 	local pointer = Instance.new("Part")
+	pointer.Name = "SpinPointer"
 	pointer.Size = Vector3.new(3, 5, 3)
-	pointer.Position = Vector3.new(SPIN_X, wheelCenterY + WHEEL_RADIUS + 4, SPIN_Z)
+	pointer.Position = Vector3.new(SPIN_X, wheelCenterY + 3, SPIN_Z - WHEEL_RADIUS - 2)
 	pointer.Anchored = true; pointer.Color = Color3.fromRGB(255, 50, 50)
 	pointer.Material = Enum.Material.Neon; pointer.Shape = Enum.PartType.Ball
 	pointer.Parent = wheelModel
 
-	-- "DAILY SPIN" label
+	-- "DAILY SPIN" billboard label above the wheel
 	local spinLabelP = Instance.new("Part")
-	spinLabelP.Size = Vector3.new(1,1,1)
-	spinLabelP.Position = Vector3.new(SPIN_X, wheelCenterY + WHEEL_RADIUS + 10, SPIN_Z)
+	spinLabelP.Size = Vector3.new(1, 1, 1)
+	spinLabelP.Position = Vector3.new(SPIN_X, wheelCenterY + 14, SPIN_Z)
 	spinLabelP.Anchored = true; spinLabelP.Transparency = 1; spinLabelP.CanCollide = false
 	spinLabelP.Parent = wheelModel
 	local spinBB = Instance.new("BillboardGui")
 	spinBB.Size = UDim2.fromOffset(250, 70); spinBB.AlwaysOnTop = false; spinBB.Parent = spinLabelP
 	local spinLbl = Instance.new("TextLabel")
-	spinLbl.Size = UDim2.fromScale(1,1); spinLbl.BackgroundTransparency = 1
-	spinLbl.Text = "🎡 DAILY SPIN 🎡"
+	spinLbl.Size = UDim2.fromScale(1, 1); spinLbl.BackgroundTransparency = 1
+	spinLbl.Text = "\xF0\x9F\x8E\xA1 DAILY SPIN \xF0\x9F\x8E\xA1"
 	spinLbl.TextColor3 = Color3.fromRGB(255, 220, 80)
 	spinLbl.TextScaled = true; spinLbl.Font = Enum.Font.FredokaOne; spinLbl.Parent = spinBB
 	Instance.new("UIStroke", spinLbl).Color = Color3.fromRGB(200, 140, 20)
@@ -2291,9 +2615,23 @@ local function createSpawnRoom()
 
 	wheelModel.Parent = mapFolder
 
-	-- Spin logic
+	-- ---- SLOW IDLE ROTATION ----
 	local wheelSpinning = false
+	local idleAngle = 0
+	local IDLE_SPEED = 0.3 -- degrees per frame (~9 deg/sec)
+	local wheelPivot = CFrame.new(SPIN_X, wheelCenterY, SPIN_Z)
 
+	task.spawn(function()
+		while wheelModel and wheelModel.Parent do
+			if not wheelSpinning then
+				idleAngle = (idleAngle + IDLE_SPEED) % 360
+				spinningParts:PivotTo(wheelPivot * CFrame.Angles(0, math.rad(idleAngle), 0))
+			end
+			task.wait(0.03)
+		end
+	end)
+
+	-- ---- SPIN LOGIC ----
 	spinPrompt.Triggered:Connect(function(plr)
 		if wheelSpinning then return end
 		local data = playerData[plr]
@@ -2312,34 +2650,25 @@ local function createSpawnRoom()
 		wheelSpinning = true
 		local winIdx, reward = weightedSpinPick()
 
-		-- Animate: rotate all segments around the wheel center
-		local totalRotation = (math.random(3, 5) * 360) + ((winIdx - 1) / 8) * 360
+		local targetSegAngle = ((winIdx - 1) / NUM_SEGMENTS) * 360
+		local totalRotation = (math.random(4, 7) * 360) + targetSegAngle
 		local spinDuration = 5
+		local startAngle = idleAngle
 		local startT = tick()
 
 		task.spawn(function()
 			while true do
 				local elapsed = tick() - startT
 				if elapsed >= spinDuration then break end
-				local eased = 1 - (1 - elapsed/spinDuration)^3
-				local currentAngle = totalRotation * eased
-
-				for si, rew in ipairs(SPIN_REWARDS) do
-					local baseAngle = ((si - 1) / 8) * math.pi * 2
-					local midBase = baseAngle + math.pi / 8
-					local rotMid = midBase + math.rad(currentAngle)
-					local seg = wheelModel:FindFirstChild("Segment_" .. si)
-					if seg then
-						seg.Position = Vector3.new(
-							SPIN_X,
-							wheelCenterY + math.cos(rotMid) * (WHEEL_RADIUS * 0.45),
-							SPIN_Z + math.sin(rotMid) * (WHEEL_RADIUS * 0.45)
-						)
-						seg.Rotation = Vector3.new(0, 0, math.deg(rotMid) - 90)
-					end
-				end
+				local eased = 1 - (1 - elapsed / spinDuration) ^ 3
+				local currentAngle = startAngle + totalRotation * eased
+				spinningParts:PivotTo(wheelPivot * CFrame.Angles(0, math.rad(currentAngle), 0))
 				task.wait(0.03)
 			end
+
+			local finalAngle = startAngle + totalRotation
+			spinningParts:PivotTo(wheelPivot * CFrame.Angles(0, math.rad(finalAngle), 0))
+			idleAngle = finalAngle % 360
 
 			applySpinReward(plr, reward)
 			dailySpinEvent:FireClient(plr, winIdx, reward.name, reward.icon)
@@ -2998,15 +3327,33 @@ local function generateMap()
 	local maxX = HALLWAY_WIDTH/2 - 12
 
 	for i, level in ipairs(LEVELS) do
-		local off = level.offset
+		local pieces = level.pieces
+		local mainPiece = pieces[1]
+		local off = mainPiece.offset
 		currentPos = currentPos + Vector3.new(off[1], off[2], off[3])
+		
+		-- clamp
 		if currentPos.Y < DEATH_Y+15 then currentPos = Vector3.new(currentPos.X, DEATH_Y+20, currentPos.Z) end
 		if currentPos.Y > START_HEIGHT+30 then currentPos = Vector3.new(currentPos.X, START_HEIGHT, currentPos.Z) end
 		currentPos = Vector3.new(math.clamp(currentPos.X, -maxX, maxX), currentPos.Y, currentPos.Z)
 
-		local builder = BUILDERS[level.candy] or buildChocolateBar
-		local walkable, mdl = builder(i, currentPos, level.size)
+		-- Build all pieces for this level
+		for pi, piece in ipairs(pieces) do
+			local piecePos
+			if pi == 1 then
+				piecePos = currentPos
+			else
+				piecePos = currentPos + Vector3.new(piece.offset[1], piece.offset[2], piece.offset[3])
+			end
+			
+			local builder = BUILDERS[piece.candy] or buildIceCream
+			local walkable, mdl = builder(i*10+pi, piecePos, piece.size)
+			
+			if level.moving then makeMoving(mdl) end
+			if level.crumbling then makeCrumbling(mdl, walkable) end
+		end
 
+		-- Level number label (on first piece position)
 		local np = Instance.new("Part")
 		np.Size = Vector3.new(1,1,1); np.Position = currentPos + Vector3.new(0,16,0)
 		np.Anchored = true; np.Transparency = 1; np.CanCollide = false; np.Parent = mapFolder
@@ -3016,9 +3363,7 @@ local function generateMap()
 		nl.TextTransparency = 0.3; nl.TextScaled = true; nl.Font = Enum.Font.FredokaOne; nl.Parent = ng
 		local ns = Instance.new("UIStroke"); ns.Color = Color3.fromRGB(200,100,150); ns.Thickness = 2; ns.Parent = nl
 
-		if level.moving then makeMoving(mdl) end
-		if level.crumbling then makeCrumbling(mdl, walkable) end
-
+		-- Checkpoint logic (triggered on first piece)
 		if level.checkpoint then
 			checkpointPositions[i] = currentPos + Vector3.new(0,5,0)
 
@@ -3148,6 +3493,7 @@ local function generateMap()
 			end)
 		end
 
+		-- Collectible every 3 levels (keep existing)
 		if i % 3 == 0 then createCollectible(currentPos, i) end
 	end
 
