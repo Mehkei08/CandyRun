@@ -43,7 +43,7 @@ freezeCharacter()
 -- Using Roblox library sound IDs (royalty-free game music)
 local titleMusic = Instance.new("Sound")
 titleMusic.Name = "TitleMusic"
-titleMusic.SoundId = "rbxassetid://1837849285"  -- Fun upbeat game music
+titleMusic.SoundId = "rbxassetid://1848354536"  -- Upbeat whistling happy tune
 titleMusic.Volume = 0.5
 titleMusic.Looped = true
 titleMusic.PlaybackSpeed = 1
@@ -243,65 +243,464 @@ task.delay(0.5, function()
 end)
 
 -- ============================================================
+-- MENU BUTTON HELPER
+-- ============================================================
+
+local function createMenuButton(text, color, strokeColor, hoverColor, hoverStroke, yPos, delay_time)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.fromScale(0, 0)
+	btn.Position = UDim2.fromScale(0.5, yPos)
+	btn.AnchorPoint = Vector2.new(0.5, 0.5)
+	btn.BackgroundColor3 = color
+	btn.Text = text
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.TextScaled = true; btn.Font = Enum.Font.FredokaOne
+	btn.BorderSizePixel = 0; btn.AutoButtonColor = false
+	btn.Parent = screenGui
+
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 18)
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = strokeColor; stroke.Thickness = 3
+	stroke.Parent = btn
+
+	local padding = Instance.new("UIPadding")
+	padding.PaddingLeft = UDim.new(0, 20)
+	padding.PaddingRight = UDim.new(0, 20)
+	padding.Parent = btn
+
+	task.delay(delay_time, function()
+		TweenService:Create(btn, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Size = UDim2.fromScale(0.28, 0.075),
+		}):Play()
+	end)
+
+	btn.MouseEnter:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
+			BackgroundColor3 = hoverColor,
+			Size = UDim2.fromScale(0.31, 0.082),
+		}):Play()
+		TweenService:Create(stroke, TweenInfo.new(0.25), {Color = hoverStroke}):Play()
+	end)
+
+	btn.MouseLeave:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
+			BackgroundColor3 = color,
+			Size = UDim2.fromScale(0.28, 0.075),
+		}):Play()
+		TweenService:Create(stroke, TweenInfo.new(0.25), {Color = strokeColor}):Play()
+	end)
+
+	return btn
+end
+
+-- ============================================================
 -- PLAY BUTTON
 -- ============================================================
 
-local playButton = Instance.new("TextButton")
-playButton.Name = "PlayButton"
-playButton.Size = UDim2.fromScale(0, 0)
-playButton.Position = UDim2.fromScale(0.5, 0.52)
-playButton.AnchorPoint = Vector2.new(0.5, 0.5)
-playButton.BackgroundColor3 = Color3.fromRGB(80, 220, 120)
-playButton.Text = "🍭  PLAY  🍭"
-playButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-playButton.TextScaled = true; playButton.Font = Enum.Font.FredokaOne
-playButton.BorderSizePixel = 0; playButton.AutoButtonColor = false
-playButton.Parent = screenGui
+local playButton = createMenuButton(
+	"🍭  PLAY  🍭",
+	Color3.fromRGB(80, 220, 120), Color3.fromRGB(40, 180, 80),
+	Color3.fromRGB(100, 255, 150), Color3.fromRGB(60, 200, 100),
+	0.46, 0.8
+)
 
-Instance.new("UICorner", playButton).CornerRadius = UDim.new(0, 18)
-
-local playStroke = Instance.new("UIStroke")
-playStroke.Color = Color3.fromRGB(40, 180, 80); playStroke.Thickness = 3
-playStroke.Parent = playButton
-
-local playPadding = Instance.new("UIPadding")
-playPadding.PaddingLeft = UDim.new(0, 20)
-playPadding.PaddingRight = UDim.new(0, 20)
-playPadding.Parent = playButton
-
-task.delay(0.8, function()
-	TweenService:Create(playButton, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-		Size = UDim2.fromScale(0.28, 0.09),
-	}):Play()
-end)
-
+-- Play button breathe animation
 task.delay(1.5, function()
 	while playButton and playButton.Parent do
 		TweenService:Create(playButton, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-			Size = UDim2.fromScale(0.30, 0.095),
+			Size = UDim2.fromScale(0.30, 0.08),
 		}):Play()
 		task.wait(1)
 		TweenService:Create(playButton, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
-			Size = UDim2.fromScale(0.28, 0.09),
+			Size = UDim2.fromScale(0.28, 0.075),
 		}):Play()
 		task.wait(1)
 	end
 end)
 
-playButton.MouseEnter:Connect(function()
-	TweenService:Create(playButton, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
-		BackgroundColor3 = Color3.fromRGB(100, 255, 150),
-		Size = UDim2.fromScale(0.31, 0.098),
-	}):Play()
-	TweenService:Create(playStroke, TweenInfo.new(0.25), {Color = Color3.fromRGB(60, 200, 100)}):Play()
+-- ============================================================
+-- SHOP BUTTON
+-- ============================================================
+
+local shopButton = createMenuButton(
+	"🛒  SHOP  🛒",
+	Color3.fromRGB(220, 160, 40), Color3.fromRGB(180, 120, 20),
+	Color3.fromRGB(255, 200, 60), Color3.fromRGB(200, 150, 30),
+	0.56, 1.0
+)
+
+-- ============================================================
+-- CREDITS BUTTON
+-- ============================================================
+
+local creditsButton = createMenuButton(
+	"⭐  CREDITS  ⭐",
+	Color3.fromRGB(160, 80, 220), Color3.fromRGB(120, 50, 180),
+	Color3.fromRGB(190, 110, 255), Color3.fromRGB(150, 70, 210),
+	0.66, 1.2
+)
+
+-- ============================================================
+-- SHOP SCREEN
+-- ============================================================
+
+local purchaseEvent = ReplicatedStorage:WaitForChild("PurchaseItem", 10)
+
+-- Shop items: items you can buy with candy (matches server ITEM_PRICES)
+local SHOP_ITEMS = {
+	{name = "Speed Coil", price = 5, icon = "⚡", desc = "Run 2x faster!"},
+	{name = "Gravity Coil", price = 8, icon = "🌀", desc = "Float with low gravity!"},
+	{name = "Fusion Coil", price = 15, icon = "💫", desc = "Speed + gravity combined!"},
+	{name = "Grapple Gun", price = 12, icon = "🪝", desc = "Swing between candies!"},
+	{name = "Magic Carpet", price = 20, icon = "🧞", desc = "Fly on a magic carpet!"},
+}
+
+-- Gamepasses: real Roblox gamepasses (placeholder IDs — replace with real ones)
+local GAMEPASSES = {
+	{name = "Boombox", passId = 0, price = "R$ 29", icon = "📻", desc = "Get a boombox to play any song!"},
+	{name = "2x Candy", passId = 0, price = "R$ 49", icon = "🍬", desc = "Earn double candy forever!"},
+	{name = "VIP", passId = 0, price = "R$ 99", icon = "👑", desc = "VIP badge + golden trail!"},
+}
+
+local shopGui = Instance.new("ScreenGui")
+shopGui.Name = "ShopScreen"
+shopGui.ResetOnSpawn = false
+shopGui.IgnoreGuiInset = true
+shopGui.Enabled = false
+shopGui.Parent = playerGui
+
+-- Shop backdrop
+local shopBg = Instance.new("Frame")
+shopBg.Size = UDim2.fromScale(1, 1)
+shopBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+shopBg.BackgroundTransparency = 0.35
+shopBg.Parent = shopGui
+
+-- Shop panel
+local shopPanel = Instance.new("Frame")
+shopPanel.Size = UDim2.fromScale(0.7, 0.8)
+shopPanel.Position = UDim2.fromScale(0.15, 0.1)
+shopPanel.BackgroundColor3 = Color3.fromRGB(40, 20, 50)
+shopPanel.BackgroundTransparency = 0.1
+shopPanel.Parent = shopGui
+Instance.new("UICorner", shopPanel).CornerRadius = UDim.new(0, 20)
+
+local shopPanelStroke = Instance.new("UIStroke")
+shopPanelStroke.Color = Color3.fromRGB(255, 200, 60); shopPanelStroke.Thickness = 3
+shopPanelStroke.Parent = shopPanel
+
+local shopPanelGradient = Instance.new("UIGradient")
+shopPanelGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 25, 70)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 15, 45)),
+})
+shopPanelGradient.Rotation = 90
+shopPanelGradient.Parent = shopPanel
+
+-- Shop title
+local shopTitle = Instance.new("TextLabel")
+shopTitle.Size = UDim2.fromScale(0.6, 0.08)
+shopTitle.Position = UDim2.fromScale(0.2, 0.01)
+shopTitle.BackgroundTransparency = 1
+shopTitle.Text = "🛒 CANDY SHOP 🛒"
+shopTitle.TextColor3 = Color3.fromRGB(255, 220, 80)
+shopTitle.TextScaled = true; shopTitle.Font = Enum.Font.FredokaOne
+shopTitle.Parent = shopPanel
+
+local shopTitleStroke = Instance.new("UIStroke")
+shopTitleStroke.Color = Color3.fromRGB(200, 140, 20); shopTitleStroke.Thickness = 2
+shopTitleStroke.Parent = shopTitle
+
+-- Close button
+local shopClose = Instance.new("TextButton")
+shopClose.Size = UDim2.fromScale(0.06, 0.06)
+shopClose.Position = UDim2.fromScale(0.92, 0.01)
+shopClose.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+shopClose.Text = "✕"
+shopClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+shopClose.TextScaled = true; shopClose.Font = Enum.Font.FredokaOne
+shopClose.AutoButtonColor = false
+shopClose.Parent = shopPanel
+Instance.new("UICorner", shopClose).CornerRadius = UDim.new(0, 10)
+
+shopClose.MouseButton1Click:Connect(function()
+	shopGui.Enabled = false
 end)
 
-playButton.MouseLeave:Connect(function()
-	TweenService:Create(playButton, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
-		BackgroundColor3 = Color3.fromRGB(80, 220, 120),
-		Size = UDim2.fromScale(0.28, 0.09),
-	}):Play()
-	TweenService:Create(playStroke, TweenInfo.new(0.25), {Color = Color3.fromRGB(40, 180, 80)}):Play()
+-- Items section header
+local itemsHeader = Instance.new("TextLabel")
+itemsHeader.Size = UDim2.fromScale(0.9, 0.05)
+itemsHeader.Position = UDim2.fromScale(0.05, 0.1)
+itemsHeader.BackgroundTransparency = 1
+itemsHeader.Text = "🍬 ITEMS (Buy with Candy)"
+itemsHeader.TextColor3 = Color3.fromRGB(255, 180, 255)
+itemsHeader.TextScaled = true; itemsHeader.Font = Enum.Font.GothamBold
+itemsHeader.TextXAlignment = Enum.TextXAlignment.Left
+itemsHeader.Parent = shopPanel
+
+-- Items scroll frame
+local itemsScroll = Instance.new("ScrollingFrame")
+itemsScroll.Size = UDim2.fromScale(0.9, 0.35)
+itemsScroll.Position = UDim2.fromScale(0.05, 0.16)
+itemsScroll.BackgroundColor3 = Color3.fromRGB(20, 10, 30)
+itemsScroll.BackgroundTransparency = 0.5
+itemsScroll.ScrollBarThickness = 6
+itemsScroll.ScrollBarImageColor3 = Color3.fromRGB(255, 200, 60)
+itemsScroll.CanvasSize = UDim2.fromScale(0, 0)
+itemsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+itemsScroll.Parent = shopPanel
+Instance.new("UICorner", itemsScroll).CornerRadius = UDim.new(0, 12)
+
+local itemsLayout = Instance.new("UIListLayout")
+itemsLayout.Padding = UDim.new(0, 6)
+itemsLayout.FillDirection = Enum.FillDirection.Vertical
+itemsLayout.Parent = itemsScroll
+
+local itemsPad = Instance.new("UIPadding")
+itemsPad.PaddingTop = UDim.new(0, 6); itemsPad.PaddingBottom = UDim.new(0, 6)
+itemsPad.PaddingLeft = UDim.new(0, 6); itemsPad.PaddingRight = UDim.new(0, 6)
+itemsPad.Parent = itemsScroll
+
+for _, item in ipairs(SHOP_ITEMS) do
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(1, 0, 0, 56)
+	row.BackgroundColor3 = Color3.fromRGB(50, 30, 65)
+	row.BackgroundTransparency = 0.3
+	row.Parent = itemsScroll
+	Instance.new("UICorner", row).CornerRadius = UDim.new(0, 10)
+
+	local icon = Instance.new("TextLabel")
+	icon.Size = UDim2.fromOffset(44, 44)
+	icon.Position = UDim2.fromOffset(6, 6)
+	icon.BackgroundTransparency = 1
+	icon.Text = item.icon; icon.TextScaled = true
+	icon.Parent = row
+
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Size = UDim2.new(0, 160, 0, 24)
+	nameLabel.Position = UDim2.fromOffset(56, 4)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text = item.name
+	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	nameLabel.TextScaled = true; nameLabel.Font = Enum.Font.FredokaOne
+	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+	nameLabel.Parent = row
+
+	local descLabel = Instance.new("TextLabel")
+	descLabel.Size = UDim2.new(0, 240, 0, 20)
+	descLabel.Position = UDim2.fromOffset(56, 28)
+	descLabel.BackgroundTransparency = 1
+	descLabel.Text = item.desc
+	descLabel.TextColor3 = Color3.fromRGB(200, 180, 220)
+	descLabel.TextScaled = true; descLabel.Font = Enum.Font.Gotham
+	descLabel.TextXAlignment = Enum.TextXAlignment.Left
+	descLabel.Parent = row
+
+	local buyBtn = Instance.new("TextButton")
+	buyBtn.Size = UDim2.new(0, 110, 0, 36)
+	buyBtn.Position = UDim2.new(1, -120, 0.5, -18)
+	buyBtn.BackgroundColor3 = Color3.fromRGB(80, 200, 100)
+	buyBtn.Text = "🍬 " .. item.price
+	buyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	buyBtn.TextScaled = true; buyBtn.Font = Enum.Font.FredokaOne
+	buyBtn.AutoButtonColor = false
+	buyBtn.Parent = row
+	Instance.new("UICorner", buyBtn).CornerRadius = UDim.new(0, 8)
+
+	buyBtn.MouseEnter:Connect(function()
+		TweenService:Create(buyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 240, 130)}):Play()
+	end)
+	buyBtn.MouseLeave:Connect(function()
+		TweenService:Create(buyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 200, 100)}):Play()
+	end)
+
+	buyBtn.MouseButton1Click:Connect(function()
+		if purchaseEvent then
+			purchaseEvent:FireServer(item.name)
+		end
+		-- Flash feedback
+		TweenService:Create(buyBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 255, 100)}):Play()
+		task.wait(0.15)
+		TweenService:Create(buyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 200, 100)}):Play()
+	end)
+end
+
+-- Gamepasses section header
+local passHeader = Instance.new("TextLabel")
+passHeader.Size = UDim2.fromScale(0.9, 0.05)
+passHeader.Position = UDim2.fromScale(0.05, 0.53)
+passHeader.BackgroundTransparency = 1
+passHeader.Text = "👑 GAMEPASSES (Robux)"
+passHeader.TextColor3 = Color3.fromRGB(255, 220, 100)
+passHeader.TextScaled = true; passHeader.Font = Enum.Font.GothamBold
+passHeader.TextXAlignment = Enum.TextXAlignment.Left
+passHeader.Parent = shopPanel
+
+-- Gamepasses scroll frame
+local passScroll = Instance.new("ScrollingFrame")
+passScroll.Size = UDim2.fromScale(0.9, 0.35)
+passScroll.Position = UDim2.fromScale(0.05, 0.59)
+passScroll.BackgroundColor3 = Color3.fromRGB(20, 10, 30)
+passScroll.BackgroundTransparency = 0.5
+passScroll.ScrollBarThickness = 6
+passScroll.ScrollBarImageColor3 = Color3.fromRGB(255, 200, 60)
+passScroll.CanvasSize = UDim2.fromScale(0, 0)
+passScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+passScroll.Parent = shopPanel
+Instance.new("UICorner", passScroll).CornerRadius = UDim.new(0, 12)
+
+local passLayout = Instance.new("UIListLayout")
+passLayout.Padding = UDim.new(0, 6)
+passLayout.FillDirection = Enum.FillDirection.Vertical
+passLayout.Parent = passScroll
+
+local passPad = Instance.new("UIPadding")
+passPad.PaddingTop = UDim.new(0, 6); passPad.PaddingBottom = UDim.new(0, 6)
+passPad.PaddingLeft = UDim.new(0, 6); passPad.PaddingRight = UDim.new(0, 6)
+passPad.Parent = passScroll
+
+local MarketplaceService = game:GetService("MarketplaceService")
+
+for _, pass in ipairs(GAMEPASSES) do
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(1, 0, 0, 56)
+	row.BackgroundColor3 = Color3.fromRGB(60, 40, 20)
+	row.BackgroundTransparency = 0.3
+	row.Parent = passScroll
+	Instance.new("UICorner", row).CornerRadius = UDim.new(0, 10)
+
+	local icon = Instance.new("TextLabel")
+	icon.Size = UDim2.fromOffset(44, 44)
+	icon.Position = UDim2.fromOffset(6, 6)
+	icon.BackgroundTransparency = 1
+	icon.Text = pass.icon; icon.TextScaled = true
+	icon.Parent = row
+
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Size = UDim2.new(0, 160, 0, 24)
+	nameLabel.Position = UDim2.fromOffset(56, 4)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text = pass.name
+	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	nameLabel.TextScaled = true; nameLabel.Font = Enum.Font.FredokaOne
+	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+	nameLabel.Parent = row
+
+	local descLabel = Instance.new("TextLabel")
+	descLabel.Size = UDim2.new(0, 240, 0, 20)
+	descLabel.Position = UDim2.fromOffset(56, 28)
+	descLabel.BackgroundTransparency = 1
+	descLabel.Text = pass.desc
+	descLabel.TextColor3 = Color3.fromRGB(200, 190, 160)
+	descLabel.TextScaled = true; descLabel.Font = Enum.Font.Gotham
+	descLabel.TextXAlignment = Enum.TextXAlignment.Left
+	descLabel.Parent = row
+
+	local buyBtn = Instance.new("TextButton")
+	buyBtn.Size = UDim2.new(0, 110, 0, 36)
+	buyBtn.Position = UDim2.new(1, -120, 0.5, -18)
+	buyBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 220)
+	buyBtn.Text = pass.price
+	buyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	buyBtn.TextScaled = true; buyBtn.Font = Enum.Font.FredokaOne
+	buyBtn.AutoButtonColor = false
+	buyBtn.Parent = row
+	Instance.new("UICorner", buyBtn).CornerRadius = UDim.new(0, 8)
+
+	buyBtn.MouseEnter:Connect(function()
+		TweenService:Create(buyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 190, 255)}):Play()
+	end)
+	buyBtn.MouseLeave:Connect(function()
+		TweenService:Create(buyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 160, 220)}):Play()
+	end)
+
+	buyBtn.MouseButton1Click:Connect(function()
+		if pass.passId > 0 then
+			MarketplaceService:PromptGamePassPurchase(player, pass.passId)
+		else
+			-- Placeholder: flash to show it's not yet configured
+			TweenService:Create(buyBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 100, 100)}):Play()
+			task.wait(0.2)
+			TweenService:Create(buyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 160, 220)}):Play()
+		end
+	end)
+end
+
+-- Wire shop button
+shopButton.MouseButton1Click:Connect(function()
+	shopGui.Enabled = true
+end)
+
+-- ============================================================
+-- CREDITS SCREEN
+-- ============================================================
+
+local creditsGui = Instance.new("ScreenGui")
+creditsGui.Name = "CreditsScreen"
+creditsGui.ResetOnSpawn = false
+creditsGui.IgnoreGuiInset = true
+creditsGui.Enabled = false
+creditsGui.Parent = playerGui
+
+local creditsBg = Instance.new("Frame")
+creditsBg.Size = UDim2.fromScale(1, 1)
+creditsBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+creditsBg.BackgroundTransparency = 0.35
+creditsBg.Parent = creditsGui
+
+local creditsPanel = Instance.new("Frame")
+creditsPanel.Size = UDim2.fromScale(0.5, 0.6)
+creditsPanel.Position = UDim2.fromScale(0.25, 0.2)
+creditsPanel.BackgroundColor3 = Color3.fromRGB(35, 15, 50)
+creditsPanel.BackgroundTransparency = 0.05
+creditsPanel.Parent = creditsGui
+Instance.new("UICorner", creditsPanel).CornerRadius = UDim.new(0, 20)
+
+local creditsPanelStroke = Instance.new("UIStroke")
+creditsPanelStroke.Color = Color3.fromRGB(200, 120, 255); creditsPanelStroke.Thickness = 3
+creditsPanelStroke.Parent = creditsPanel
+
+local creditsTitle = Instance.new("TextLabel")
+creditsTitle.Size = UDim2.fromScale(0.8, 0.12)
+creditsTitle.Position = UDim2.fromScale(0.1, 0.03)
+creditsTitle.BackgroundTransparency = 1
+creditsTitle.Text = "⭐ CREDITS ⭐"
+creditsTitle.TextColor3 = Color3.fromRGB(255, 220, 100)
+creditsTitle.TextScaled = true; creditsTitle.Font = Enum.Font.FredokaOne
+creditsTitle.Parent = creditsPanel
+
+local creditsTitleStroke = Instance.new("UIStroke")
+creditsTitleStroke.Color = Color3.fromRGB(200, 160, 40); creditsTitleStroke.Thickness = 2
+creditsTitleStroke.Parent = creditsTitle
+
+local creditsBody = Instance.new("TextLabel")
+creditsBody.Size = UDim2.fromScale(0.8, 0.6)
+creditsBody.Position = UDim2.fromScale(0.1, 0.18)
+creditsBody.BackgroundTransparency = 1
+creditsBody.Text = "🍬 Candy Run 🍬\n\nDeveloped by: You!\n\nArt & Design: You!\n\nMusic: Roblox Library\n\nSpecial Thanks:\nEveryone who played!\n\n🍭 Thanks for playing! 🍭"
+creditsBody.TextColor3 = Color3.fromRGB(230, 210, 255)
+creditsBody.TextScaled = true; creditsBody.Font = Enum.Font.GothamBold
+creditsBody.TextWrapped = true
+creditsBody.Parent = creditsPanel
+
+local creditsClose = Instance.new("TextButton")
+creditsClose.Size = UDim2.fromScale(0.3, 0.1)
+creditsClose.Position = UDim2.fromScale(0.35, 0.84)
+creditsClose.BackgroundColor3 = Color3.fromRGB(160, 80, 220)
+creditsClose.Text = "BACK"
+creditsClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+creditsClose.TextScaled = true; creditsClose.Font = Enum.Font.FredokaOne
+creditsClose.AutoButtonColor = false
+creditsClose.Parent = creditsPanel
+Instance.new("UICorner", creditsClose).CornerRadius = UDim.new(0, 12)
+
+creditsClose.MouseButton1Click:Connect(function()
+	creditsGui.Enabled = false
+end)
+
+creditsButton.MouseButton1Click:Connect(function()
+	creditsGui.Enabled = true
 end)
 
 -- ============================================================
@@ -338,8 +737,8 @@ end)
 -- ============================================================
 
 local statsFrame = Instance.new("Frame")
-statsFrame.Size = UDim2.fromScale(0.4, 0.06)
-statsFrame.Position = UDim2.fromScale(0.3, 0.66)
+statsFrame.Size = UDim2.fromScale(0.4, 0.05)
+statsFrame.Position = UDim2.fromScale(0.3, 0.76)
 statsFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 statsFrame.BackgroundTransparency = 0.65; statsFrame.Parent = screenGui
 
@@ -358,14 +757,14 @@ statsLabel.Parent = statsFrame
 -- VERSION
 -- ============================================================
 
-local credits = Instance.new("TextLabel")
-credits.Size = UDim2.fromScale(0.2, 0.03)
-credits.Position = UDim2.fromScale(0.4, 0.93)
-credits.BackgroundTransparency = 1
-credits.Text = "v1.0  ·  Made with 🍫"
-credits.TextColor3 = Color3.fromRGB(255, 255, 255)
-credits.TextTransparency = 0.5; credits.TextScaled = true
-credits.Font = Enum.Font.Gotham; credits.Parent = screenGui
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Size = UDim2.fromScale(0.2, 0.03)
+versionLabel.Position = UDim2.fromScale(0.4, 0.93)
+versionLabel.BackgroundTransparency = 1
+versionLabel.Text = "v1.1  ·  Made with 🍫"
+versionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+versionLabel.TextTransparency = 0.5; versionLabel.TextScaled = true
+versionLabel.Font = Enum.Font.Gotham; versionLabel.Parent = screenGui
 
 -- ============================================================
 -- PLAY BUTTON CLICK → INSTANT SPAWN
@@ -375,6 +774,10 @@ local startGameEvent = ReplicatedStorage:WaitForChild("StartGame", 10)
 
 playButton.MouseButton1Click:Connect(function()
 	playButton.Active = false
+
+	-- Close shop/credits if open
+	shopGui.Enabled = false
+	creditsGui.Enabled = false
 
 	-- Click feedback
 	TweenService:Create(playButton, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
@@ -432,7 +835,7 @@ playButton.MouseButton1Click:Connect(function()
 	-- Gameplay soundtrack (different from title)
 	local gameMusic = Instance.new("Sound")
 	gameMusic.Name = "GameplayMusic"
-	gameMusic.SoundId = "rbxassetid://1839879277"  -- Upbeat adventure/platformer music
+	gameMusic.SoundId = "rbxassetid://9043887091"  -- Fun adventure music
 	gameMusic.Volume = 0
 	gameMusic.Looped = true
 	gameMusic.PlaybackSpeed = 1
@@ -441,6 +844,8 @@ playButton.MouseButton1Click:Connect(function()
 	TweenService:Create(gameMusic, TweenInfo.new(1), {Volume = 0.4}):Play()
 
 	screenGui:Destroy()
+	shopGui:Destroy()
+	creditsGui:Destroy()
 
 	TweenService:Create(newFlash, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		BackgroundTransparency = 1,

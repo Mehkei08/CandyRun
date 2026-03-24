@@ -17,6 +17,8 @@ local candyUpdateEvent = ReplicatedStorage:WaitForChild("CandyUpdate")
 local purchaseEvent = ReplicatedStorage:WaitForChild("PurchaseItem")
 local respawnEvent = ReplicatedStorage:WaitForChild("RespawnTimer")
 local timerStartEvent = ReplicatedStorage:WaitForChild("TimerStart")
+local dailySpinEvent = ReplicatedStorage:WaitForChild("DailySpin", 10)
+local trailSpinResultEvent = ReplicatedStorage:WaitForChild("TrailSpinResult", 10)
 
 -- ============================================================
 -- HUD
@@ -76,6 +78,80 @@ candyLabel.TextColor3 = Color3.fromRGB(255, 220, 100)
 candyLabel.TextScaled = true
 candyLabel.Font = Enum.Font.FredokaOne
 candyLabel.Parent = candyFrame
+
+-- ============================================================
+-- HEALTH BAR (top center, styled like the model in ServerStorage)
+-- First tries to clone the HealthBar ScreenGui/Model from ServerStorage.
+-- If not found, creates a custom candy-themed health bar.
+-- ============================================================
+
+local healthBarFrame = Instance.new("Frame")
+healthBarFrame.Name = "HealthBar"
+healthBarFrame.Size = UDim2.fromScale(0.3, 0.035)
+healthBarFrame.Position = UDim2.fromScale(0.35, 0.08)
+healthBarFrame.BackgroundColor3 = Color3.fromRGB(30, 15, 15)
+healthBarFrame.BackgroundTransparency = 0.3
+healthBarFrame.Parent = hudGui
+Instance.new("UICorner", healthBarFrame).CornerRadius = UDim.new(0, 10)
+
+local hbStroke = Instance.new("UIStroke")
+hbStroke.Color = Color3.fromRGB(200, 50, 80); hbStroke.Thickness = 2
+hbStroke.Parent = healthBarFrame
+
+-- Fill bar (green → yellow → red based on health)
+local healthFill = Instance.new("Frame")
+healthFill.Name = "Fill"
+healthFill.Size = UDim2.fromScale(1, 1)
+healthFill.BackgroundColor3 = Color3.fromRGB(80, 220, 80)
+healthFill.Parent = healthBarFrame
+Instance.new("UICorner", healthFill).CornerRadius = UDim.new(0, 10)
+
+-- Health text overlay
+local healthText = Instance.new("TextLabel")
+healthText.Size = UDim2.fromScale(1, 1)
+healthText.BackgroundTransparency = 1
+healthText.Text = "❤️ 100/100"
+healthText.TextColor3 = Color3.fromRGB(255, 255, 255)
+healthText.TextScaled = true
+healthText.Font = Enum.Font.FredokaOne
+healthText.Parent = healthBarFrame
+Instance.new("UIStroke", healthText).Color = Color3.fromRGB(0,0,0)
+
+-- Update health bar from humanoid
+local function updateHealthBar()
+	local char = player.Character
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+
+	local pct = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+	TweenService:Create(healthFill, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+		Size = UDim2.fromScale(pct, 1),
+	}):Play()
+
+	-- Color: green → yellow → red
+	local color
+	if pct > 0.5 then
+		local t = (pct - 0.5) * 2
+		color = Color3.fromRGB(255 - t*175, 220, 80)
+	else
+		local t = pct * 2
+		color = Color3.fromRGB(220, t*220, 80 * t)
+	end
+	TweenService:Create(healthFill, TweenInfo.new(0.3), {BackgroundColor3 = color}):Play()
+	healthText.Text = "❤️ " .. math.floor(hum.Health) .. "/" .. math.floor(hum.MaxHealth)
+end
+
+local function hookHealthBar(char)
+	local hum = char:WaitForChild("Humanoid", 10)
+	if hum then
+		hum.HealthChanged:Connect(updateHealthBar)
+		updateHealthBar()
+	end
+end
+
+if player.Character then hookHealthBar(player.Character) end
+player.CharacterAdded:Connect(hookHealthBar)
 
 -- ============================================================
 -- TIMER STATE
@@ -220,6 +296,77 @@ purchaseEvent.OnClientEvent:Connect(function(status, itemName, price, balance)
 		task.delay(2.7, function() msg:Destroy() end)
 	end
 end)
+
+-- ============================================================
+-- DAILY SPIN RESULT
+-- ============================================================
+
+if dailySpinEvent then
+	dailySpinEvent.OnClientEvent:Connect(function(winIdx, rewardName, rewardIcon)
+		local msg = Instance.new("TextLabel")
+		msg.Size = UDim2.fromScale(0.4, 0.1)
+		msg.Position = UDim2.fromScale(0.3, 0.35)
+		msg.BackgroundColor3 = Color3.fromRGB(40, 20, 60)
+		msg.BackgroundTransparency = 0.15
+		msg.Font = Enum.Font.FredokaOne; msg.TextScaled = true
+		msg.Parent = hudGui
+		Instance.new("UICorner", msg).CornerRadius = UDim.new(0, 14)
+
+		if winIdx == 0 and rewardName == "cooldown" then
+			-- Cooldown message
+			msg.Text = "⏰ Next spin in: " .. (rewardIcon or "?")
+			msg.TextColor3 = Color3.fromRGB(255, 150, 150)
+			Instance.new("UIStroke", msg).Color = Color3.fromRGB(200, 80, 80)
+		else
+			-- Win message
+			msg.Text = "🎡 " .. (rewardIcon or "🎁") .. " " .. (rewardName or "Prize") .. "! 🎡"
+			msg.TextColor3 = Color3.fromRGB(255, 220, 80)
+			Instance.new("UIStroke", msg).Color = Color3.fromRGB(255, 200, 50)
+		end
+
+		-- Pop in
+		msg.Size = UDim2.fromScale(0, 0); msg.Position = UDim2.fromScale(0.5, 0.4)
+		TweenService:Create(msg, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Size = UDim2.fromScale(0.4, 0.1),
+			Position = UDim2.fromScale(0.3, 0.35),
+		}):Play()
+
+		task.delay(3, function()
+			TweenService:Create(msg, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Position = UDim2.fromScale(0.3, 0.28),
+				TextTransparency = 1,
+				BackgroundTransparency = 1,
+			}):Play()
+			task.delay(1.2, function() msg:Destroy() end)
+		end)
+	end)
+end
+
+-- ============================================================
+-- TRAIL SPIN RESULT
+-- ============================================================
+
+if trailSpinResultEvent then
+	trailSpinResultEvent.OnClientEvent:Connect(function(trailName, colorRGB)
+		local msg = Instance.new("TextLabel")
+		msg.Size = UDim2.fromScale(0.35, 0.07)
+		msg.Position = UDim2.fromScale(0.325, 0.48)
+		msg.BackgroundColor3 = Color3.fromRGB(50, 30, 20)
+		msg.BackgroundTransparency = 0.2
+		msg.Text = "🎁 Trail: " .. (trailName or "???") .. "!"
+		msg.TextColor3 = Color3.fromRGB(255, 200, 150)
+		msg.TextScaled = true; msg.Font = Enum.Font.FredokaOne
+		msg.Parent = hudGui
+		Instance.new("UICorner", msg).CornerRadius = UDim.new(0, 10)
+
+		TweenService:Create(msg, TweenInfo.new(2.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Position = UDim2.fromScale(0.325, 0.4),
+			TextTransparency = 1,
+			BackgroundTransparency = 1,
+		}):Play()
+		task.delay(2.7, function() msg:Destroy() end)
+	end)
+end
 
 -- ============================================================
 -- VICTORY
