@@ -1590,9 +1590,10 @@ local function createSpawnRoom()
 	chestPromptR.Triggered:Connect(function(plr) handleTrailChest(plr) end)
 
 	-- ============================================================
-	-- DAILY SPIN WHEEL (front-left, carnival style, HORIZONTAL facing UP)
+	-- DAILY SPIN WHEEL (front-left, carnival style, VERTICAL facing -Z)
 	-- Pizza-slice segments with black text labels, slow idle rotation,
 	-- carnival ribbons, no floating 3D objects
+	-- Players view the wheel from the front (looking at the -Z face)
 	-- ============================================================
 	local SPIN_X = -55
 	local SPIN_Z = -40
@@ -1600,15 +1601,15 @@ local function createSpawnRoom()
 	local NUM_SEGMENTS = #SPIN_REWARDS
 	local wheelModel = Instance.new("Model"); wheelModel.Name = "DailySpinWheel"
 
-	-- Wheel center height: pedestal top + clearance
-	local PEDESTAL_HEIGHT = 12
-	local wheelCenterY = floorY + PEDESTAL_HEIGHT + 1
+	-- Wheel center: raised so the wheel face is at eye level
+	local WHEEL_CENTER_Y = floorY + WHEEL_RADIUS + 6
+	local wheelCenterY = WHEEL_CENTER_Y
 
 	-- ---- CARNIVAL BOOTH FRAME (striped pillars + canopy + ribbons) ----
 	for _, sx in ipairs({-1, 1}) do
 		local pillar = Instance.new("Part")
 		pillar.Size = Vector3.new(3, 50, 3)
-		pillar.Position = Vector3.new(SPIN_X + sx * 22, floorY + 25, SPIN_Z)
+		pillar.Position = Vector3.new(SPIN_X + sx * 22, floorY + 25, SPIN_Z + 2)
 		pillar.Anchored = true; pillar.Color = Color3.fromRGB(255, 40, 40)
 		pillar.Material = Enum.Material.SmoothPlastic; pillar.Parent = wheelModel
 		local pStripe = Instance.new("Part")
@@ -1618,13 +1619,13 @@ local function createSpawnRoom()
 		pStripe.Material = Enum.Material.SmoothPlastic; pStripe.CanCollide = false; pStripe.Parent = wheelModel
 	end
 	local canopy = Instance.new("Part")
-	canopy.Size = Vector3.new(48, 3, 22)
-	canopy.Position = Vector3.new(SPIN_X, floorY + 51, SPIN_Z)
+	canopy.Size = Vector3.new(48, 3, 12)
+	canopy.Position = Vector3.new(SPIN_X, floorY + 51, SPIN_Z + 2)
 	canopy.Anchored = true; canopy.Color = Color3.fromRGB(255, 220, 50)
 	canopy.Material = Enum.Material.Fabric; canopy.Parent = wheelModel
 	local canopyStripe = Instance.new("Part")
-	canopyStripe.Size = Vector3.new(48, 1, 22)
-	canopyStripe.Position = Vector3.new(SPIN_X, floorY + 52.5, SPIN_Z)
+	canopyStripe.Size = Vector3.new(48, 1, 12)
+	canopyStripe.Position = Vector3.new(SPIN_X, floorY + 52.5, SPIN_Z + 2)
 	canopyStripe.Anchored = true; canopyStripe.Color = Color3.fromRGB(255, 50, 50)
 	canopyStripe.Material = Enum.Material.Fabric; canopyStripe.CanCollide = false; canopyStripe.Parent = wheelModel
 
@@ -1636,17 +1637,15 @@ local function createSpawnRoom()
 	}
 	for ri = 1, 12 do
 		local ribbonX = SPIN_X - 22 + (ri - 1) * 4
-		for _, zSide in ipairs({-1, 1}) do
-			local ribbon = Instance.new("Part")
-			ribbon.Size = Vector3.new(0.6, math.random(8, 16), 0.15)
-			ribbon.Position = Vector3.new(ribbonX, floorY + 51 - ribbon.Size.Y / 2, SPIN_Z + zSide * 11)
-			ribbon.Anchored = true
-			ribbon.Color = ribbonColors[(ri % #ribbonColors) + 1]
-			ribbon.Material = Enum.Material.Fabric
-			ribbon.CanCollide = false
-			ribbon.Rotation = Vector3.new(0, 0, math.random(-8, 8))
-			ribbon.Parent = wheelModel
-		end
+		local ribbon = Instance.new("Part")
+		ribbon.Size = Vector3.new(0.6, math.random(8, 16), 0.15)
+		ribbon.Position = Vector3.new(ribbonX, floorY + 51 - ribbon.Size.Y / 2, SPIN_Z - 4)
+		ribbon.Anchored = true
+		ribbon.Color = ribbonColors[(ri % #ribbonColors) + 1]
+		ribbon.Material = Enum.Material.Fabric
+		ribbon.CanCollide = false
+		ribbon.Rotation = Vector3.new(0, 0, math.random(-8, 8))
+		ribbon.Parent = wheelModel
 	end
 	for _, sx in ipairs({-1, 1}) do
 		for ci = 1, 3 do
@@ -1655,7 +1654,7 @@ local function createSpawnRoom()
 			cornerRibbon.Position = Vector3.new(
 				SPIN_X + sx * 22 + ci * sx * 1.5,
 				floorY + 50 - cornerRibbon.Size.Y / 2,
-				SPIN_Z + math.random(-3, 3)
+				SPIN_Z - 2
 			)
 			cornerRibbon.Anchored = true
 			cornerRibbon.Color = ribbonColors[(ci + (if sx == -1 then 0 else 3)) % #ribbonColors + 1]
@@ -1666,14 +1665,21 @@ local function createSpawnRoom()
 		end
 	end
 
-	-- ---- PEDESTAL ----
+	-- ---- BACK WALL (behind the wheel, so you see the wheel face from front) ----
+	local wheelBackWall = Instance.new("Part")
+	wheelBackWall.Size = Vector3.new(WHEEL_RADIUS * 2 + 10, WHEEL_RADIUS * 2 + 10, 2)
+	wheelBackWall.Position = Vector3.new(SPIN_X, wheelCenterY, SPIN_Z + 3)
+	wheelBackWall.Anchored = true; wheelBackWall.Color = Color3.fromRGB(40, 20, 50)
+	wheelBackWall.Material = Enum.Material.SmoothPlastic; wheelBackWall.CanCollide = true
+	wheelBackWall.Parent = wheelModel
+
+	-- ---- PEDESTAL (base under the wheel) ----
 	local pedestal = Instance.new("Part")
 	pedestal.Name = "SpinPedestal"
-	pedestal.Size = Vector3.new(PEDESTAL_HEIGHT, 14, 14)
-	pedestal.Position = Vector3.new(SPIN_X, floorY + PEDESTAL_HEIGHT / 2, SPIN_Z)
+	pedestal.Size = Vector3.new(8, 5, 8)
+	pedestal.Position = Vector3.new(SPIN_X, floorY + 4, SPIN_Z)
 	pedestal.Anchored = true; pedestal.Color = Color3.fromRGB(80, 30, 30)
 	pedestal.Material = Enum.Material.Wood
-	pedestal.Shape = Enum.PartType.Cylinder; pedestal.Orientation = Vector3.new(0, 0, 90)
 	pedestal.Parent = wheelModel
 
 	-- ---- SPINNING WHEEL SUB-MODEL (all rotating parts go here) ----
@@ -1681,43 +1687,42 @@ local function createSpawnRoom()
 	spinningParts.Name = "SpinningWheel"
 	spinningParts.Parent = wheelModel
 
-	-- Main wheel disc (horizontal, face-up)
-	-- Roblox PartType.Cylinder: axis = local Y, diameter from Size.X
-	-- For a face-up disc: axis points up (Y), so default orientation is correct.
+	-- Main wheel disc (VERTICAL, facing -Z so players see it from the front)
+	-- Cylinder axis = Y by default. We rotate 90° on X to make it vertical (face -Z/+Z)
 	local wheelDisc = Instance.new("Part")
 	wheelDisc.Name = "WheelDisc"
 	wheelDisc.Size = Vector3.new(WHEEL_RADIUS * 2 + 2, 2, WHEEL_RADIUS * 2 + 2)
-	wheelDisc.Position = Vector3.new(SPIN_X, wheelCenterY, SPIN_Z)
+	wheelDisc.CFrame = CFrame.new(SPIN_X, wheelCenterY, SPIN_Z) * CFrame.Angles(math.rad(90), 0, 0)
 	wheelDisc.Anchored = true; wheelDisc.Color = Color3.fromRGB(245, 235, 220)
 	wheelDisc.Material = Enum.Material.SmoothPlastic
 	wheelDisc.Shape = Enum.PartType.Cylinder
 	wheelDisc.Parent = spinningParts
 
-	-- Gold neon outer rim
+	-- Gold neon outer rim (vertical)
 	local rim = Instance.new("Part")
 	rim.Size = Vector3.new(WHEEL_RADIUS * 2 + 6, 3, WHEEL_RADIUS * 2 + 6)
-	rim.Position = Vector3.new(SPIN_X, wheelCenterY - 0.5, SPIN_Z)
+	rim.CFrame = CFrame.new(SPIN_X, wheelCenterY, SPIN_Z + 0.5) * CFrame.Angles(math.rad(90), 0, 0)
 	rim.Anchored = true; rim.Color = Color3.fromRGB(255, 215, 0)
 	rim.Material = Enum.Material.Neon; rim.Transparency = 0.3
 	rim.Shape = Enum.PartType.Cylinder
 	rim.CanCollide = false; rim.Parent = spinningParts
 
-	-- Carnival lights around the rim (horizontal plane)
+	-- Carnival lights around the rim (vertical circle on XY plane)
 	for i = 1, 16 do
 		local bAngle = (i / 16) * math.pi * 2
 		local bulb = Instance.new("Part")
 		bulb.Size = Vector3.new(1.5, 1.5, 1.5)
 		bulb.Position = Vector3.new(
 			SPIN_X + math.cos(bAngle) * (WHEEL_RADIUS + 4),
-			wheelCenterY + 1,
-			SPIN_Z + math.sin(bAngle) * (WHEEL_RADIUS + 4)
+			wheelCenterY + math.sin(bAngle) * (WHEEL_RADIUS + 4),
+			SPIN_Z - 1
 		)
 		bulb.Anchored = true; bulb.Shape = Enum.PartType.Ball
 		bulb.Color = if i % 2 == 0 then Color3.fromRGB(255, 50, 50) else Color3.fromRGB(255, 255, 80)
 		bulb.Material = Enum.Material.Neon; bulb.CanCollide = false; bulb.Parent = spinningParts
 	end
 
-	-- ---- PIE-CUT SEGMENTS (flat, equally distributed, text labels) ----
+	-- ---- PIE-CUT SEGMENTS (vertical, on the XY plane) ----
 	local altColors = {
 		Color3.fromRGB(255, 200, 50),  Color3.fromRGB(80, 200, 255),
 		Color3.fromRGB(255, 100, 200), Color3.fromRGB(100, 255, 150),
@@ -1730,45 +1735,45 @@ local function createSpawnRoom()
 		local midAngle = angle + math.pi / NUM_SEGMENTS
 		local segColor = altColors[((i - 1) % #altColors) + 1]
 
-		-- Pie slice (flat block radiating from center, rotated around Y)
+		-- Pie slice radiating from center (vertical, on XY plane)
 		local seg = Instance.new("Part")
 		seg.Name = "Segment_" .. i
-		seg.Size = Vector3.new(5.5, 1.8, WHEEL_RADIUS * 0.85)
+		seg.Size = Vector3.new(5.5, WHEEL_RADIUS * 0.85, 1.8)
 		seg.CFrame = CFrame.new(
 			SPIN_X + math.cos(midAngle) * (WHEEL_RADIUS * 0.42),
-			wheelCenterY + 0.2,
-			SPIN_Z + math.sin(midAngle) * (WHEEL_RADIUS * 0.42)
-		) * CFrame.Angles(0, -midAngle + math.pi / 2, 0)
+			wheelCenterY + math.sin(midAngle) * (WHEEL_RADIUS * 0.42),
+			SPIN_Z - 0.2
+		) * CFrame.Angles(0, 0, midAngle - math.pi / 2)
 		seg.Anchored = true; seg.Color = segColor
 		seg.Material = Enum.Material.SmoothPlastic; seg.CanCollide = false
 		seg.Parent = spinningParts
 
-		-- Pizza-cut divider line
+		-- Pizza-cut divider line (vertical)
 		local divider = Instance.new("Part")
-		divider.Size = Vector3.new(0.3, 2, WHEEL_RADIUS * 0.95)
+		divider.Size = Vector3.new(0.3, WHEEL_RADIUS * 0.95, 2)
 		divider.CFrame = CFrame.new(
 			SPIN_X + math.cos(angle) * (WHEEL_RADIUS * 0.45),
-			wheelCenterY + 0.3,
-			SPIN_Z + math.sin(angle) * (WHEEL_RADIUS * 0.45)
-		) * CFrame.Angles(0, -angle + math.pi / 2, 0)
+			wheelCenterY + math.sin(angle) * (WHEEL_RADIUS * 0.45),
+			SPIN_Z - 0.3
+		) * CFrame.Angles(0, 0, angle - math.pi / 2)
 		divider.Anchored = true; divider.Color = Color3.fromRGB(40, 25, 50)
 		divider.Material = Enum.Material.SmoothPlastic; divider.CanCollide = false
 		divider.Parent = spinningParts
 
-		-- Reward NAME label (BLACK text on a face-up SurfaceGui)
+		-- Reward NAME label (BLACK text on a vertical SurfaceGui facing -Z)
 		local segLblP = Instance.new("Part")
 		segLblP.Name = "SegLabel_" .. i
-		segLblP.Size = Vector3.new(5, 0.1, 2.5)
+		segLblP.Size = Vector3.new(5, 2.5, 0.1)
 		segLblP.CFrame = CFrame.new(
 			SPIN_X + math.cos(midAngle) * (WHEEL_RADIUS * 0.55),
-			wheelCenterY + 1.2,
-			SPIN_Z + math.sin(midAngle) * (WHEEL_RADIUS * 0.55)
-		) * CFrame.Angles(0, -midAngle + math.pi / 2, 0)
+			wheelCenterY + math.sin(midAngle) * (WHEEL_RADIUS * 0.55),
+			SPIN_Z - 1.2
+		) * CFrame.Angles(0, 0, midAngle - math.pi / 2)
 		segLblP.Anchored = true; segLblP.Transparency = 0.95; segLblP.CanCollide = false
 		segLblP.Parent = spinningParts
 
 		local sGui = Instance.new("SurfaceGui")
-		sGui.Face = Enum.NormalId.Top; sGui.Parent = segLblP
+		sGui.Face = Enum.NormalId.Back; sGui.Parent = segLblP
 		local segLbl = Instance.new("TextLabel")
 		segLbl.Size = UDim2.fromScale(1, 1); segLbl.BackgroundTransparency = 1
 		segLbl.Text = reward.name
@@ -1777,20 +1782,20 @@ local function createSpawnRoom()
 		segLbl.Parent = sGui
 	end
 
-	-- Center hub (gold)
+	-- Center hub (gold, vertical)
 	local hub = Instance.new("Part")
-	hub.Size = Vector3.new(5, 3, 5)
-	hub.Position = Vector3.new(SPIN_X, wheelCenterY + 0.5, SPIN_Z)
+	hub.Size = Vector3.new(5, 5, 3)
+	hub.CFrame = CFrame.new(SPIN_X, wheelCenterY, SPIN_Z - 0.5) * CFrame.Angles(math.rad(90), 0, 0)
 	hub.Anchored = true; hub.Color = Color3.fromRGB(255, 215, 0)
 	hub.Material = Enum.Material.Metal; hub.Shape = Enum.PartType.Cylinder
 	hub.Parent = spinningParts
 
 	-- ---- STATIC PARTS (pointer, label) ----
-	-- Pointer arrow at one edge (does NOT rotate)
+	-- Pointer arrow at TOP of wheel (does NOT rotate) — points down at winning segment
 	local pointer = Instance.new("Part")
 	pointer.Name = "SpinPointer"
 	pointer.Size = Vector3.new(3, 5, 3)
-	pointer.Position = Vector3.new(SPIN_X, wheelCenterY + 3, SPIN_Z - WHEEL_RADIUS - 2)
+	pointer.Position = Vector3.new(SPIN_X, wheelCenterY + WHEEL_RADIUS + 3, SPIN_Z - 2)
 	pointer.Anchored = true; pointer.Color = Color3.fromRGB(255, 50, 50)
 	pointer.Material = Enum.Material.Neon; pointer.Shape = Enum.PartType.Ball
 	pointer.Parent = wheelModel
@@ -1798,7 +1803,7 @@ local function createSpawnRoom()
 	-- "DAILY SPIN" billboard label above the wheel
 	local spinLabelP = Instance.new("Part")
 	spinLabelP.Size = Vector3.new(1, 1, 1)
-	spinLabelP.Position = Vector3.new(SPIN_X, wheelCenterY + 14, SPIN_Z)
+	spinLabelP.Position = Vector3.new(SPIN_X, wheelCenterY + WHEEL_RADIUS + 10, SPIN_Z)
 	spinLabelP.Anchored = true; spinLabelP.Transparency = 1; spinLabelP.CanCollide = false
 	spinLabelP.Parent = wheelModel
 	local spinBB = Instance.new("BillboardGui")
@@ -1822,7 +1827,7 @@ local function createSpawnRoom()
 
 	wheelModel.Parent = mapFolder
 
-	-- ---- SLOW IDLE ROTATION ----
+	-- ---- SLOW IDLE ROTATION (spins around Z axis for vertical wheel) ----
 	local wheelSpinning = false
 	local idleAngle = 0
 	local IDLE_SPEED = 0.3 -- degrees per frame (~9 deg/sec)
@@ -1832,7 +1837,7 @@ local function createSpawnRoom()
 		while wheelModel and wheelModel.Parent do
 			if not wheelSpinning then
 				idleAngle = (idleAngle + IDLE_SPEED) % 360
-				spinningParts:PivotTo(wheelPivot * CFrame.Angles(0, math.rad(idleAngle), 0))
+				spinningParts:PivotTo(wheelPivot * CFrame.Angles(0, 0, math.rad(idleAngle)))
 			end
 			task.wait(0.03)
 		end
@@ -1869,12 +1874,12 @@ local function createSpawnRoom()
 				if elapsed >= spinDuration then break end
 				local eased = 1 - (1 - elapsed / spinDuration) ^ 3
 				local currentAngle = startAngle + totalRotation * eased
-				spinningParts:PivotTo(wheelPivot * CFrame.Angles(0, math.rad(currentAngle), 0))
+				spinningParts:PivotTo(wheelPivot * CFrame.Angles(0, 0, math.rad(currentAngle)))
 				task.wait(0.03)
 			end
 
 			local finalAngle = startAngle + totalRotation
-			spinningParts:PivotTo(wheelPivot * CFrame.Angles(0, math.rad(finalAngle), 0))
+			spinningParts:PivotTo(wheelPivot * CFrame.Angles(0, 0, math.rad(finalAngle)))
 			idleAngle = finalAngle % 360
 
 			applySpinReward(plr, reward)
