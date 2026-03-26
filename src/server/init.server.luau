@@ -137,14 +137,10 @@ end
 
 -- Fallback colors/shapes if model not found in ServerStorage
 local CANDY_FALLBACK = {
-	icecream   = {Color3.fromRGB(85, 45, 18), Enum.PartType.Ball, Vector3.new(14, 14, 14)}, -- brown ball (scoop)
 	candycane  = {Color3.fromRGB(220, 20, 20), Enum.PartType.Cylinder, Vector3.new(22, 6, 6)}, -- red+white striped cylinder
+	icecream   = {Color3.fromRGB(85, 45, 18), Enum.PartType.Ball, Vector3.new(14, 14, 14)}, -- brown ball (scoop)
+	candypieces = {Color3.fromRGB(85, 45, 18), Enum.PartType.Ball, Vector3.new(12, 10, 12)}, -- chocolate scoop pieces
 	peppermint = {Color3.fromRGB(255, 20, 20), Enum.PartType.Cylinder, Vector3.new(5, 18, 18)}, -- red+white flat cylinder
-	lollipop   = {Color3.fromRGB(255, 60, 140), Enum.PartType.Cylinder, Vector3.new(5, 18, 18)},
-	gummy      = {Color3.fromRGB(50, 220, 50), Enum.PartType.Ball, Vector3.new(16, 12, 14)},
-	donut      = {Color3.fromRGB(255, 140, 190), Enum.PartType.Cylinder, Vector3.new(5, 18, 18)},
-	cupcake    = {Color3.fromRGB(255, 175, 215), Enum.PartType.Ball, Vector3.new(16, 14, 16)},
-	jawbreaker = {Color3.fromRGB(255, 65, 65), Enum.PartType.Ball, Vector3.new(16, 16, 16)},
 }
 
 -- Cache: clone templates from ServerStorage (or ReplicatedStorage/workspace fallback)
@@ -245,609 +241,28 @@ local function buildCandyFromModel(candyType, index, pos, m)
 	return walkable or model:FindFirstChildWhichIsA("BasePart"), model
 end
 
--- Wrapper functions matching the new candy types
+-- Wrapper functions for the 4 real candy model types
+local function buildCandyCane(index, pos, m)
+	return buildCandyFromModel("candycane", index, pos, m)
+end
+
 local function buildIceCream(index, pos, m)
 	return buildCandyFromModel("icecream", index, pos, m)
 end
 
-local function buildCandyCane(index, pos, m)
-	return buildCandyFromModel("candycane", index, pos, m)
+local function buildCandyPieces(index, pos, m)
+	return buildCandyFromModel("candypieces", index, pos, m)
 end
 
 local function buildPeppermint(index, pos, m)
 	return buildCandyFromModel("peppermint", index, pos, m)
 end
-local function buildLollipop(index, pos, m)
-	return buildCandyFromModel("lollipop", index, pos, m)
-end
-local function buildGummyBear(index, pos, m)
-	return buildCandyFromModel("gummy", index, pos, m)
-end
-local function buildDonut(index, pos, m)
-	return buildCandyFromModel("donut", index, pos, m)
-end
-local function buildCupcake(index, pos, m)
-	return buildCandyFromModel("cupcake", index, pos, m)
-end
-local function buildJawbreaker(index, pos, m)
-	return buildCandyFromModel("jawbreaker", index, pos, m)
-end
 
---[=[ OLD BUILDERS REMOVED
-	local base = Instance.new("Part")
-	base.Name = "Walkable"
-	base.Size = Vector3.new(14*m, 5*m, 14*m)
-	base.Position = pos + Vector3.new(0, -2*m, 0)
-	base.Anchored = true; base.Color = Color3.fromRGB(255, 200, 40)
-	base.Material = Enum.Material.SmoothPlastic
-	base.Parent = model
 
-	-- Orange middle (slightly narrower Block)
-	local middle = Instance.new("Part")
-	middle.Size = Vector3.new(10*m, 5*m, 10*m)
-	middle.Position = pos + Vector3.new(0, 2*m, 0)
-	middle.Anchored = true; middle.Color = Color3.fromRGB(255, 140, 20)
-	middle.Material = Enum.Material.SmoothPlastic
-	middle.CanCollide = false; middle.Parent = model
-
-	-- White tip (Ball on top)
-	local tip = Instance.new("Part")
-	tip.Size = Vector3.new(6*m, 6*m, 6*m)
-	tip.Position = pos + Vector3.new(0, 6*m, 0)
-	tip.Anchored = true; tip.Color = Color3.fromRGB(255, 255, 255)
-	tip.Material = Enum.Material.SmoothPlastic
-	tip.Shape = Enum.PartType.Ball
-	tip.CanCollide = false; tip.Parent = model
-
-	-- Round blending spheres at transitions for smooth look
-	local blend1 = Instance.new("Part")
-	blend1.Size = Vector3.new(12*m, 4*m, 12*m)
-	blend1.Position = pos
-	blend1.Anchored = true; blend1.Color = Color3.fromRGB(255, 170, 30)
-	blend1.Material = Enum.Material.SmoothPlastic
-	blend1.Shape = Enum.PartType.Ball
-	blend1.CanCollide = false; blend1.Parent = model
-
-	local blend2 = Instance.new("Part")
-	blend2.Size = Vector3.new(8*m, 3*m, 8*m)
-	blend2.Position = pos + Vector3.new(0, 4*m, 0)
-	blend2.Anchored = true; blend2.Color = Color3.fromRGB(255, 220, 160)
-	blend2.Material = Enum.Material.SmoothPlastic
-	blend2.Shape = Enum.PartType.Ball
-	blend2.CanCollide = false; blend2.Parent = model
-
-	-- Waxy glass overlay covering whole piece
-	addSheen(model, Vector3.new(15*m, 12*m, 15*m), pos + Vector3.new(0, 1*m, 0), 
-		Color3.fromRGB(255, 240, 200))
-
-	-- Warm golden glow
-	glow(base, Color3.fromRGB(255, 230, 80), 20, 0.5)
-
-	model.Parent = mapFolder
-	return base, model
-end
-
--- ============================================================
--- CHOCOLATE BAR: Detailed segmented chocolate bar
--- ============================================================
-
-local function buildChocolateBar(index, pos, m)
-	m = m or 1
-	local model = Instance.new("Model"); model.Name = "ChocolateBar_"..index
-
-	-- Rich brown main block (Walkable)
-	local bar = Instance.new("Part")
-	bar.Name = "Walkable"
-	bar.Size = Vector3.new(20*m, 5*m, 14*m)
-	bar.Position = pos; bar.Anchored = true
-	bar.Color = Color3.fromRGB(85, 45, 18)
-	bar.Material = Enum.Material.SmoothPlastic
-	bar.Parent = model
-
-	-- 4x2 grid of raised segment bumps on top (small Balls for domed look)
-	for x = 1, 4 do
-		for z = 1, 2 do
-			local bump = Instance.new("Part")
-			bump.Size = Vector3.new(3*m, 2*m, 4*m)
-			bump.Position = pos + Vector3.new(
-				-7.5*m + (x-1)*5*m, 3*m, -3*m + (z-1)*6*m
-			)
-			bump.Anchored = true; bump.Color = Color3.fromRGB(85, 45, 18)
-			bump.Material = Enum.Material.SmoothPlastic
-			bump.Shape = Enum.PartType.Ball
-			bump.CanCollide = false; bump.Parent = model
-		end
-	end
-
-	-- Thin dark groove lines between segments
-	for x = 1, 3 do
-		local groove = Instance.new("Part")
-		groove.Size = Vector3.new(0.3*m, 1*m, 14*m)
-		groove.Position = pos + Vector3.new(-5*m + x*5*m, 2.8*m, 0)
-		groove.Anchored = true; groove.Color = Color3.fromRGB(60, 30, 12)
-		groove.Material = Enum.Material.SmoothPlastic
-		groove.CanCollide = false; groove.Parent = model
-	end
-
-	local groove2 = Instance.new("Part")
-	groove2.Size = Vector3.new(20*m, 1*m, 0.3*m)
-	groove2.Position = pos + Vector3.new(0, 2.8*m, 0)
-	groove2.Anchored = true; groove2.Color = Color3.fromRGB(60, 30, 12)
-	groove2.Material = Enum.Material.SmoothPlastic
-	groove2.CanCollide = false; groove2.Parent = model
-
-	-- Gold foil wrapper parts sticking out on both ends
-	for _, side in ipairs({-1, 1}) do
-		local foil = Instance.new("Part")
-		foil.Size = Vector3.new(2*m, 6*m, 16*m)
-		foil.Position = pos + Vector3.new(side * 11*m, 0, 0)
-		foil.Anchored = true; foil.Color = Color3.fromRGB(255, 215, 0)
-		foil.Material = Enum.Material.Foil
-		foil.CanCollide = false; foil.Parent = model
-	end
-
-	-- Cocoa dust particles (tiny brown balls on top)
-	for i = 1, 12 do
-		local dust = Instance.new("Part")
-		dust.Size = Vector3.new(0.3*m, 0.3*m, 0.3*m)
-		dust.Position = pos + Vector3.new(
-			math.random(-8, 8)*m, 3*m, math.random(-5, 5)*m
-		)
-		dust.Anchored = true; dust.Color = Color3.fromRGB(60, 30, 12)
-		dust.Material = Enum.Material.SmoothPlastic
-		dust.Shape = Enum.PartType.Ball
-		dust.CanCollide = false; dust.Parent = model
-	end
-
-	-- Glossy sheen
-	addSheen(model, Vector3.new(20.5*m, 5.5*m, 14.5*m), pos + Vector3.new(0, 0.2*m, 0), 
-		Color3.fromRGB(180, 140, 100))
-
-	glow(bar, Color3.fromRGB(150, 100, 60), 20, 0.45)
-
-	model.Parent = mapFolder
-	return bar, model
-end
-
--- ============================================================
--- LOLLIPOP: Detailed swirl lollipop with bow
--- ============================================================
-
-local function buildLollipop(index, pos, m)
-	m = m or 1
-	local palettes = {
-		{Color3.fromRGB(255,60,140), Color3.fromRGB(255,200,220)},
-		{Color3.fromRGB(130,60,255), Color3.fromRGB(200,150,255)},
-		{Color3.fromRGB(60,180,255), Color3.fromRGB(180,220,255)},
-		{Color3.fromRGB(255,140,30), Color3.fromRGB(255,220,150)},
-	}
-	local palette = palettes[math.random(1, #palettes)]
-	local color1, color2 = palette[1], palette[2]
-	local model = Instance.new("Model"); model.Name = "Lollipop_"..index
-
-	-- White stick cylinder going down
-	local stick = Instance.new("Part")
-	stick.Size = Vector3.new(1.5*m, 12*m, 1.5*m)
-	stick.Position = pos + Vector3.new(0, -7*m, 0)
-	stick.Anchored = true; stick.Color = Color3.fromRGB(245, 235, 210)
-	stick.Material = Enum.Material.SmoothPlastic
-	stick.CanCollide = false; stick.Parent = model
-
-	-- Big disc (Walkable, Cylinder oriented flat)
-	local disc = Instance.new("Part")
-	disc.Name = "Walkable"
-	disc.Size = Vector3.new(5*m, 18*m, 18*m)
-	disc.Position = pos; disc.Anchored = true
-	disc.Color = color1
-	disc.Material = Enum.Material.SmoothPlastic
-	disc.Shape = Enum.PartType.Cylinder
-	disc.Orientation = Vector3.new(0,0,90)
-	disc.Parent = model
-
-	-- 6 concentric swirl rings on disc face (alternating colors, slightly transparent)
-	for i = 1, 6 do
-		local ring = Instance.new("Part")
-		ring.Size = Vector3.new(5.5*m, 18*m - i*2*m, 18*m - i*2*m)
-		ring.Position = pos + Vector3.new(0.2*m, 0, 0)
-		ring.Anchored = true
-		ring.Color = if i % 2 == 1 then color2 else color1
-		ring.Material = Enum.Material.SmoothPlastic
-		ring.Shape = Enum.PartType.Cylinder
-		ring.Orientation = Vector3.new(0,0,90)
-		ring.Transparency = 0.3
-		ring.CanCollide = false; ring.Parent = model
-	end
-
-	-- Glass sheen disc on top
-	addSheen(model, Vector3.new(5.5*m, 18.5*m, 18.5*m), pos, 
-		Color3.fromRGB(255,255,255), Enum.PartType.Cylinder, Vector3.new(0,0,90))
-
-	-- Bow decoration at base of stick (2 small balls + knot)
-	local bow1 = Instance.new("Part")
-	bow1.Size = Vector3.new(2*m, 2*m, 2*m)
-	bow1.Position = pos + Vector3.new(-1.5*m, -1*m, 0)
-	bow1.Anchored = true; bow1.Color = Color3.fromRGB(255, 100, 150)
-	bow1.Material = Enum.Material.SmoothPlastic
-	bow1.Shape = Enum.PartType.Ball
-	bow1.CanCollide = false; bow1.Parent = model
-
-	local bow2 = Instance.new("Part")
-	bow2.Size = Vector3.new(2*m, 2*m, 2*m)
-	bow2.Position = pos + Vector3.new(1.5*m, -1*m, 0)
-	bow2.Anchored = true; bow2.Color = Color3.fromRGB(255, 100, 150)
-	bow2.Material = Enum.Material.SmoothPlastic
-	bow2.Shape = Enum.PartType.Ball
-	bow2.CanCollide = false; bow2.Parent = model
-
-	local knot = Instance.new("Part")
-	knot.Size = Vector3.new(1*m, 1*m, 1*m)
-	knot.Position = pos + Vector3.new(0, -1*m, 0)
-	knot.Anchored = true; knot.Color = Color3.fromRGB(200, 80, 120)
-	knot.Material = Enum.Material.SmoothPlastic
-	knot.Shape = Enum.PartType.Ball
-	knot.CanCollide = false; knot.Parent = model
-
-	glow(disc, color1, 26, 0.55)
-
-	model.Parent = mapFolder
-	return disc, model
-end
-
--- ============================================================
--- GUMMY BEAR: Detailed translucent gummy bear
--- ============================================================
-
-local function buildGummyBear(index, pos, m)
-	m = m or 1
-	local gummyColors = {
-		Color3.fromRGB(255,50,50), Color3.fromRGB(50,220,50),
-		Color3.fromRGB(255,200,50), Color3.fromRGB(255,120,0),
-		Color3.fromRGB(200, 50, 200),
-	}
-	local color = gummyColors[math.random(1, #gummyColors)]
-	local model = Instance.new("Model"); model.Name = "GummyBear_"..index
-
-	-- Rounded body block (Walkable) with 4 corner spheres for squishy edges
-	local body = Instance.new("Part")
-	body.Name = "Walkable"
-	body.Size = Vector3.new(12*m, 8*m, 10*m)
-	body.Position = pos; body.Anchored = true; body.Color = color
-	body.Material = Enum.Material.SmoothPlastic
-	body.Transparency = 0.18; body.Parent = model
-
-	-- 4 corner spheres for squishy edges
-	local corners = {
-		{-5*m, 3*m, -4*m}, {5*m, 3*m, -4*m}, 
-		{-5*m, -3*m, -4*m}, {5*m, -3*m, -4*m}
-	}
-	for _, corner in ipairs(corners) do
-		local sphere = Instance.new("Part")
-		sphere.Size = Vector3.new(4*m, 4*m, 4*m)
-		sphere.Position = pos + Vector3.new(corner[1], corner[2], corner[3])
-		sphere.Anchored = true; sphere.Color = color
-		sphere.Material = Enum.Material.SmoothPlastic
-		sphere.Shape = Enum.PartType.Ball
-		sphere.Transparency = 0.18
-		sphere.CanCollide = false; sphere.Parent = model
-	end
-
-	-- Spherical head on top
-	local head = Instance.new("Part")
-	head.Size = Vector3.new(8*m, 8*m, 8*m)
-	head.Position = pos + Vector3.new(0, 8*m, 0)
-	head.Anchored = true; head.Color = color
-	head.Material = Enum.Material.SmoothPlastic
-	head.Shape = Enum.PartType.Ball
-	head.Transparency = 0.18
-	head.CanCollide = false; head.Parent = model
-
-	-- Two small ear spheres
-	for _, side in ipairs({-1, 1}) do
-		local ear = Instance.new("Part")
-		ear.Size = Vector3.new(2*m, 2*m, 2*m)
-		ear.Position = pos + Vector3.new(side*3*m, 10*m, 1*m)
-		ear.Anchored = true; ear.Color = color
-		ear.Material = Enum.Material.SmoothPlastic
-		ear.Shape = Enum.PartType.Ball
-		ear.Transparency = 0.18
-		ear.CanCollide = false; ear.Parent = model
-	end
-
-	-- Two stubby arm spheres on sides
-	for _, side in ipairs({-1, 1}) do
-		local arm = Instance.new("Part")
-		arm.Size = Vector3.new(3*m, 3*m, 3*m)
-		arm.Position = pos + Vector3.new(side*7*m, 2*m, 0)
-		arm.Anchored = true; arm.Color = color
-		arm.Material = Enum.Material.SmoothPlastic
-		arm.Shape = Enum.PartType.Ball
-		arm.Transparency = 0.18
-		arm.CanCollide = false; arm.Parent = model
-	end
-
-	-- Two dark eyes with white highlight dots
-	for _, side in ipairs({-1, 1}) do
-		local eye = Instance.new("Part")
-		eye.Size = Vector3.new(1*m, 1*m, 1*m)
-		eye.Position = pos + Vector3.new(side*1.5*m, 8.5*m, 3*m)
-		eye.Anchored = true; eye.Color = Color3.fromRGB(0, 0, 0)
-		eye.Material = Enum.Material.SmoothPlastic
-		eye.Shape = Enum.PartType.Ball
-		eye.CanCollide = false; eye.Parent = model
-
-		local highlight = Instance.new("Part")
-		highlight.Size = Vector3.new(0.4*m, 0.4*m, 0.4*m)
-		highlight.Position = pos + Vector3.new(side*1.7*m, 8.7*m, 3.2*m)
-		highlight.Anchored = true; highlight.Color = Color3.fromRGB(255, 255, 255)
-		highlight.Material = Enum.Material.Neon
-		highlight.Shape = Enum.PartType.Ball
-		highlight.CanCollide = false; highlight.Parent = model
-	end
-
-	-- Smile part
-	local smile = Instance.new("Part")
-	smile.Size = Vector3.new(3*m, 0.5*m, 0.5*m)
-	smile.Position = pos + Vector3.new(0, 7*m, 3.5*m)
-	smile.Anchored = true; smile.Color = Color3.fromRGB(0, 0, 0)
-	smile.Material = Enum.Material.SmoothPlastic
-	smile.CanCollide = false; smile.Parent = model
-
-	-- Inner glass glow core for translucent gummy effect
-	local glowCore = Instance.new("Part")
-	glowCore.Size = Vector3.new(8*m, 6*m, 6*m)
-	glowCore.Position = pos
-	glowCore.Anchored = true; glowCore.Color = color
-	glowCore.Material = Enum.Material.Glass
-	glowCore.Transparency = 0.7
-	glowCore.CanCollide = false; glowCore.Parent = model
-
-	-- Sugar coating: 10 tiny white neon ball specks
-	for i = 1, 10 do
-		local speck = Instance.new("Part")
-		speck.Size = Vector3.new(0.3*m, 0.3*m, 0.3*m)
-		speck.Position = pos + Vector3.new(
-			math.random(-5, 5)*m, math.random(-3, 6)*m, math.random(-4, 4)*m
-		)
-		speck.Anchored = true; speck.Color = Color3.fromRGB(255, 255, 255)
-		speck.Material = Enum.Material.Neon
-		speck.Shape = Enum.PartType.Ball
-		speck.CanCollide = false; speck.Parent = model
-	end
-
-	glow(body, color, 22, 0.45)
-
-	model.Parent = mapFolder
-	return body, model
-end
-
--- ============================================================
--- DONUT: Detailed frosted donut with sprinkles
--- ============================================================
-
-local function buildDonut(index, pos, m)
-	m = m or 1
-	local frostColors = {
-		Color3.fromRGB(255,140,190), Color3.fromRGB(190,120,255),
-		Color3.fromRGB(120,190,255), Color3.fromRGB(255,210,120),
-	}
-	local frostColor = frostColors[math.random(1, #frostColors)]
-	local model = Instance.new("Model"); model.Name = "Donut_"..index
-
-	-- Golden dough ring cylinder (Walkable, oriented flat)
-	local ring = Instance.new("Part")
-	ring.Name = "Walkable"
-	ring.Size = Vector3.new(4*m, 18*m, 18*m)
-	ring.Position = pos; ring.Anchored = true
-	ring.Color = Color3.fromRGB(200, 150, 80)
-	ring.Material = Enum.Material.SmoothPlastic
-	ring.Shape = Enum.PartType.Cylinder
-	ring.Orientation = Vector3.new(0,0,90)
-	ring.Parent = model
-
-	-- Frosting layer cylinder slightly above
-	local frosting = Instance.new("Part")
-	frosting.Size = Vector3.new(3*m, 17*m, 17*m)
-	frosting.Position = pos + Vector3.new(0, 0, 0.5*m)
-	frosting.Anchored = true; frosting.Color = frostColor
-	frosting.Material = Enum.Material.SmoothPlastic
-	frosting.Shape = Enum.PartType.Cylinder
-	frosting.Orientation = Vector3.new(0,0,90)
-	frosting.CanCollide = false; frosting.Parent = model
-
-	-- 8 frosting drip balls around edge
-	for i = 1, 8 do
-		local angle = (i / 8) * math.pi * 2
-		local drip = Instance.new("Part")
-		drip.Size = Vector3.new(2*m, 2*m, 3*m)
-		drip.Position = pos + Vector3.new(
-			0, math.cos(angle) * 8*m, math.sin(angle) * 8*m - 1*m
-		)
-		drip.Anchored = true; drip.Color = frostColor
-		drip.Material = Enum.Material.SmoothPlastic
-		drip.Shape = Enum.PartType.Ball
-		drip.CanCollide = false; drip.Parent = model
-	end
-
-	-- 20 colorful sprinkle parts on top (tiny rotated blocks)
-	local sprinkleColors = {
-		Color3.fromRGB(255,80,80), Color3.fromRGB(80,255,80),
-		Color3.fromRGB(80,80,255), Color3.fromRGB(255,255,80),
-		Color3.fromRGB(255,80,255)
-	}
-	for i = 1, 20 do
-		local sprinkle = Instance.new("Part")
-		sprinkle.Size = Vector3.new(0.3*m, 0.3*m, 1.5*m)
-		sprinkle.Position = pos + Vector3.new(
-			0, math.random(-6, 6)*m, math.random(-6, 6)*m + 1*m
-		)
-		sprinkle.Rotation = Vector3.new(
-			math.random(0, 360), math.random(0, 360), math.random(0, 360)
-		)
-		sprinkle.Anchored = true
-		sprinkle.Color = sprinkleColors[math.random(1, #sprinkleColors)]
-		sprinkle.Material = Enum.Material.SmoothPlastic
-		sprinkle.CanCollide = false; sprinkle.Parent = model
-	end
-
-	-- Glass sheen cylinder overlay
-	addSheen(model, Vector3.new(4.5*m, 18.5*m, 18.5*m), pos, 
-		Color3.fromRGB(255,255,255), Enum.PartType.Cylinder, Vector3.new(0,0,90))
-
-	-- Warm glow
-	glow(ring, frostColor, 20, 0.5)
-
-	model.Parent = mapFolder
-	return ring, model
-end
-
--- ============================================================
--- CUPCAKE: Detailed layered cupcake with cherry
--- ============================================================
-
-local function buildCupcake(index, pos, m)
-	m = m or 1
-	local model = Instance.new("Model"); model.Name = "Cupcake_"..index
-
-	-- Golden wrapper block (Walkable) 
-	local wrapper = Instance.new("Part")
-	wrapper.Name = "Walkable"
-	wrapper.Size = Vector3.new(12*m, 6*m, 12*m)
-	wrapper.Position = pos + Vector3.new(0, -2*m, 0)
-	wrapper.Anchored = true; wrapper.Color = Color3.fromRGB(200, 150, 50)
-	wrapper.Material = Enum.Material.SmoothPlastic
-	wrapper.Parent = model
-
-	-- 10 wrapper ridge parts around circumference
-	for i = 1, 10 do
-		local angle = (i / 10) * math.pi * 2
-		local ridge = Instance.new("Part")
-		ridge.Size = Vector3.new(0.5*m, 6*m, 2*m)
-		ridge.Position = pos + Vector3.new(
-			math.cos(angle) * 6*m, -2*m, math.sin(angle) * 6*m
-		)
-		ridge.Anchored = true; ridge.Color = Color3.fromRGB(180, 130, 40)
-		ridge.Material = Enum.Material.SmoothPlastic
-		ridge.CanCollide = false; ridge.Parent = model
-	end
-
-	-- Visible cake layer above wrapper
-	local cake = Instance.new("Part")
-	cake.Size = Vector3.new(10*m, 4*m, 10*m)
-	cake.Position = pos + Vector3.new(0, 2*m, 0)
-	cake.Anchored = true; cake.Color = Color3.fromRGB(220, 180, 120)
-	cake.Material = Enum.Material.SmoothPlastic
-	cake.CanCollide = false; cake.Parent = model
-
-	-- 3-tier frosting swirl (large → medium → small, getting lighter pink)
-	local frostTier1 = Instance.new("Part")
-	frostTier1.Size = Vector3.new(8*m, 3*m, 8*m)
-	frostTier1.Position = pos + Vector3.new(0, 5*m, 0)
-	frostTier1.Anchored = true; frostTier1.Color = Color3.fromRGB(255, 175, 215)
-	frostTier1.Material = Enum.Material.SmoothPlastic
-	frostTier1.Shape = Enum.PartType.Ball
-	frostTier1.CanCollide = false; frostTier1.Parent = model
-
-	local frostTier2 = Instance.new("Part")
-	frostTier2.Size = Vector3.new(5*m, 2.5*m, 5*m)
-	frostTier2.Position = pos + Vector3.new(0, 7*m, 0)
-	frostTier2.Anchored = true; frostTier2.Color = Color3.fromRGB(255, 200, 230)
-	frostTier2.Material = Enum.Material.SmoothPlastic
-	frostTier2.Shape = Enum.PartType.Ball
-	frostTier2.CanCollide = false; frostTier2.Parent = model
-
-	local frostTier3 = Instance.new("Part")
-	frostTier3.Size = Vector3.new(3*m, 2*m, 3*m)
-	frostTier3.Position = pos + Vector3.new(0, 9*m, 0)
-	frostTier3.Anchored = true; frostTier3.Color = Color3.fromRGB(255, 230, 245)
-	frostTier3.Material = Enum.Material.SmoothPlastic
-	frostTier3.Shape = Enum.PartType.Ball
-	frostTier3.CanCollide = false; frostTier3.Parent = model
-
-	-- Cherry sphere on top (red) with white neon highlight + green stem
-	local cherry = Instance.new("Part")
-	cherry.Size = Vector3.new(2*m, 2*m, 2*m)
-	cherry.Position = pos + Vector3.new(0, 11*m, 0)
-	cherry.Anchored = true; cherry.Color = Color3.fromRGB(200, 30, 30)
-	cherry.Material = Enum.Material.SmoothPlastic
-	cherry.Shape = Enum.PartType.Ball
-	cherry.CanCollide = false; cherry.Parent = model
-
-	local highlight = Instance.new("Part")
-	highlight.Size = Vector3.new(0.5*m, 0.5*m, 0.5*m)
-	highlight.Position = pos + Vector3.new(0.3*m, 11.3*m, 0.3*m)
-	highlight.Anchored = true; highlight.Color = Color3.fromRGB(255, 255, 255)
-	highlight.Material = Enum.Material.Neon
-	highlight.Shape = Enum.PartType.Ball
-	highlight.CanCollide = false; highlight.Parent = model
-
-	local stem = Instance.new("Part")
-	stem.Size = Vector3.new(0.3*m, 2*m, 0.3*m)
-	stem.Position = pos + Vector3.new(0, 13*m, 0)
-	stem.Anchored = true; stem.Color = Color3.fromRGB(50, 150, 50)
-	stem.Material = Enum.Material.SmoothPlastic
-	stem.CanCollide = false; stem.Parent = model
-
-	-- Glass frosting gloss overlay
-	addSheen(model, Vector3.new(9*m, 8*m, 9*m), pos + Vector3.new(0, 4*m, 0), 
-		Color3.fromRGB(255,230,240))
-
-	glow(wrapper, Color3.fromRGB(255, 200, 230), 20, 0.45)
-
-	model.Parent = mapFolder
-	return wrapper, model
-end
-
--- ============================================================
--- JAWBREAKER: Multi-layer concentric sphere jawbreaker
--- ============================================================
-
-local function buildJawbreaker(index, pos, m)
-	m = m or 1
-	local model = Instance.new("Model"); model.Name = "Jawbreaker_"..index
-
-	-- 5 concentric spheres with increasing transparency
-	local layers = {
-		{size = 16*m, color = Color3.fromRGB(255, 65, 65), transparency = 0}, -- red outer (Walkable)
-		{size = 12*m, color = Color3.fromRGB(255, 200, 65), transparency = 0.15}, -- yellow
-		{size = 8*m, color = Color3.fromRGB(65, 200, 255), transparency = 0.3}, -- blue
-		{size = 5*m, color = Color3.fromRGB(200, 65, 255), transparency = 0.45}, -- purple
-		{size = 2*m, color = Color3.fromRGB(255, 255, 255), transparency = 0.6}, -- white center
-	}
-
-	local walkablePart
-	for i, layer in ipairs(layers) do
-		local sphere = Instance.new("Part")
-		if i == 1 then
-			sphere.Name = "Walkable"
-			walkablePart = sphere
-		end
-		sphere.Size = Vector3.new(layer.size, layer.size, layer.size)
-		sphere.Position = pos; sphere.Anchored = true
-		sphere.Color = layer.color
-		sphere.Material = Enum.Material.SmoothPlastic
-		sphere.Shape = Enum.PartType.Ball
-		sphere.Transparency = layer.transparency
-		if i > 1 then sphere.CanCollide = false end
-		sphere.Parent = model
-	end
-
-	-- Glossy glass sphere overlay
-	addSheen(model, Vector3.new(17*m, 17*m, 17*m), pos, 
-		Color3.fromRGB(255,255,255), Enum.PartType.Ball)
-
-	-- Outer sphere glows
-	glow(walkablePart, Color3.fromRGB(255, 100, 100), 22, 0.55)
-
-	model.Parent = mapFolder
-	return walkablePart, model
-end
-]=]
 
 local BUILDERS = {
-	icecream = buildIceCream, candycane = buildCandyCane,
-	peppermint = buildPeppermint, lollipop = buildLollipop,
-	gummy = buildGummyBear, donut = buildDonut,
-	cupcake = buildCupcake, jawbreaker = buildJawbreaker,
+	candycane = buildCandyCane, icecream = buildIceCream,
+	candypieces = buildCandyPieces, peppermint = buildPeppermint,
 }
 
 -- ============================================================
@@ -855,351 +270,143 @@ local BUILDERS = {
 -- ============================================================
 
 -- Candy parkour — platforms made from your candy models at different scales
-local CANDY_TYPES = {"icecream","candycane","peppermint","lollipop","gummy","donut","cupcake","jawbreaker"}
+local CANDY_TYPES = {"candycane", "icecream", "candypieces", "peppermint"}
 
 local LEVELS = {
-	-- ====== PHASE 1: EASY (1-10) — 2-3 big pieces, large sizes, short jumps ======
+	-- ====== PHASE 1: EASY (Levels 1-5) — 3 pieces, large, short jumps, single lane ======
+	-- Level 1: Gentle intro — straight line of candy
 	{
 		pieces = {
-			{offset={0,-1,-28}, candy="icecream", size=2.0},
-			{offset={-12,0,-2}, candy="lollipop", size=1.8},
+			{offset={0, 0, -20}, candy="candycane", size=2.0},
+			{offset={3, 1, -18}, candy="icecream", size=1.8},
+			{offset={-2, 0, -18}, candy="peppermint", size=1.9},
 		},
 	},
+	-- Level 2: Slight zigzag
 	{
 		pieces = {
-			{offset={8,2,-26}, candy="candycane", size=1.9},
-			{offset={-14,1,3}, candy="gummy", size=1.7},
-			{offset={10,-1,-5}, candy="donut", size=1.6},
+			{offset={-3, 0, -20}, candy="icecream", size=1.9},
+			{offset={5, 2, -18}, candy="candypieces", size=1.7},
+			{offset={-4, -1, -18}, candy="candycane", size=1.8},
 		},
 	},
+	-- Level 3: Small height changes
 	{
 		pieces = {
-			{offset={-6,0,-28}, candy="cupcake", size=2.1},
-			{offset={16,3,0}, candy="peppermint", size=1.8},
+			{offset={2, 2, -22}, candy="peppermint", size=2.0},
+			{offset={-3, -1, -18}, candy="icecream", size=1.8},
+			{offset={4, 1, -18}, candy="candypieces", size=1.7},
 		},
 	},
+	-- Level 4: Wider spacing
 	{
 		pieces = {
-			{offset={4,1,-26}, candy="jawbreaker", size=1.9},
-			{offset={-12,-2,4}, candy="icecream", size=1.7},
-			{offset={8,3,-3}, candy="lollipop", size=1.5},
+			{offset={-4, 0, -22}, candy="candycane", size=1.8},
+			{offset={5, 2, -20}, candy="peppermint", size=1.6},
+			{offset={-3, -1, -18}, candy="icecream", size=1.9},
 		},
 	},
+	-- Level 5: CHECKPOINT — easy landing pad
 	{
 		pieces = {
-			{offset={-8,-1,-28}, candy="candycane", size=2.2},
-			{offset={18,2,2}, candy="gummy", size=1.8},
-		},
-	},
-	{
-		pieces = {
-			{offset={6,3,-26}, candy="donut", size=2.0},
-			{offset={-10,0,5}, candy="cupcake", size=1.6},
-			{offset={15,-1,-2}, candy="peppermint", size=1.7},
-		},
-	},
-	{
-		pieces = {
-			{offset={-4,0,-28}, candy="jawbreaker", size=1.8},
-			{offset={20,1,3}, candy="icecream", size=1.9},
-		},
-	},
-	{
-		pieces = {
-			{offset={7,2,-26}, candy="lollipop", size=2.1},
-			{offset={-14,4,0}, candy="candycane", size=1.7},
-			{offset={9,-2,-4}, candy="gummy", size=1.6},
-		},
-	},
-	{
-		pieces = {
-			{offset={-5,-1,-28}, candy="donut", size=2.0},
-			{offset={16,3,2}, candy="cupcake", size=1.8},
-		},
-	},
-	{
-		pieces = {
-			{offset={0,2,-30}, candy="peppermint", size=2.5},
+			{offset={0, 1, -20}, candy="candypieces", size=1.9},
+			{offset={3, 0, -18}, candy="candycane", size=1.8},
+			{offset={-2, 2, -18}, candy="peppermint", size=2.0},
 		},
 		checkpoint = true,
 	},
 
-	-- ====== PHASE 2: MEDIUM (11-20) — 2-4 pieces, medium sizes, wider gaps ======
+	-- ====== PHASE 2: MEDIUM (Levels 6-10) — 3-4 pieces, medium sizes, wider gaps ======
+	-- Level 6: Bigger X offsets
 	{
 		pieces = {
-			{offset={-12,1,-26}, candy="jawbreaker", size=1.5},
-			{offset={18,-2,4}, candy="icecream", size=1.3},
-			{offset={-8,3,2}, candy="lollipop", size=1.4},
+			{offset={-6, 1, -22}, candy="icecream", size=1.4},
+			{offset={8, -1, -20}, candy="candycane", size=1.3},
+			{offset={-5, 2, -22}, candy="peppermint", size=1.2},
 		},
 	},
+	-- Level 7: 4 pieces, tighter platforms
 	{
 		pieces = {
-			{offset={10,0,-28}, candy="candycane", size=1.6},
-			{offset={-20,2,0}, candy="gummy", size=1.2},
-			{offset={14,4,-3}, candy="donut", size=1.3},
-			{offset={-6,-1,5}, candy="cupcake", size=1.1},
+			{offset={4, 0, -24}, candy="candypieces", size=1.3},
+			{offset={-8, 2, -20}, candy="icecream", size=1.2},
+			{offset={7, -1, -22}, candy="candycane", size=1.4},
+			{offset={-6, 3, -20}, candy="peppermint", size=1.2},
 		},
 	},
+	-- Level 8: Height jumps
 	{
 		pieces = {
-			{offset={-8,3,-30}, candy="peppermint", size=1.4},
-			{offset={22,-1,2}, candy="jawbreaker", size=1.3},
+			{offset={-5, 3, -22}, candy="candycane", size=1.5},
+			{offset={10, -2, -22}, candy="candypieces", size=1.3},
+			{offset={-8, 4, -20}, candy="icecream", size=1.2},
 		},
 	},
+	-- Level 9: 4 pieces, more spread
 	{
 		pieces = {
-			{offset={6,-2,-26}, candy="icecream", size=1.5},
-			{offset={-16,4,3}, candy="lollipop", size=1.2},
-			{offset={12,1,-4}, candy="candycane", size=1.3},
+			{offset={6, -1, -24}, candy="peppermint", size=1.3},
+			{offset={-10, 2, -20}, candy="candycane", size=1.2},
+			{offset={8, 0, -22}, candy="candypieces", size=1.4},
+			{offset={-7, 3, -20}, candy="icecream", size=1.2},
 		},
 	},
+	-- Level 10: CHECKPOINT
 	{
 		pieces = {
-			{offset={-14,2,-28}, candy="gummy", size=1.4},
-			{offset={24,0,1}, candy="donut", size=1.3},
-			{offset={-10,5,0}, candy="cupcake", size=1.1},
-		},
-	},
-	{
-		pieces = {
-			{offset={8,-1,-30}, candy="peppermint", size=1.6},
-			{offset={-18,3,4}, candy="jawbreaker", size=1.2},
-		},
-	},
-	{
-		pieces = {
-			{offset={-4,4,-26}, candy="icecream", size=1.3},
-			{offset={20,-3,2}, candy="lollipop", size=1.4},
-			{offset={-12,2,5}, candy="candycane", size=1.1},
-			{offset={16,1,-3}, candy="gummy", size=1.2},
-		},
-	},
-	{
-		pieces = {
-			{offset={12,0,-28}, candy="donut", size=1.5},
-			{offset={-26,3,1}, candy="cupcake", size=1.3},
-		},
-	},
-	{
-		pieces = {
-			{offset={-6,-2,-30}, candy="peppermint", size=1.4},
-			{offset={18,4,3}, candy="jawbreaker", size=1.2},
-			{offset={-14,1,0}, candy="icecream", size=1.3},
-		},
-	},
-	{
-		pieces = {
-			{offset={0,2,-28}, candy="lollipop", size=2.0},
+			{offset={0, 1, -22}, candy="icecream", size=1.5},
+			{offset={-5, 2, -22}, candy="candycane", size=1.3},
+			{offset={4, 0, -20}, candy="peppermint", size=1.4},
 		},
 		checkpoint = true,
 	},
 
-	-- ====== PHASE 3: HARD (21-35) — 2-4 pieces, some moving, bigger gaps ======
+	-- ====== PHASE 3: HARD (Levels 11-15) — 4 pieces, smaller, some moving ======
+	-- Level 11: Tighter jumps
 	{
 		pieces = {
-			{offset={-18,3,-26}, candy="candycane", size=1.2},
-			{offset={28,-1,4}, candy="gummy", size=1.0},
+			{offset={-8, 2, -25}, candy="candycane", size=1.1},
+			{offset={12, -1, -22}, candy="icecream", size=1.0},
+			{offset={-10, 3, -24}, candy="peppermint", size=0.9},
+			{offset={8, 0, -22}, candy="candypieces", size=1.0},
 		},
 	},
+	-- Level 12: Moving platforms!
 	{
 		pieces = {
-			{offset={14,1,-30}, candy="donut", size=1.1},
-			{offset={-22,5,2}, candy="cupcake", size=0.9},
-			{offset={16,-3,-4}, candy="peppermint", size=1.0},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={-10,-2,-26}, candy="jawbreaker", size=1.3},
-			{offset={24,4,3}, candy="icecream", size=0.9},
-		},
-	},
-	{
-		pieces = {
-			{offset={6,0,-28}, candy="lollipop", size=1.1},
-			{offset={-20,3,5}, candy="candycane", size=1.0},
-			{offset={18,-2,1}, candy="gummy", size=0.8},
-			{offset={-12,4,-3}, candy="donut", size=0.9},
-		},
-	},
-	{
-		pieces = {
-			{offset={-16,2,-30}, candy="cupcake", size=1.2},
-			{offset={30,-1,2}, candy="peppermint", size=0.9},
+			{offset={5, 1, -26}, candy="icecream", size=1.1},
+			{offset={-12, -2, -22}, candy="candypieces", size=1.0},
+			{offset={10, 3, -24}, candy="candycane", size=0.9},
+			{offset={-8, 0, -22}, candy="peppermint", size=1.1},
 		},
 		moving = true,
 	},
+	-- Level 13: Big height variation
 	{
 		pieces = {
-			{offset={12,5,-26}, candy="jawbreaker", size=1.0},
-			{offset={-26,1,4}, candy="icecream", size=1.1},
-			{offset={20,-3,0}, candy="lollipop", size=0.8},
+			{offset={-10, 4, -25}, candy="peppermint", size=1.0},
+			{offset={14, -3, -24}, candy="candycane", size=1.1},
+			{offset={-12, 2, -22}, candy="candypieces", size=0.9},
+			{offset={8, 5, -24}, candy="icecream", size=1.0},
 		},
 	},
+	-- Level 14: Moving + small
 	{
 		pieces = {
-			{offset={-8,-1,-28}, candy="candycane", size=1.0},
-			{offset={24,4,3}, candy="gummy", size=0.9},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={16,2,-30}, candy="donut", size=1.1},
-			{offset={-28,0,5}, candy="cupcake", size=0.8},
-			{offset={14,-4,1}, candy="peppermint", size=0.9},
-			{offset={-10,3,-2}, candy="jawbreaker", size=0.7},
-		},
-	},
-	{
-		pieces = {
-			{offset={-14,-3,-26}, candy="icecream", size=1.0},
-			{offset={32,5,2}, candy="lollipop", size=0.8},
+			{offset={6, -1, -26}, candy="candypieces", size=1.0},
+			{offset={-15, 3, -24}, candy="icecream", size=0.9},
+			{offset={12, 0, -22}, candy="peppermint", size=1.0},
+			{offset={-8, 4, -24}, candy="candycane", size=0.9},
 		},
 		moving = true,
 	},
+	-- Level 15: FINAL CHECKPOINT (finish area)
 	{
 		pieces = {
-			{offset={8,1,-28}, candy="candycane", size=0.9},
-			{offset={-24,4,4}, candy="gummy", size=1.0},
-			{offset={18,-2,0}, candy="donut", size=0.8},
-		},
-	},
-	{
-		pieces = {
-			{offset={-12,3,-30}, candy="cupcake", size=1.1},
-			{offset={26,-1,3}, candy="peppermint", size=0.9},
-		},
-	},
-	{
-		pieces = {
-			{offset={4,-4,-26}, candy="jawbreaker", size=0.8},
-			{offset={-20,5,5}, candy="icecream", size=0.9},
-			{offset={22,0,1}, candy="lollipop", size=0.7},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={-18,2,-28}, candy="candycane", size=1.0},
-			{offset={34,-3,2}, candy="gummy", size=0.8},
-		},
-	},
-	{
-		pieces = {
-			{offset={10,4,-30}, candy="donut", size=0.9},
-			{offset={-28,1,4}, candy="cupcake", size=0.8},
-			{offset={16,-2,0}, candy="peppermint", size=0.7},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={0,2,-32}, candy="jawbreaker", size=2.0},
-		},
-		checkpoint = true,
-	},
-
-	-- ====== PHASE 4: VERY HARD (36-45) — 1-3 pieces, most moving ======
-	{
-		pieces = {
-			{offset={-24,-2,-26}, candy="icecream", size=0.7},
-			{offset={36,5,3}, candy="lollipop", size=0.6},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={14,1,-28}, candy="candycane", size=0.8},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={-20,4,-30}, candy="gummy", size=0.6},
-			{offset={30,-3,4}, candy="donut", size=0.7},
-			{offset={-14,2,1}, candy="cupcake", size=0.5},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={8,-1,-26}, candy="peppermint", size=0.9},
-			{offset={-26,5,2}, candy="jawbreaker", size=0.6},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={-16,3,-28}, candy="icecream", size=0.7},
-		},
-	},
-	{
-		pieces = {
-			{offset={22,-4,-30}, candy="lollipop", size=0.8},
-			{offset={-34,2,5}, candy="candycane", size=0.6},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={12,0,-26}, candy="gummy", size=0.5},
-			{offset={-28,4,3}, candy="donut", size=0.7},
-			{offset={20,-2,0}, candy="cupcake", size=0.6},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={-6,-3,-28}, candy="peppermint", size=0.8},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={18,5,-30}, candy="jawbreaker", size=0.6},
-			{offset={-32,1,4}, candy="icecream", size=0.7},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={0,2,-30}, candy="lollipop", size=2.0},
-		},
-		checkpoint = true,
-	},
-
-	-- ====== PHASE 5: EXTREME (46-50) — 1-2 pieces, all moving, smallest sizes ======
-	{
-		pieces = {
-			{offset={-28,-1,-26}, candy="candycane", size=0.5},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={36,4,-28}, candy="gummy", size=0.4},
-			{offset={-20,-3,5}, candy="donut", size=0.6},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={-14,2,-30}, candy="cupcake", size=0.5},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={24,-4,-26}, candy="peppermint", size=0.4},
-			{offset={-38,5,3}, candy="jawbreaker", size=0.7},
-		},
-		moving = true,
-	},
-	{
-		pieces = {
-			{offset={0,0,-32}, candy="icecream", size=2.5},
+			{offset={0, 2, -25}, candy="icecream", size=1.2},
+			{offset={-5, 0, -22}, candy="candycane", size=1.1},
+			{offset={4, 1, -22}, candy="peppermint", size=1.2},
+			{offset={0, 0, -24}, candy="candypieces", size=1.3},
 		},
 		checkpoint = true,
 	},
