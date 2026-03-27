@@ -216,11 +216,11 @@ local function buildCandyPlatform(candyName, index, pos, m)
 		local originalPivot = clone:GetPivot()
 		local originalRotation = originalPivot - originalPivot.Position -- extract rotation only
 		
-		-- Force ALL models to lay flat/horizontal so players can land on them
-		-- Rotate 90° on X so the top becomes the front (laying down)
+		-- Only lay down models that are VERY tall and thin (like candy canes, candyfloss sticks)
+		-- Donuts, peppermints, ice cream scoops etc. should stay upright
 		local modelBounds = clone:GetExtentsSize()
-		if modelBounds.Y > modelBounds.X * 0.8 or modelBounds.Y > modelBounds.Z * 0.8 then
-			-- Model is taller than it is wide — lay it on its side
+		if modelBounds.Y > modelBounds.X * 2.5 and modelBounds.Y > modelBounds.Z * 2.5 then
+			-- Model is extremely tall and thin (like a stick) — lay it on its side
 			originalRotation = originalRotation * CFrame.Angles(math.rad(90), 0, 0)
 		end
 		
@@ -305,67 +305,67 @@ local CLUSTER_OFFSETS = {
 
 local PARKOUR_STEPS = {
 	-- === INTRO (steps 1-6): Single path, learn to jump ===
-	-- === INTRO (steps 1-6): Single path, HUGE varied sizes ===
-	{x=0,    y=0,   z=-83,    size=5.0},   -- 1: massive starter at door
-	{x=8,    y=2,   z=-130,   size=3.5},   -- 2: big
-	{x=-12,  y=0,   z=-180,   size=4.5},   -- 3: huge
-	{x=5,    y=3,   z=-230,   size=3.0},   -- 4: large
-	{x=-10,  y=1,   z=-280,   size=4.0},   -- 5: big
-	{x=0,    y=0,   z=-335,   size=5.0, checkpoint=true},  -- 6: CHECKPOINT 1
+	-- === INTRO (steps 1-6): Single path, big platforms, jumpable gaps ===
+	{x=0,    y=0,   z=-83,    size=6.0},   -- 1: massive starter at door
+	{x=8,    y=1,   z=-120,   size=5.0},   -- 2: big
+	{x=-10,  y=0,   z=-158,   size=5.5},   -- 3: huge
+	{x=6,    y=2,   z=-195,   size=4.5},   -- 4: large
+	{x=-8,   y=0,   z=-232,   size=5.0},   -- 5: big
+	{x=0,    y=0,   z=-272,   size=6.0, checkpoint=true},  -- 6: CHECKPOINT 1
 
-	-- === MEDIUM (steps 7-13): Wider jumps, still big ===
-	{x=15,   y=3,   z=-390,   size=4.0},   -- 7
-	{x=-18,  y=0,   z=-445,   size=3.5},   -- 8
-	{x=22,   y=4,   z=-500,   size=4.5},   -- 9: extra big
-	{x=-8,   y=1,   z=-555,   size=3.0},   -- 10
-	{x=12,   y=-1,  z=-610,   size=3.8},   -- 11
-	{x=-22,  y=3,   z=-665,   size=4.2},   -- 12: big
-	{x=0,    y=0,   z=-725,   size=5.0, checkpoint=true},  -- 13: CHECKPOINT 2
+	-- === MEDIUM (steps 7-13): Wider jumps, big platforms ===
+	{x=14,   y=2,   z=-312,   size=5.0},   -- 7
+	{x=-16,  y=0,   z=-352,   size=4.5},   -- 8
+	{x=20,   y=3,   z=-395,   size=5.5},   -- 9
+	{x=-8,   y=1,   z=-435,   size=4.5},   -- 10
+	{x=12,   y=0,   z=-475,   size=5.0},   -- 11
+	{x=-20,  y=2,   z=-518,   size=5.5},   -- 12
+	{x=0,    y=0,   z=-560,   size=6.0, checkpoint=true},  -- 13: CHECKPOINT 2
 
 	-- === BRANCHING: Three paths diverge ===
 	-- LEFT PATH
-	{x=-45,  y=2,   z=-785,   size=4.0},
-	{x=-50,  y=0,   z=-845,   size=3.5},
-	{x=-40,  y=4,   z=-905,   size=4.5},
-	{x=-48,  y=1,   z=-965,   size=3.8},
+	{x=-40,  y=1,   z=-605,   size=5.0},
+	{x=-45,  y=0,   z=-650,   size=4.5},
+	{x=-38,  y=2,   z=-695,   size=5.5},
+	{x=-42,  y=0,   z=-740,   size=5.0},
 
-	-- CENTER PATH (higher, harder)
-	{x=0,    y=5,   z=-790,   size=3.5},
-	{x=8,    y=3,   z=-850,   size=3.0},
-	{x=-5,   y=6,   z=-910,   size=4.0},
-	{x=4,    y=4,   z=-970,   size=3.2},
+	-- CENTER PATH (higher)
+	{x=0,    y=4,   z=-608,   size=4.5},
+	{x=6,    y=2,   z=-653,   size=4.5},
+	{x=-4,   y=5,   z=-698,   size=5.0},
+	{x=3,    y=3,   z=-743,   size=4.5},
 
 	-- RIGHT PATH
-	{x=45,   y=2,   z=-785,   size=4.0},
-	{x=50,   y=0,   z=-845,   size=3.5},
-	{x=40,   y=4,   z=-905,   size=4.5},
-	{x=48,   y=1,   z=-965,   size=3.8},
+	{x=40,   y=1,   z=-605,   size=5.0},
+	{x=45,   y=0,   z=-650,   size=4.5},
+	{x=38,   y=2,   z=-695,   size=5.5},
+	{x=42,   y=0,   z=-740,   size=5.0},
 
 	-- === PATHS MERGE ===
-	{x=-22,  y=2,   z=-1025,  size=4.0},
-	{x=22,   y=2,   z=-1025,  size=4.0},
-	{x=0,    y=0,   z=-1090,  size=5.0, checkpoint=true},  -- CHECKPOINT 3
+	{x=-18,  y=1,   z=-785,   size=5.0},
+	{x=18,   y=1,   z=-785,   size=5.0},
+	{x=0,    y=0,   z=-830,   size=6.0, checkpoint=true},  -- CHECKPOINT 3
 
 	-- === HARD: Branches again, moving ===
 	-- LEFT HARD
-	{x=-38,  y=3,   z=-1150,  size=3.5, moving=true},
-	{x=-44,  y=0,   z=-1210,  size=3.0},
-	{x=-34,  y=5,   z=-1270,  size=3.8, moving=true},
+	{x=-35,  y=2,   z=-878,   size=4.5, moving=true},
+	{x=-40,  y=0,   z=-925,   size=4.0},
+	{x=-32,  y=3,   z=-972,   size=4.5, moving=true},
 
 	-- CENTER HARD
-	{x=0,    y=6,   z=-1155,  size=3.2, moving=true},
-	{x=8,    y=3,   z=-1215,  size=3.0},
-	{x=-5,   y=7,   z=-1275,  size=3.5, moving=true},
+	{x=0,    y=4,   z=-880,   size=4.0, moving=true},
+	{x=6,    y=2,   z=-927,   size=4.0},
+	{x=-4,   y=5,   z=-974,   size=4.5, moving=true},
 
 	-- RIGHT HARD
-	{x=38,   y=3,   z=-1150,  size=3.5, moving=true},
-	{x=44,   y=0,   z=-1210,  size=3.0},
-	{x=34,   y=5,   z=-1270,  size=3.8, moving=true},
+	{x=35,   y=2,   z=-878,   size=4.5, moving=true},
+	{x=40,   y=0,   z=-925,   size=4.0},
+	{x=32,   y=3,   z=-972,   size=4.5, moving=true},
 
 	-- === FINAL MERGE ===
-	{x=-15,  y=2,   z=-1330,  size=3.8},
-	{x=15,   y=2,   z=-1330,  size=3.8},
-	{x=0,    y=0,   z=-1400,  size=5.0, checkpoint=true},  -- FINAL CHECKPOINT
+	{x=-14,  y=1,   z=-1020,  size=5.0},
+	{x=14,   y=1,   z=-1020,  size=5.0},
+	{x=0,    y=0,   z=-1070,  size=6.0, checkpoint=true},  -- FINAL CHECKPOINT
 }
 
 -- ============================================================
