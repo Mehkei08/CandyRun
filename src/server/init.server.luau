@@ -325,67 +325,83 @@ local CLUSTER_OFFSETS = {
 }
 
 local PARKOUR_STEPS = {
-	-- === INTRO (steps 1-6): Single path, easy first jumps then stretch out ===
-	{x=0,    y=0,   z=-115,   size=5.5},   -- 1: starter (clear of door)
-	{x=8,    y=0,   z=-150,   size=5.0},   -- 2: easy first jump (35 studs)
-	{x=-10,  y=0,   z=-190,   size=5.0},   -- 3: (40 studs)
-	{x=8,    y=1,   z=-240,   size=4.5},   -- 4: (50 studs)
-	{x=-10,  y=0,   z=-295,   size=5.0},   -- 5: (55 studs)
-	{x=0,    y=0,   z=-360,   size=6.0, checkpoint=true},  -- 6: CHECKPOINT 1
+	-- === SECTION 1 (steps 1-10): Single lane, 30-40 stud gaps ===
+	{x=0,    y=0,   z=-115,   size=5.5},   -- 1: starter at door
+	{x=8,    y=0,   z=-148,   size=5.0},   -- 2
+	{x=-8,   y=1,   z=-182,   size=5.0},   -- 3
+	{x=10,   y=0,   z=-215,   size=4.5},   -- 4
+	{x=-6,   y=1,   z=-248,   size=5.0},   -- 5
+	{x=12,   y=0,   z=-280,   size=4.5},   -- 6
+	{x=-10,  y=2,   z=-312,   size=5.0},   -- 7
+	{x=6,    y=0,   z=-345,   size=4.5},   -- 8
+	{x=-8,   y=1,   z=-378,   size=5.5},   -- 9
+	{x=0,    y=0,   z=-415,   size=6.0, checkpoint=true},  -- 10: CHECKPOINT 1
 
-	-- === MEDIUM (steps 7-13): Wider jumps ===
-	{x=16,   y=2,   z=-490,   size=5.0},   -- 7
-	{x=-18,  y=0,   z=-560,   size=4.5},   -- 8
-	{x=22,   y=3,   z=-635,   size=5.5},   -- 9
-	{x=-10,  y=1,   z=-705,   size=4.5},   -- 10
-	{x=14,   y=0,   z=-775,   size=5.0},   -- 11
-	{x=-22,  y=2,   z=-850,   size=5.5},   -- 12
-	{x=0,    y=0,   z=-925,   size=6.0, checkpoint=true},  -- 13: CHECKPOINT 2
+	-- === SECTION 2 (steps 11-20): Wider zigzag, 35-45 stud gaps ===
+	{x=15,   y=2,   z=-452,   size=5.0},   -- 11
+	{x=-18,  y=0,   z=-490,   size=4.5},   -- 12
+	{x=20,   y=1,   z=-530,   size=5.5},   -- 13
+	{x=-14,  y=2,   z=-568,   size=4.5},   -- 14
+	{x=18,   y=0,   z=-608,   size=5.0},   -- 15
+	{x=-20,  y=1,   z=-648,   size=5.5},   -- 16
+	{x=16,   y=2,   z=-688,   size=4.5},   -- 17
+	{x=-12,  y=0,   z=-728,   size=5.0},   -- 18
+	{x=14,   y=1,   z=-768,   size=5.5},   -- 19
+	{x=0,    y=0,   z=-810,   size=6.0, checkpoint=true},  -- 20: CHECKPOINT 2
 
-	-- === BRANCHING: Three paths diverge ===
-	-- LEFT PATH
-	{x=-45,  y=1,   z=-1000,  size=5.0},
-	{x=-50,  y=0,   z=-1075,  size=4.5},
-	{x=-42,  y=2,   z=-1150,  size=5.5},
-	{x=-48,  y=0,   z=-1225,  size=5.0},
+	-- === SECTION 3 (steps 21-36): BRANCHING — 3 paths, 40 stud gaps ===
+	-- LEFT PATH (6 steps)
+	{x=-40,  y=1,   z=-852,   size=5.0},   -- 21L
+	{x=-45,  y=0,   z=-892,   size=4.5},   -- 22L
+	{x=-38,  y=2,   z=-932,   size=5.5},   -- 23L
+	{x=-42,  y=0,   z=-972,   size=5.0},   -- 24L
+	{x=-36,  y=1,   z=-1012,  size=4.5},   -- 25L
+	{x=-40,  y=2,   z=-1052,  size=5.0},   -- 26L
 
-	-- CENTER PATH (higher)
-	{x=0,    y=4,   z=-1005,  size=4.5},
-	{x=8,    y=2,   z=-1080,  size=4.5},
-	{x=-5,   y=5,   z=-1155,  size=5.0},
-	{x=4,    y=3,   z=-1230,  size=4.5},
+	-- CENTER PATH (6 steps, higher)
+	{x=0,    y=4,   z=-855,   size=4.5},   -- 21C
+	{x=6,    y=2,   z=-895,   size=4.5},   -- 22C
+	{x=-4,   y=5,   z=-935,   size=5.0},   -- 23C
+	{x=5,    y=3,   z=-975,   size=4.5},   -- 24C
+	{x=-3,   y=4,   z=-1015,  size=5.0},   -- 25C
+	{x=4,    y=3,   z=-1055,  size=4.5},   -- 26C
 
-	-- RIGHT PATH
-	{x=45,   y=1,   z=-1000,  size=5.0},
-	{x=50,   y=0,   z=-1075,  size=4.5},
-	{x=42,   y=2,   z=-1150,  size=5.5},
-	{x=48,   y=0,   z=-1225,  size=5.0},
+	-- RIGHT PATH (6 steps)
+	{x=40,   y=1,   z=-852,   size=5.0},   -- 21R
+	{x=45,   y=0,   z=-892,   size=4.5},   -- 22R
+	{x=38,   y=2,   z=-932,   size=5.5},   -- 23R
+	{x=42,   y=0,   z=-972,   size=5.0},   -- 24R
+	{x=36,   y=1,   z=-1012,  size=4.5},   -- 25R
+	{x=40,   y=2,   z=-1052,  size=5.0},   -- 26R
 
 	-- === PATHS MERGE ===
-	{x=-20,  y=1,   z=-1305,  size=5.0},
-	{x=20,   y=1,   z=-1305,  size=5.0},
-	{x=0,    y=0,   z=-1380,  size=6.0, checkpoint=true},  -- CHECKPOINT 3
+	{x=-18,  y=1,   z=-1095,  size=5.0},   -- 37: left merge
+	{x=18,   y=1,   z=-1095,  size=5.0},   -- 38: right merge
+	{x=0,    y=0,   z=-1135,  size=6.0, checkpoint=true},  -- 39: CHECKPOINT 3
 
-	-- === HARD: Branches again, moving ===
-	-- LEFT HARD
-	{x=-38,  y=2,   z=-1460,  size=4.5, moving=true},
-	{x=-44,  y=0,   z=-1540,  size=4.5},
-	{x=-35,  y=3,   z=-1620,  size=5.0, moving=true},
+	-- === SECTION 4 (steps 40-51): HARD — moving, 35 stud gaps ===
+	-- LEFT HARD (4 steps)
+	{x=-35,  y=2,   z=-1175,  size=4.5, moving=true},
+	{x=-40,  y=0,   z=-1215,  size=4.5},
+	{x=-32,  y=3,   z=-1255,  size=5.0, moving=true},
+	{x=-38,  y=1,   z=-1295,  size=4.5},
 
-	-- CENTER HARD
-	{x=0,    y=4,   z=-1465,  size=4.5, moving=true},
-	{x=8,    y=2,   z=-1545,  size=4.5},
-	{x=-5,   y=5,   z=-1625,  size=5.0, moving=true},
+	-- CENTER HARD (4 steps)
+	{x=0,    y=4,   z=-1178,  size=4.5, moving=true},
+	{x=6,    y=2,   z=-1218,  size=4.5},
+	{x=-4,   y=5,   z=-1258,  size=5.0, moving=true},
+	{x=3,    y=3,   z=-1298,  size=4.5},
 
-	-- RIGHT HARD
-	{x=38,   y=2,   z=-1460,  size=4.5, moving=true},
-	{x=44,   y=0,   z=-1540,  size=4.5},
-	{x=35,   y=3,   z=-1620,  size=5.0, moving=true},
+	-- RIGHT HARD (4 steps)
+	{x=35,   y=2,   z=-1175,  size=4.5, moving=true},
+	{x=40,   y=0,   z=-1215,  size=4.5},
+	{x=32,   y=3,   z=-1255,  size=5.0, moving=true},
+	{x=38,   y=1,   z=-1295,  size=4.5},
 
 	-- === FINAL MERGE ===
-	{x=-16,  y=1,   z=-1700,  size=5.0},
-	{x=16,   y=1,   z=-1700,  size=5.0},
-	{x=0,    y=0,   z=-1780,  size=6.0, checkpoint=true},  -- FINAL CHECKPOINT
+	{x=-14,  y=1,   z=-1338,  size=5.0},   -- 52
+	{x=14,   y=1,   z=-1338,  size=5.0},   -- 53
+	{x=0,    y=0,   z=-1380,  size=6.0, checkpoint=true},  -- 54: FINAL CHECKPOINT
 }
 
 -- ============================================================
