@@ -326,239 +326,239 @@ if dailySpinEvent then
 		if spinGui then spinGui:Destroy() end
 
 		spinGui = Instance.new("ScreenGui")
-		spinGui.Name = "DailySpinGui"
-		spinGui.IgnoreGuiInset = true
-		spinGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-		spinGui.Parent = playerGui
+		spinGui.Name = "DailySpinGui"; spinGui.IgnoreGuiInset = true
+		spinGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; spinGui.Parent = playerGui
 
 		-- Dark overlay
-		local overlay = Instance.new("Frame")
-		overlay.Size = UDim2.fromScale(1, 1)
-		overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		overlay.BackgroundTransparency = 0.5
-		overlay.ZIndex = 100
-		overlay.Parent = spinGui
+		local overlay = Instance.new("Frame"); overlay.Size = UDim2.fromScale(1,1)
+		overlay.BackgroundColor3 = Color3.fromRGB(0,0,0); overlay.BackgroundTransparency = 0.45
+		overlay.ZIndex = 100; overlay.Parent = spinGui
 
-		-- Main popup frame (centered, candy-themed)
-		local popup = Instance.new("Frame")
-		popup.Name = "Popup"
-		popup.Size = UDim2.fromScale(0.5, 0.75)
-		popup.Position = UDim2.fromScale(0.25, 0.125)
-		popup.BackgroundColor3 = Color3.fromRGB(40, 15, 60)
-		popup.BorderSizePixel = 0
-		popup.ZIndex = 101
-		popup.Parent = spinGui
-		Instance.new("UICorner", popup).CornerRadius = UDim.new(0, 20)
-
-		-- Gradient border
-		local popupStroke = Instance.new("UIStroke")
-		popupStroke.Color = Color3.fromRGB(255, 180, 50)
-		popupStroke.Thickness = 3
-		popupStroke.Parent = popup
+		-- Main popup (large, takes most of the screen)
+		local popup = Instance.new("Frame"); popup.Name = "Popup"
+		popup.Size = UDim2.fromScale(0.65, 0.88)
+		popup.AnchorPoint = Vector2.new(0.5, 0.5)
+		popup.Position = UDim2.fromScale(0.5, 0.5)
+		popup.BackgroundColor3 = Color3.fromRGB(35, 10, 55); popup.BorderSizePixel = 0
+		popup.ZIndex = 101; popup.Parent = spinGui
+		Instance.new("UICorner", popup).CornerRadius = UDim.new(0, 24)
+		local pStroke = Instance.new("UIStroke"); pStroke.Color = Color3.fromRGB(255,180,50)
+		pStroke.Thickness = 4; pStroke.Parent = popup
 
 		-- Title
 		local title = Instance.new("TextLabel")
-		title.Size = UDim2.fromScale(0.8, 0.08)
-		title.Position = UDim2.fromScale(0.1, 0.02)
+		title.Size = UDim2.fromScale(0.7, 0.06)
+		title.AnchorPoint = Vector2.new(0.5, 0)
+		title.Position = UDim2.fromScale(0.5, 0.015)
 		title.BackgroundTransparency = 1
 		title.Text = "🎡 DAILY SPIN 🎡"
-		title.TextColor3 = Color3.fromRGB(255, 220, 80)
-		title.TextScaled = true
-		title.Font = Enum.Font.FredokaOne
-		title.ZIndex = 102
-		title.Parent = popup
-		Instance.new("UIStroke", title).Color = Color3.fromRGB(200, 140, 20)
+		title.TextColor3 = Color3.fromRGB(255,220,80); title.TextScaled = true
+		title.Font = Enum.Font.FredokaOne; title.ZIndex = 102; title.Parent = popup
+		Instance.new("UIStroke", title).Color = Color3.fromRGB(200,140,20)
 
-		-- Close button (red X, top right)
+		-- Close button (red X)
 		local closeBtn = Instance.new("TextButton")
-		closeBtn.Size = UDim2.fromOffset(36, 36)
-		closeBtn.Position = UDim2.new(1, -42, 0, 6)
-		closeBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
-		closeBtn.Text = "✕"
-		closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-		closeBtn.TextSize = 22
-		closeBtn.Font = Enum.Font.GothamBold
-		closeBtn.ZIndex = 103
-		closeBtn.Parent = popup
-		Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 18)
-
+		closeBtn.Size = UDim2.fromOffset(40, 40)
+		closeBtn.Position = UDim2.new(1, -48, 0, 8)
+		closeBtn.BackgroundColor3 = Color3.fromRGB(200,40,40); closeBtn.Text = "✕"
+		closeBtn.TextColor3 = Color3.fromRGB(255,255,255); closeBtn.TextSize = 24
+		closeBtn.Font = Enum.Font.GothamBold; closeBtn.ZIndex = 103; closeBtn.Parent = popup
+		Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 20)
 		closeBtn.MouseButton1Click:Connect(function()
-			spinGui:Destroy()
-			spinGui = nil
-			spinGuiOpen = false
+			spinGui:Destroy(); spinGui = nil; spinGuiOpen = false
 		end)
 
-		-- Wheel container (circular area)
-		local wheelFrame = Instance.new("Frame")
-		wheelFrame.Name = "WheelFrame"
-		wheelFrame.Size = UDim2.fromScale(0.7, 0.55)
-		wheelFrame.Position = UDim2.fromScale(0.15, 0.12)
-		wheelFrame.BackgroundTransparency = 1
-		wheelFrame.ZIndex = 102
-		wheelFrame.ClipsDescendants = true
-		wheelFrame.Parent = popup
+		-- ========== BIG WHEEL (takes up most of the popup) ==========
+		-- Square container for the wheel (aspect ratio locked)
+		local wheelSize = 0.72 -- fraction of popup width
+		local wheelContainer = Instance.new("Frame"); wheelContainer.Name = "WheelContainer"
+		wheelContainer.Size = UDim2.fromScale(wheelSize, 0) -- height set by aspect ratio
+		wheelContainer.AnchorPoint = Vector2.new(0.5, 0)
+		wheelContainer.Position = UDim2.fromScale(0.5, 0.08)
+		wheelContainer.BackgroundTransparency = 1; wheelContainer.ZIndex = 102
+		wheelContainer.Parent = popup
+		-- Force square aspect ratio
+		local aspectRatio = Instance.new("UIAspectRatioConstraint")
+		aspectRatio.AspectRatio = 1; aspectRatio.Parent = wheelContainer
 
-		-- Wheel image container (this rotates)
-		local wheelRotator = Instance.new("Frame")
-		wheelRotator.Name = "WheelRotator"
-		wheelRotator.Size = UDim2.fromScale(1, 1)
-		wheelRotator.Position = UDim2.fromScale(0, 0)
-		wheelRotator.BackgroundTransparency = 1
+		-- Outer rim ring (static, gold circle behind the wheel)
+		local outerRing = Instance.new("Frame")
+		outerRing.Size = UDim2.fromScale(1.06, 1.06)
+		outerRing.AnchorPoint = Vector2.new(0.5, 0.5)
+		outerRing.Position = UDim2.fromScale(0.5, 0.5)
+		outerRing.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+		outerRing.ZIndex = 102; outerRing.Parent = wheelContainer
+		Instance.new("UICorner", outerRing).CornerRadius = UDim.new(1, 0)
+
+		-- Wheel disc background (static, darker circle)
+		local discBg = Instance.new("Frame")
+		discBg.Size = UDim2.fromScale(0.97, 0.97)
+		discBg.AnchorPoint = Vector2.new(0.5, 0.5)
+		discBg.Position = UDim2.fromScale(0.5, 0.5)
+		discBg.BackgroundColor3 = Color3.fromRGB(30, 10, 45)
+		discBg.ZIndex = 103; discBg.Parent = wheelContainer
+		Instance.new("UICorner", discBg).CornerRadius = UDim.new(1, 0)
+
+		-- Rotating part (segments + labels spin inside)
+		local wheelRotator = Instance.new("Frame"); wheelRotator.Name = "WheelRotator"
+		wheelRotator.Size = UDim2.fromScale(0.94, 0.94)
 		wheelRotator.AnchorPoint = Vector2.new(0.5, 0.5)
 		wheelRotator.Position = UDim2.fromScale(0.5, 0.5)
-		wheelRotator.ZIndex = 102
-		wheelRotator.Parent = wheelFrame
+		wheelRotator.BackgroundTransparency = 1; wheelRotator.ZIndex = 104
+		wheelRotator.Parent = wheelContainer
 
-		-- Draw wheel segments as colored frames radiating from center
+		-- Build wide wedge segments with icon + reward name text
 		local numSegs = #SPIN_REWARDS_CLIENT
+		local segAngle = 360 / numSegs
 		for i, rw in ipairs(SPIN_REWARDS_CLIENT) do
-			local angle = ((i - 1) / numSegs) * 360
+			local angle = (i - 1) * segAngle
+
+			-- Each segment = wide colored bar radiating from center
+			-- Width = proportional to the arc at that radius
 			local segFrame = Instance.new("Frame")
-			segFrame.Size = UDim2.fromScale(0.08, 0.45)
+			segFrame.Size = UDim2.fromScale(0.22, 0.46) -- wide enough for text
 			segFrame.AnchorPoint = Vector2.new(0.5, 1)
 			segFrame.Position = UDim2.fromScale(0.5, 0.5)
 			segFrame.Rotation = angle
-			segFrame.BackgroundColor3 = rw.color
-			segFrame.BorderSizePixel = 0
-			segFrame.ZIndex = 103
-			segFrame.Parent = wheelRotator
-			Instance.new("UICorner", segFrame).CornerRadius = UDim.new(0, 4)
+			segFrame.BackgroundColor3 = rw.color; segFrame.BorderSizePixel = 0
+			segFrame.ZIndex = 105; segFrame.Parent = wheelRotator
+			Instance.new("UICorner", segFrame).CornerRadius = UDim.new(0, 6)
 
-			-- Label on segment
-			local segLbl = Instance.new("TextLabel")
-			segLbl.Size = UDim2.fromScale(1, 0.35)
-			segLbl.Position = UDim2.fromScale(0, 0.1)
-			segLbl.BackgroundTransparency = 1
-			segLbl.Text = rw.icon
-			segLbl.TextScaled = true
-			segLbl.Font = Enum.Font.FredokaOne
-			segLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-			segLbl.ZIndex = 104
-			segLbl.Rotation = 0 -- keep text upright relative to segment
-			segLbl.Parent = segFrame
+			-- Dark border between segments
+			local segStroke = Instance.new("UIStroke")
+			segStroke.Color = Color3.fromRGB(25, 8, 40); segStroke.Thickness = 1.5
+			segStroke.Parent = segFrame
+
+			-- Icon (top of segment, near rim)
+			local iconLbl = Instance.new("TextLabel")
+			iconLbl.Size = UDim2.fromScale(1, 0.3)
+			iconLbl.Position = UDim2.fromScale(0, 0.02)
+			iconLbl.BackgroundTransparency = 1; iconLbl.Text = rw.icon
+			iconLbl.TextScaled = true; iconLbl.Font = Enum.Font.FredokaOne
+			iconLbl.TextColor3 = Color3.fromRGB(255,255,255)
+			iconLbl.ZIndex = 106; iconLbl.Parent = segFrame
+
+			-- Reward name text (below icon, written into the segment)
+			local nameLbl = Instance.new("TextLabel")
+			nameLbl.Size = UDim2.fromScale(0.95, 0.55)
+			nameLbl.Position = UDim2.fromScale(0.025, 0.32)
+			nameLbl.BackgroundTransparency = 1; nameLbl.Text = rw.name
+			nameLbl.TextScaled = true; nameLbl.Font = Enum.Font.FredokaOne
+			nameLbl.TextColor3 = Color3.fromRGB(255,255,255)
+			nameLbl.TextWrapped = true; nameLbl.ZIndex = 106; nameLbl.Parent = segFrame
+			local nameStroke = Instance.new("UIStroke")
+			nameStroke.Color = Color3.fromRGB(0,0,0); nameStroke.Thickness = 1.5
+			nameStroke.Parent = nameLbl
 		end
 
-		-- Center circle
-		local centerCircle = Instance.new("Frame")
-		centerCircle.Size = UDim2.fromScale(0.15, 0.15)
-		centerCircle.AnchorPoint = Vector2.new(0.5, 0.5)
-		centerCircle.Position = UDim2.fromScale(0.5, 0.5)
-		centerCircle.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-		centerCircle.ZIndex = 105
-		centerCircle.Parent = wheelFrame
-		Instance.new("UICorner", centerCircle).CornerRadius = UDim.new(1, 0)
+		-- Center hub (gold circle)
+		local hub = Instance.new("Frame")
+		hub.Size = UDim2.fromScale(0.14, 0.14)
+		hub.AnchorPoint = Vector2.new(0.5, 0.5)
+		hub.Position = UDim2.fromScale(0.5, 0.5)
+		hub.BackgroundColor3 = Color3.fromRGB(255, 215, 0); hub.ZIndex = 108
+		hub.Parent = wheelContainer
+		Instance.new("UICorner", hub).CornerRadius = UDim.new(1, 0)
+		local hubStroke = Instance.new("UIStroke")
+		hubStroke.Color = Color3.fromRGB(180, 140, 30); hubStroke.Thickness = 3
+		hubStroke.Parent = hub
+		local hubText = Instance.new("TextLabel")
+		hubText.Size = UDim2.fromScale(1,1); hubText.BackgroundTransparency = 1
+		hubText.Text = "SPIN"; hubText.TextColor3 = Color3.fromRGB(80, 40, 10)
+		hubText.TextScaled = true; hubText.Font = Enum.Font.FredokaOne
+		hubText.ZIndex = 109; hubText.Parent = hub
 
-		-- Pointer (triangle at top, static)
+		-- Pointer (red arrow at top, static, outside the wheel)
+		local pointerFrame = Instance.new("Frame")
+		pointerFrame.Size = UDim2.fromOffset(40, 50)
+		pointerFrame.AnchorPoint = Vector2.new(0.5, 1)
+		pointerFrame.Position = UDim2.fromScale(0.5, 0.01)
+		pointerFrame.BackgroundTransparency = 1; pointerFrame.ZIndex = 110
+		pointerFrame.Parent = wheelContainer
 		local pointerLbl = Instance.new("TextLabel")
-		pointerLbl.Size = UDim2.fromOffset(30, 40)
-		pointerLbl.AnchorPoint = Vector2.new(0.5, 0)
-		pointerLbl.Position = UDim2.fromScale(0.5, -0.02)
-		pointerLbl.BackgroundTransparency = 1
-		pointerLbl.Text = "▼"
-		pointerLbl.TextColor3 = Color3.fromRGB(255, 30, 30)
-		pointerLbl.TextSize = 36
-		pointerLbl.Font = Enum.Font.GothamBold
-		pointerLbl.ZIndex = 106
-		pointerLbl.Parent = wheelFrame
+		pointerLbl.Size = UDim2.fromScale(1,1); pointerLbl.BackgroundTransparency = 1
+		pointerLbl.Text = "🔻"; pointerLbl.TextScaled = true
+		pointerLbl.Font = Enum.Font.GothamBold; pointerLbl.ZIndex = 110
+		pointerLbl.Parent = pointerFrame
 
-		-- Idle rotation
+		-- ========== IDLE ROTATION ==========
 		local idleConnection
 		local wheelAngle = 0
 		idleConnection = RunService.Heartbeat:Connect(function(dt)
 			if not spinGui or not spinGui.Parent then
-				if idleConnection then idleConnection:Disconnect() end
-				return
+				if idleConnection then idleConnection:Disconnect() end; return
 			end
-			wheelAngle = (wheelAngle + dt * 15) % 360
+			wheelAngle = (wheelAngle + dt * 12) % 360
 			wheelRotator.Rotation = wheelAngle
 		end)
 
-		-- Buttons container
+		-- ========== BUTTONS ==========
 		local btnFrame = Instance.new("Frame")
-		btnFrame.Size = UDim2.fromScale(0.9, 0.18)
-		btnFrame.Position = UDim2.fromScale(0.05, 0.75)
-		btnFrame.BackgroundTransparency = 1
-		btnFrame.ZIndex = 102
-		btnFrame.Parent = popup
+		btnFrame.Size = UDim2.fromScale(0.85, 0.1)
+		btnFrame.AnchorPoint = Vector2.new(0.5, 0)
+		btnFrame.Position = UDim2.fromScale(0.5, 0.87)
+		btnFrame.BackgroundTransparency = 1; btnFrame.ZIndex = 102; btnFrame.Parent = popup
 
-		-- Free Spin button
 		local freeBtn = Instance.new("TextButton")
-		freeBtn.Size = UDim2.fromScale(0.45, 0.8)
-		freeBtn.Position = UDim2.fromScale(0, 0.1)
-		freeBtn.BackgroundColor3 = Color3.fromRGB(80, 200, 80)
-		freeBtn.Text = "🎁 Free Spin"
-		freeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-		freeBtn.TextScaled = true
-		freeBtn.Font = Enum.Font.FredokaOne
-		freeBtn.ZIndex = 103
-		freeBtn.Parent = btnFrame
-		Instance.new("UICorner", freeBtn).CornerRadius = UDim.new(0, 14)
-		Instance.new("UIStroke", freeBtn).Color = Color3.fromRGB(50, 150, 50)
+		freeBtn.Size = UDim2.fromScale(0.47, 1)
+		freeBtn.Position = UDim2.fromScale(0, 0)
+		freeBtn.BackgroundColor3 = Color3.fromRGB(60, 190, 70)
+		freeBtn.Text = "🎁 Free Spin"; freeBtn.TextColor3 = Color3.fromRGB(255,255,255)
+		freeBtn.TextScaled = true; freeBtn.Font = Enum.Font.FredokaOne
+		freeBtn.ZIndex = 103; freeBtn.Parent = btnFrame
+		Instance.new("UICorner", freeBtn).CornerRadius = UDim.new(0, 16)
+		Instance.new("UIStroke", freeBtn).Color = Color3.fromRGB(40, 140, 40)
 
-		-- Paid Spin button
 		local paidBtn = Instance.new("TextButton")
-		paidBtn.Size = UDim2.fromScale(0.45, 0.8)
-		paidBtn.Position = UDim2.fromScale(0.52, 0.1)
-		paidBtn.BackgroundColor3 = Color3.fromRGB(255, 180, 50)
-		paidBtn.Text = "💎 Spin (R$49)"
-		paidBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-		paidBtn.TextScaled = true
-		paidBtn.Font = Enum.Font.FredokaOne
-		paidBtn.ZIndex = 103
-		paidBtn.Parent = btnFrame
-		Instance.new("UICorner", paidBtn).CornerRadius = UDim.new(0, 14)
-		Instance.new("UIStroke", paidBtn).Color = Color3.fromRGB(200, 130, 30)
+		paidBtn.Size = UDim2.fromScale(0.47, 1)
+		paidBtn.Position = UDim2.fromScale(0.53, 0)
+		paidBtn.BackgroundColor3 = Color3.fromRGB(255, 170, 40)
+		paidBtn.Text = "💎 Spin (R$49)"; paidBtn.TextColor3 = Color3.fromRGB(255,255,255)
+		paidBtn.TextScaled = true; paidBtn.Font = Enum.Font.FredokaOne
+		paidBtn.ZIndex = 103; paidBtn.Parent = btnFrame
+		Instance.new("UICorner", paidBtn).CornerRadius = UDim.new(0, 16)
+		Instance.new("UIStroke", paidBtn).Color = Color3.fromRGB(200, 120, 20)
 
-		-- Result display (hidden until spin completes)
-		local resultFrame = Instance.new("Frame")
-		resultFrame.Name = "ResultFrame"
-		resultFrame.Size = UDim2.fromScale(0.8, 0.12)
-		resultFrame.Position = UDim2.fromScale(0.1, 0.68)
-		resultFrame.BackgroundColor3 = Color3.fromRGB(30, 10, 45)
-		resultFrame.BackgroundTransparency = 0.3
-		resultFrame.Visible = false
-		resultFrame.ZIndex = 102
-		resultFrame.Parent = popup
+		-- Result bar (hidden until spin)
+		local resultFrame = Instance.new("Frame"); resultFrame.Name = "ResultFrame"
+		resultFrame.Size = UDim2.fromScale(0.85, 0.06)
+		resultFrame.AnchorPoint = Vector2.new(0.5, 0)
+		resultFrame.Position = UDim2.fromScale(0.5, 0.8)
+		resultFrame.BackgroundColor3 = Color3.fromRGB(25, 8, 40); resultFrame.BackgroundTransparency = 0.2
+		resultFrame.Visible = false; resultFrame.ZIndex = 102; resultFrame.Parent = popup
 		Instance.new("UICorner", resultFrame).CornerRadius = UDim.new(0, 12)
-
 		local resultLbl = Instance.new("TextLabel")
-		resultLbl.Size = UDim2.fromScale(1, 1)
-		resultLbl.BackgroundTransparency = 1
-		resultLbl.TextColor3 = Color3.fromRGB(255, 220, 80)
-		resultLbl.TextScaled = true
-		resultLbl.Font = Enum.Font.FredokaOne
-		resultLbl.ZIndex = 103
-		resultLbl.Parent = resultFrame
+		resultLbl.Size = UDim2.fromScale(1,1); resultLbl.BackgroundTransparency = 1
+		resultLbl.TextColor3 = Color3.fromRGB(255,220,80); resultLbl.TextScaled = true
+		resultLbl.Font = Enum.Font.FredokaOne; resultLbl.ZIndex = 103; resultLbl.Parent = resultFrame
 
-		-- Confetti particles function
+		-- Confetti
 		local function showConfetti()
-			for ci = 1, 40 do
-				local conf = Instance.new("TextLabel")
-				conf.Text = ({"🍬","🎉","✨","⭐","🌈","💎"})[math.random(1,6)]
-				conf.TextSize = math.random(16, 30)
-				conf.BackgroundTransparency = 1
-				conf.Size = UDim2.fromOffset(30, 30)
-				conf.Position = UDim2.fromScale(0.5, 0.4)
-				conf.ZIndex = 110
-				conf.Parent = popup
-				local angle = math.random() * math.pi * 2
-				local dist = math.random(15, 45) / 100
-				TweenService:Create(conf, TweenInfo.new(math.random(8,15)/10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-					Position = UDim2.fromScale(0.5 + math.cos(angle)*dist, 0.4 + math.sin(angle)*dist),
-					TextTransparency = 1,
-					Rotation = math.random(-360, 360),
+			for ci = 1, 50 do
+				local c = Instance.new("TextLabel")
+				c.Text = ({"🍬","🎉","✨","⭐","🌈","💎","🎊","🏆"})[math.random(1,8)]
+				c.TextSize = math.random(18, 34); c.BackgroundTransparency = 1
+				c.Size = UDim2.fromOffset(34,34)
+				c.Position = UDim2.fromScale(0.5, 0.45); c.ZIndex = 112; c.Parent = popup
+				local a = math.random() * math.pi * 2
+				local d = math.random(20, 50) / 100
+				TweenService:Create(c, TweenInfo.new(math.random(10,18)/10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Position = UDim2.fromScale(0.5+math.cos(a)*d, 0.45+math.sin(a)*d),
+					TextTransparency = 1, Rotation = math.random(-360,360),
 				}):Play()
-				task.delay(2, function() if conf then conf:Destroy() end end)
+				task.delay(2.5, function() if c then c:Destroy() end end)
 			end
 		end
 
 		-- Win sound
 		local winSound = Instance.new("Sound")
-		winSound.SoundId = "rbxassetid://5619828673"
-		winSound.Volume = 1.5
-		winSound.Parent = playerGui
+		winSound.SoundId = "rbxassetid://5619828673"; winSound.Volume = 1.5; winSound.Parent = playerGui
 
-		-- Spin animation function
+		-- Tick sound
+		local tickSound = Instance.new("Sound")
+		tickSound.SoundId = "rbxassetid://6732690176"; tickSound.Volume = 0.6; tickSound.Parent = playerGui
+
+		-- ========== SPIN ANIMATION ==========
 		local spinning = false
 		local function doSpinAnimation(winIdx, rewardName, rewardIcon)
 			if spinning then return end
@@ -567,75 +567,79 @@ if dailySpinEvent then
 			paidBtn.Active = false; paidBtn.BackgroundTransparency = 0.5
 			resultFrame.Visible = false
 
-			-- Stop idle
 			if idleConnection then idleConnection:Disconnect(); idleConnection = nil end
 
-			-- Calculate target angle
 			local segDeg = 360 / #SPIN_REWARDS_CLIENT
 			local targetAngle = (winIdx - 1) * segDeg + segDeg / 2
 			local startAngle = wheelAngle
-			local totalSpin = math.random(5, 7) * 360 + targetAngle
-
-			-- Fast spin animation with deceleration
-			local duration = 4.5
+			local totalSpin = math.random(6, 9) * 360 + targetAngle
+			local duration = 5.5
 			local startT = tick()
+			local lastSegIdx = -1
+
 			while true do
 				local elapsed = tick() - startT
 				if elapsed >= duration then break end
 				local t = elapsed / duration
-				local eased = 1 - (1 - t) ^ 3
+				local eased = 1 - (1 - t) ^ 4 -- quartic for smoother deceleration
 				wheelAngle = startAngle + totalSpin * eased
 				wheelRotator.Rotation = wheelAngle
-				task.wait(0.02)
+
+				-- Tick sound on segment change
+				local segIdx = math.floor(wheelAngle / segDeg) % #SPIN_REWARDS_CLIENT
+				if segIdx ~= lastSegIdx then
+					lastSegIdx = segIdx
+					tickSound:Play()
+				end
+				task.wait(0.016)
 			end
 
-			-- Final snap
 			wheelAngle = startAngle + totalSpin
 			wheelRotator.Rotation = wheelAngle
 
+			-- Settle wobble
+			for w = 1, 3 do
+				local amt = 4 / w
+				TweenService:Create(wheelRotator, TweenInfo.new(0.12, Enum.EasingStyle.Sine), {
+					Rotation = wheelAngle + amt
+				}):Play(); task.wait(0.12)
+				TweenService:Create(wheelRotator, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {
+					Rotation = wheelAngle - amt * 0.4
+				}):Play(); task.wait(0.15)
+			end
+			TweenService:Create(wheelRotator, TweenInfo.new(0.1), {Rotation = wheelAngle}):Play()
+			task.wait(0.15)
+
 			-- Show result
-			task.wait(0.3)
 			resultFrame.Visible = true
 			resultLbl.Text = rewardIcon .. " You won: " .. rewardName .. "! " .. rewardIcon
-			
-			-- Confetti + sound
-			winSound:Play()
-			showConfetti()
+			winSound:Play(); showConfetti()
 
-			-- Re-enable buttons after delay
-			task.delay(2, function()
+			task.delay(2.5, function()
 				spinning = false
 				if freeBtn and freeBtn.Parent then
 					freeBtn.Active = true; freeBtn.BackgroundTransparency = 0
 					paidBtn.Active = true; paidBtn.BackgroundTransparency = 0
 				end
-				-- Restart idle
 				if spinGui and spinGui.Parent and not idleConnection then
 					idleConnection = RunService.Heartbeat:Connect(function(dt)
 						if not spinGui or not spinGui.Parent then
-							if idleConnection then idleConnection:Disconnect() end
-							return
+							if idleConnection then idleConnection:Disconnect() end; return
 						end
-						wheelAngle = (wheelAngle + dt * 15) % 360
+						wheelAngle = (wheelAngle + dt * 12) % 360
 						wheelRotator.Rotation = wheelAngle
 					end)
 				end
 			end)
 		end
 
-		-- Button handlers
 		freeBtn.MouseButton1Click:Connect(function()
 			if spinning then return end
-			if spinRequestEvent then
-				spinRequestEvent:FireServer("free")
-			end
+			if spinRequestEvent then spinRequestEvent:FireServer("free") end
 		end)
-
 		paidBtn.MouseButton1Click:Connect(function()
 			if spinning then return end
-			if spinRequestEvent then
-				spinRequestEvent:FireServer("paid")
-			end
+			if spinRequestEvent then spinRequestEvent:FireServer("paid") end
 		end)
 
 		return {doSpinAnimation = doSpinAnimation}
