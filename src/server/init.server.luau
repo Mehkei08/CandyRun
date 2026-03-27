@@ -147,13 +147,29 @@ local candyPiecesFolder = ServerStorage:FindFirstChild("CandyPieces")
 local CANDY_TYPES = {}
 local candyTemplates = {} -- name -> template instance
 
+-- Only allow these candy types for parkour (lowercase matching)
+-- Skips rectangular colored blocks, speed candies, and other non-parkour pieces
+local ALLOWED_CANDY_KEYWORDS = {"candy", "cane", "sugar", "floss", "peppermint", "mint", "icecream", "ice cream", "cream", "donut", "doughnut", "chocolate", "choco", "gumball", "lollipop", "lolli"}
+
+local function isCandyAllowed(name)
+	local lower = string.lower(name)
+	for _, keyword in ipairs(ALLOWED_CANDY_KEYWORDS) do
+		if string.find(lower, keyword) then return true end
+	end
+	return false
+end
+
 if candyPiecesFolder then
 	for _, child in candyPiecesFolder:GetChildren() do
 		if child:IsA("Model") or child:IsA("BasePart") or child:IsA("MeshPart") then
 			local name = child.Name
-			table.insert(CANDY_TYPES, name)
-			candyTemplates[name] = child
-			print("[CandyRun] Found candy piece: " .. name)
+			if isCandyAllowed(name) then
+				table.insert(CANDY_TYPES, name)
+				candyTemplates[name] = child
+				print("[CandyRun] ✓ Candy piece loaded: " .. name)
+			else
+				print("[CandyRun] ✗ Skipped (not a candy): " .. name)
+			end
 		end
 	end
 	print("[CandyRun] Loaded " .. #CANDY_TYPES .. " candy pieces from " .. candyPiecesFolder.Name)
@@ -304,68 +320,67 @@ local CLUSTER_OFFSETS = {
 }
 
 local PARKOUR_STEPS = {
-	-- === INTRO (steps 1-6): Single path, learn to jump ===
-	-- === INTRO (steps 1-6): Single path, big platforms, jumpable gaps ===
-	{x=0,    y=0,   z=-83,    size=6.0},   -- 1: massive starter at door
-	{x=8,    y=1,   z=-120,   size=5.0},   -- 2: big
-	{x=-10,  y=0,   z=-158,   size=5.5},   -- 3: huge
-	{x=6,    y=2,   z=-195,   size=4.5},   -- 4: large
-	{x=-8,   y=0,   z=-232,   size=5.0},   -- 5: big
-	{x=0,    y=0,   z=-272,   size=6.0, checkpoint=true},  -- 6: CHECKPOINT 1
+	-- === INTRO (steps 1-6): Single path, big platforms, stretched gaps ===
+	{x=0,    y=0,   z=-120,   size=5.5},   -- 1: starter (clear of door)
+	{x=10,   y=1,   z=-175,   size=4.5},   -- 2
+	{x=-12,  y=0,   z=-235,   size=5.0},   -- 3
+	{x=8,    y=2,   z=-295,   size=4.5},   -- 4
+	{x=-10,  y=0,   z=-355,   size=5.0},   -- 5
+	{x=0,    y=0,   z=-420,   size=6.0, checkpoint=true},  -- 6: CHECKPOINT 1
 
-	-- === MEDIUM (steps 7-13): Wider jumps, big platforms ===
-	{x=14,   y=2,   z=-312,   size=5.0},   -- 7
-	{x=-16,  y=0,   z=-352,   size=4.5},   -- 8
-	{x=20,   y=3,   z=-395,   size=5.5},   -- 9
-	{x=-8,   y=1,   z=-435,   size=4.5},   -- 10
-	{x=12,   y=0,   z=-475,   size=5.0},   -- 11
-	{x=-20,  y=2,   z=-518,   size=5.5},   -- 12
-	{x=0,    y=0,   z=-560,   size=6.0, checkpoint=true},  -- 13: CHECKPOINT 2
+	-- === MEDIUM (steps 7-13): Wider jumps ===
+	{x=16,   y=2,   z=-490,   size=5.0},   -- 7
+	{x=-18,  y=0,   z=-560,   size=4.5},   -- 8
+	{x=22,   y=3,   z=-635,   size=5.5},   -- 9
+	{x=-10,  y=1,   z=-705,   size=4.5},   -- 10
+	{x=14,   y=0,   z=-775,   size=5.0},   -- 11
+	{x=-22,  y=2,   z=-850,   size=5.5},   -- 12
+	{x=0,    y=0,   z=-925,   size=6.0, checkpoint=true},  -- 13: CHECKPOINT 2
 
 	-- === BRANCHING: Three paths diverge ===
 	-- LEFT PATH
-	{x=-40,  y=1,   z=-605,   size=5.0},
-	{x=-45,  y=0,   z=-650,   size=4.5},
-	{x=-38,  y=2,   z=-695,   size=5.5},
-	{x=-42,  y=0,   z=-740,   size=5.0},
+	{x=-45,  y=1,   z=-1000,  size=5.0},
+	{x=-50,  y=0,   z=-1075,  size=4.5},
+	{x=-42,  y=2,   z=-1150,  size=5.5},
+	{x=-48,  y=0,   z=-1225,  size=5.0},
 
 	-- CENTER PATH (higher)
-	{x=0,    y=4,   z=-608,   size=4.5},
-	{x=6,    y=2,   z=-653,   size=4.5},
-	{x=-4,   y=5,   z=-698,   size=5.0},
-	{x=3,    y=3,   z=-743,   size=4.5},
+	{x=0,    y=4,   z=-1005,  size=4.5},
+	{x=8,    y=2,   z=-1080,  size=4.5},
+	{x=-5,   y=5,   z=-1155,  size=5.0},
+	{x=4,    y=3,   z=-1230,  size=4.5},
 
 	-- RIGHT PATH
-	{x=40,   y=1,   z=-605,   size=5.0},
-	{x=45,   y=0,   z=-650,   size=4.5},
-	{x=38,   y=2,   z=-695,   size=5.5},
-	{x=42,   y=0,   z=-740,   size=5.0},
+	{x=45,   y=1,   z=-1000,  size=5.0},
+	{x=50,   y=0,   z=-1075,  size=4.5},
+	{x=42,   y=2,   z=-1150,  size=5.5},
+	{x=48,   y=0,   z=-1225,  size=5.0},
 
 	-- === PATHS MERGE ===
-	{x=-18,  y=1,   z=-785,   size=5.0},
-	{x=18,   y=1,   z=-785,   size=5.0},
-	{x=0,    y=0,   z=-830,   size=6.0, checkpoint=true},  -- CHECKPOINT 3
+	{x=-20,  y=1,   z=-1305,  size=5.0},
+	{x=20,   y=1,   z=-1305,  size=5.0},
+	{x=0,    y=0,   z=-1380,  size=6.0, checkpoint=true},  -- CHECKPOINT 3
 
 	-- === HARD: Branches again, moving ===
 	-- LEFT HARD
-	{x=-35,  y=2,   z=-878,   size=4.5, moving=true},
-	{x=-40,  y=0,   z=-925,   size=4.0},
-	{x=-32,  y=3,   z=-972,   size=4.5, moving=true},
+	{x=-38,  y=2,   z=-1460,  size=4.5, moving=true},
+	{x=-44,  y=0,   z=-1540,  size=4.5},
+	{x=-35,  y=3,   z=-1620,  size=5.0, moving=true},
 
 	-- CENTER HARD
-	{x=0,    y=4,   z=-880,   size=4.0, moving=true},
-	{x=6,    y=2,   z=-927,   size=4.0},
-	{x=-4,   y=5,   z=-974,   size=4.5, moving=true},
+	{x=0,    y=4,   z=-1465,  size=4.5, moving=true},
+	{x=8,    y=2,   z=-1545,  size=4.5},
+	{x=-5,   y=5,   z=-1625,  size=5.0, moving=true},
 
 	-- RIGHT HARD
-	{x=35,   y=2,   z=-878,   size=4.5, moving=true},
-	{x=40,   y=0,   z=-925,   size=4.0},
-	{x=32,   y=3,   z=-972,   size=4.5, moving=true},
+	{x=38,   y=2,   z=-1460,  size=4.5, moving=true},
+	{x=44,   y=0,   z=-1540,  size=4.5},
+	{x=35,   y=3,   z=-1620,  size=5.0, moving=true},
 
 	-- === FINAL MERGE ===
-	{x=-14,  y=1,   z=-1020,  size=5.0},
-	{x=14,   y=1,   z=-1020,  size=5.0},
-	{x=0,    y=0,   z=-1070,  size=6.0, checkpoint=true},  -- FINAL CHECKPOINT
+	{x=-16,  y=1,   z=-1700,  size=5.0},
+	{x=16,   y=1,   z=-1700,  size=5.0},
+	{x=0,    y=0,   z=-1780,  size=6.0, checkpoint=true},  -- FINAL CHECKPOINT
 }
 
 -- ============================================================
