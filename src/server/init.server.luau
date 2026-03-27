@@ -343,7 +343,7 @@ local function getCandyScale(candyName, stepSize)
 		return 1.0  -- candyfloss stays original size
 	end
 	if string.find(lower, "donut") or string.find(lower, "doughnut") then
-		return stepSize * 2.0  -- donuts doubled
+		return stepSize * 4.0  -- donuts quadrupled (doubled again)
 	end
 	if string.find(lower, "gumball") or string.find(lower, "gum ball") then
 		return stepSize * 2.0  -- gumball machines doubled
@@ -1117,7 +1117,7 @@ local function applySpinReward(plr, reward)
 		if hum then
 			hum.WalkSpeed = 76
 			task.delay(reward.value * 60, function()
-				if hum and hum.Parent then hum.WalkSpeed = 48 end
+				if hum and hum.Parent then hum.WalkSpeed = 82 end
 			end)
 		end
 	elseif reward.type == "gravity_boost" then
@@ -1833,7 +1833,7 @@ local function createSpawnRoom()
 				if hum then hum.WalkSpeed = hum.WalkSpeed + 30 end
 			end)
 			tool.Unequipped:Connect(function()
-				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 30, 48) end
+				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 30, 82) end
 			end)
 
 		elseif itemName == "Gravity Coil" then
@@ -1908,7 +1908,7 @@ local function createSpawnRoom()
 				end
 			end)
 			tool.Unequipped:Connect(function()
-				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 25, 48) end
+				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 25, 82) end
 				local rootPart = char:FindFirstChild("HumanoidRootPart")
 				if rootPart then
 					local bf = rootPart:FindFirstChild("FusionGravityReducer")
@@ -2503,7 +2503,7 @@ end
 
 local function onCharacterAdded(player, character)
 	local humanoid = character:WaitForChild("Humanoid")
-	humanoid.WalkSpeed = 48
+	humanoid.WalkSpeed = 82
 	humanoid.Died:Connect(function() onPlayerDied(player) end)
 end
 
