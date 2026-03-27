@@ -8,6 +8,7 @@ local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Lighting = game:GetService("Lighting")
 local ServerStorage = game:GetService("ServerStorage")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 -- ============================================================
 -- REMOTE EVENTS
@@ -185,10 +186,44 @@ local function buildCandyPlatform(candyName, index, pos, m)
 			end
 		end
 
+		-- CLEANUP: Remove grey platforms/bases and tiny useless parts
+		local partsToRemove = {}
+		for _, part in clone:GetDescendants() do
+			if part:IsA("BasePart") then
+				local r, g, b = part.Color.R * 255, part.Color.G * 255, part.Color.B * 255
+				local sx, sy, sz = part.Size.X, part.Size.Y, part.Size.Z
+				local maxDim = math.max(sx, sy, sz)
+				local minDim = math.min(sx, sy, sz)
+				
+				-- Grey/dark flat platform (base plate) — remove it
+				-- A "platform" is grey AND one dimension is much thinner than others
+				if r < 120 and g < 120 and b < 120 and (minDim < maxDim * 0.25) and maxDim > 5 then
+					table.insert(partsToRemove, part)
+				end
+				
+				-- Tiny decorative bits (all dimensions < 2 studs after scale) — remove
+				if sx < 2 and sy < 2 and sz < 2 then
+					table.insert(partsToRemove, part)
+				end
+			end
+		end
+		for _, part in ipairs(partsToRemove) do
+			part:Destroy()
+		end
+
 		-- Move to target position while KEEPING the model's original rotation
 		-- (candy pieces are oriented correctly in Studio — don't reset that)
 		local originalPivot = clone:GetPivot()
 		local originalRotation = originalPivot - originalPivot.Position -- extract rotation only
+		
+		-- Check if model is taller than it is wide (like candyfloss standing up)
+		-- If so, rotate it 90 degrees on Z to lay it on its side (jumpable)
+		local modelBounds = clone:GetExtentsSize()
+		if modelBounds.Y > modelBounds.X * 1.5 and modelBounds.Y > modelBounds.Z * 1.5 then
+			-- Model is tall and thin — rotate to lay flat
+			originalRotation = originalRotation * CFrame.Angles(0, 0, math.rad(90))
+		end
+		
 		clone:PivotTo(CFrame.new(pos) * originalRotation)
 
 		-- Make ALL parts walkable/collidable (no invisible bases)
@@ -910,6 +945,17 @@ local TRAIL_COLORS = {
 	{name = "Midnight", color = Color3.fromRGB(30, 30, 80)},
 }
 
+local PREMIUM_TRAIL_COLORS = {
+	{name = "Galaxy Swirl", color = Color3.fromRGB(20, 0, 80), isGalaxy = true},
+	{name = "Cosmic Nebula", color = Color3.fromRGB(80, 0, 120), isCosmic = true},
+	{name = "Rainbow Pulse", color = Color3.fromRGB(255, 100, 200), isRainbow = true},
+	{name = "Stardust", color = Color3.fromRGB(255, 230, 150), isCosmic = true},
+	{name = "Aurora Borealis", color = Color3.fromRGB(0, 255, 180), isCosmic = true},
+	{name = "Void Walker", color = Color3.fromRGB(10, 0, 30), isGalaxy = true},
+	{name = "Supernova", color = Color3.fromRGB(255, 50, 0), isCosmic = true},
+	{name = "Prismatic", color = Color3.fromRGB(200, 100, 255), isRainbow = true},
+}
+
 -- ============================================================
 -- DAILY SPIN REWARDS (weighted)
 -- ============================================================
@@ -938,9 +984,11 @@ local function weightedSpinPick()
 end
 
 -- Apply a trail to a character
-local function applyTrail(char, color, isRainbow)
+local function applyTrail(char, trailColor, isRainbow, isGalaxy, isCosmic)
+	-- Clean up existing trails and particles
 	for _, d in char:GetDescendants() do
 		if d:IsA("Trail") and d.Name == "CandyTrail" then d:Destroy() end
+		if d:IsA("ParticleEmitter") and d.Name == "PremiumTrailParticles" then d:Destroy() end
 	end
 	for _, d in char:GetDescendants() do
 		if d:IsA("Attachment") and (d.Name == "TrailTop" or d.Name == "TrailBot") then d:Destroy() end
@@ -954,13 +1002,32 @@ local function applyTrail(char, color, isRainbow)
 	trail.Name = "CandyTrail"
 	trail.Attachment0 = a0; trail.Attachment1 = a1
 	trail.Lifetime = 1.5; trail.MinLength = 0.1
-	trail.LightEmission = 0.4; trail.LightInfluence = 0.6
+	
+	-- Enhanced properties for premium trails
+	if isGalaxy or isCosmic then
+		trail.LightEmission = 0.8
+		trail.LightInfluence = 0.2
+	else
+		trail.LightEmission = 0.4
+		trail.LightInfluence = 0.6
+	end
+	
 	trail.WidthScale = NumberSequence.new({
 		NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.5), NumberSequenceKeypoint.new(1, 0),
 	})
-	trail.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.7, 0.3), NumberSequenceKeypoint.new(1, 1),
-	})
+	
+	-- Enhanced transparency for rainbow trails
+	if isRainbow and not isGalaxy and not isCosmic then
+		trail.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.3, 0.2), NumberSequenceKeypoint.new(0.7, 0.6), NumberSequenceKeypoint.new(1, 1),
+		})
+	else
+		trail.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.7, 0.3), NumberSequenceKeypoint.new(1, 1),
+		})
+	end
+	
+	-- Color setup based on trail type
 	if isRainbow then
 		trail.Color = ColorSequence.new({
 			ColorSequenceKeypoint.new(0, Color3.fromRGB(255,50,50)),
@@ -971,10 +1038,47 @@ local function applyTrail(char, color, isRainbow)
 			ColorSequenceKeypoint.new(0.83, Color3.fromRGB(150,50,255)),
 			ColorSequenceKeypoint.new(1, Color3.fromRGB(255,50,200)),
 		})
+	elseif isGalaxy then
+		-- Dark base with sparkle colors
+		trail.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(10, 0, 30)),
+			ColorSequenceKeypoint.new(0.3, Color3.fromRGB(80, 0, 120)),
+			ColorSequenceKeypoint.new(0.7, Color3.fromRGB(20, 0, 80)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 20, 100)),
+		})
+	elseif isCosmic then
+		-- Nebula colors
+		trail.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 0, 120)),
+			ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 100, 200)),
+			ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 255, 180)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 230, 150)),
+		})
 	else
-		trail.Color = ColorSequence.new(color)
+		trail.Color = ColorSequence.new(trailColor)
 	end
 	trail.Parent = hrp
+	
+	-- Add particle emitter for premium trails
+	if isGalaxy or isCosmic then
+		local particles = Instance.new("ParticleEmitter")
+		particles.Name = "PremiumTrailParticles"
+		particles.Color = ColorSequence.new(trailColor)
+		particles.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.5),
+			NumberSequenceKeypoint.new(1, 0),
+		})
+		particles.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+		particles.Lifetime = NumberRange.new(0.5, 1.5)
+		particles.Rate = 30
+		particles.Speed = NumberRange.new(1, 3)
+		particles.SpreadAngle = Vector2.new(30, 30)
+		particles.LightEmission = 0.8
+		particles.Parent = hrp
+	end
 end
 
 -- Apply spin reward to a player
@@ -1010,7 +1114,7 @@ local function applySpinReward(plr, reward)
 			end
 		end
 	elseif reward.type == "trail" then
-		if char then applyTrail(char, nil, true) end
+		if char then applyTrail(char, nil, true, false, false) end
 	elseif reward.type == "jackpot" then
 		print("[CandyRun] JACKPOT! " .. plr.Name .. " won VIP!")
 	end
@@ -1278,7 +1382,7 @@ local function createSpawnRoom()
 	doorArch.Material = Enum.Material.Neon; doorArch.Transparency = 0.2
 	doorArch.CanCollide = false; doorArch.Parent = model
 
-	-- "ITEM SHOP" sign above doorway
+	-- "OBBY GAMEPASSES" sign above doorway
 	local shopSignP = Instance.new("Part")
 	shopSignP.Size = Vector3.new(1,1,1)
 	shopSignP.Position = Vector3.new(divX - 3, floorY + doorHeight + 6, 0)
@@ -1287,7 +1391,7 @@ local function createSpawnRoom()
 	shopSignBB.Size = UDim2.fromOffset(200, 60); shopSignBB.AlwaysOnTop = false; shopSignBB.Parent = shopSignP
 	local shopSignLbl = Instance.new("TextLabel")
 	shopSignLbl.Size = UDim2.fromScale(1,1); shopSignLbl.BackgroundTransparency = 1
-	shopSignLbl.Text = "🛒 ITEM SHOP 🛒"
+	shopSignLbl.Text = "💎 OBBY GAMEPASSES 💎"
 	shopSignLbl.TextColor3 = Color3.fromRGB(255, 220, 80)
 	shopSignLbl.TextScaled = true; shopSignLbl.Font = Enum.Font.FredokaOne; shopSignLbl.Parent = shopSignBB
 	Instance.new("UIStroke", shopSignLbl).Color = Color3.fromRGB(200, 140, 20)
@@ -1302,7 +1406,7 @@ local function createSpawnRoom()
 		["Grapple Gun"]  = 88714214,   -- Grappling Hook model
 	}
 
-	local function buildItemPedestal(position, itemName, itemColor, itemEmoji, price)
+	local function buildGamepassDisplay(position, itemName, itemColor, itemEmoji, robuxPrice, gamepassId)
 		local dModel = Instance.new("Model"); dModel.Name = itemName .. "_Display"
 
 		-- Pedestal block
@@ -1364,14 +1468,14 @@ local function createSpawnRoom()
 		local priceLbl = Instance.new("TextLabel")
 		priceLbl.Size = UDim2.fromScale(1, 0.4); priceLbl.Position = UDim2.fromScale(0, 0.6)
 		priceLbl.BackgroundTransparency = 1
-		priceLbl.Text = "🍬 " .. price
+		priceLbl.Text = "R$" .. robuxPrice
 		priceLbl.TextColor3 = Color3.fromRGB(255, 220, 100)
 		priceLbl.TextScaled = true; priceLbl.Font = Enum.Font.GothamBold; priceLbl.Parent = bb
 
 		-- ProximityPrompt (hold E to buy)
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.ActionText = "Buy"
-		prompt.ObjectText = itemName .. " (" .. price .. " 🍬)"
+		prompt.ObjectText = itemName .. " (R$" .. robuxPrice .. ")"
 		prompt.KeyboardKeyCode = Enum.KeyCode.E
 		prompt.HoldDuration = 0.5
 		prompt.MaxActivationDistance = 12
@@ -1379,33 +1483,33 @@ local function createSpawnRoom()
 		prompt.Parent = ped
 
 		dModel.Parent = mapFolder
-		return prompt
+		return prompt, gamepassId
 	end
 
-	-- All 5 items lined up parallel against the far right wall
+	-- All 5 gamepasses lined up parallel against the far right wall
 	local itemX = 85  -- close to the right wall (wall is at X=100)
 	local itemStartZ = -35
 	local itemSpacing = 16
 
-	local speedPrompt = buildItemPedestal(
+	local speedPrompt, speedGamepassId = buildGamepassDisplay(
 		Vector3.new(itemX, floorY + 4, itemStartZ),
-		"Speed Coil", Color3.fromRGB(80, 200, 255), "⚡", 5
+		"Speed Coil", Color3.fromRGB(80, 200, 255), "⚡", 49, 1001
 	)
-	local gravityPrompt = buildItemPedestal(
+	local gravityPrompt, gravityGamepassId = buildGamepassDisplay(
 		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing),
-		"Gravity Coil", Color3.fromRGB(180, 80, 255), "🌀", 8
+		"Gravity Coil", Color3.fromRGB(180, 80, 255), "🌀", 79, 1002
 	)
-	local fusionPrompt = buildItemPedestal(
+	local fusionPrompt, fusionGamepassId = buildGamepassDisplay(
 		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing*2),
-		"Fusion Coil", Color3.fromRGB(130, 140, 255), "💫", 15
+		"Fusion Coil", Color3.fromRGB(130, 140, 255), "💫", 149, 1003
 	)
-	local carpetPrompt = buildItemPedestal(
+	local carpetPrompt, carpetGamepassId = buildGamepassDisplay(
 		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing*3),
-		"Magic Carpet", Color3.fromRGB(255, 180, 50), "🧞", 20
+		"Magic Carpet", Color3.fromRGB(255, 180, 50), "🧞", 199, 1004
 	)
-	local grapplePrompt = buildItemPedestal(
+	local grapplePrompt, grappleGamepassId = buildGamepassDisplay(
 		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing*4),
-		"Grapple Gun", Color3.fromRGB(255, 80, 80), "🪝", 12
+		"Grapple Gun", Color3.fromRGB(255, 80, 80), "🪝", 99, 1005
 	)
 
 	-- ============================================================
@@ -1475,12 +1579,80 @@ local function createSpawnRoom()
 		return prompt
 	end
 
+	-- Create normal trail chest (left position)
 	local chestPromptL = buildTrailChest(Vector3.new(-40, floorY + 4, -15))
-	local chestPromptR = buildTrailChest(Vector3.new(-40, floorY + 4, 15))
+	
+	-- Create premium trail chest (right position, golden appearance)
+	local function buildPremiumTrailChest(position)
+		local chestModel = Instance.new("Model"); chestModel.Name = "PremiumTrailChest"
 
-	-- Trail chest purchase handler
+		-- Chest base (gold)
+		local base = Instance.new("Part")
+		base.Name = "ChestBase"
+		base.Size = Vector3.new(6, 4, 5)
+		base.Position = position; base.Anchored = true
+		base.Color = Color3.fromRGB(255, 215, 0)
+		base.Material = Enum.Material.Neon; base.Parent = chestModel
+
+		-- Lid (gold)
+		local lid = Instance.new("Part")
+		lid.Size = Vector3.new(6.2, 3, 5.2)
+		lid.Position = position + Vector3.new(0, 3.5, 0)
+		lid.Anchored = true; lid.Color = Color3.fromRGB(255, 200, 0)
+		lid.Material = Enum.Material.Neon
+		lid.Shape = Enum.PartType.Ball; lid.Parent = chestModel
+
+		-- Premium trim (bright gold)
+		local trim = Instance.new("Part")
+		trim.Size = Vector3.new(6.4, 0.5, 5.4)
+		trim.Position = position + Vector3.new(0, 2, 0)
+		trim.Anchored = true; trim.Color = Color3.fromRGB(255, 255, 150)
+		trim.Material = Enum.Material.Neon; trim.CanCollide = false; trim.Parent = chestModel
+
+		-- Diamond lock
+		local lock = Instance.new("Part")
+		lock.Size = Vector3.new(1.2, 1.2, 0.5)
+		lock.Position = position + Vector3.new(0, 2, -2.8)
+		lock.Anchored = true; lock.Color = Color3.fromRGB(150, 255, 255)
+		lock.Material = Enum.Material.Neon; lock.Shape = Enum.PartType.Ball
+		lock.CanCollide = false; lock.Parent = chestModel
+
+		-- Bright glow
+		local gl = Instance.new("PointLight")
+		gl.Color = Color3.fromRGB(255, 220, 80); gl.Brightness = 2.5; gl.Range = 25; gl.Parent = base
+
+		-- Premium label
+		local labelP = Instance.new("Part")
+		labelP.Size = Vector3.new(1,1,1); labelP.Position = position + Vector3.new(0, 8, 0)
+		labelP.Anchored = true; labelP.Transparency = 1; labelP.CanCollide = false; labelP.Parent = chestModel
+		local bb = Instance.new("BillboardGui")
+		bb.Size = UDim2.fromOffset(200, 60); bb.AlwaysOnTop = false; bb.Parent = labelP
+		local lbl = Instance.new("TextLabel")
+		lbl.Size = UDim2.fromScale(1,1); lbl.BackgroundTransparency = 1
+		lbl.Text = "👑 Premium Chest - R$29"
+		lbl.TextColor3 = Color3.fromRGB(255, 220, 80)
+		lbl.TextScaled = true; lbl.Font = Enum.Font.FredokaOne; lbl.Parent = bb
+		Instance.new("UIStroke", lbl).Color = Color3.fromRGB(200, 160, 20)
+
+		-- ProximityPrompt (hold E)
+		local prompt = Instance.new("ProximityPrompt")
+		prompt.ActionText = "Buy"
+		prompt.ObjectText = "Premium Trail Chest (R$29)"
+		prompt.KeyboardKeyCode = Enum.KeyCode.E
+		prompt.HoldDuration = 0.5
+		prompt.MaxActivationDistance = 10
+		prompt.RequiresLineOfSight = false
+		prompt.Parent = base
+
+		chestModel.Parent = mapFolder
+		return prompt
+	end
+	
+	local premiumChestPrompt = buildPremiumTrailChest(Vector3.new(-40, floorY + 4, 15))
+
+	-- Trail chest purchase handlers
 	local trailDebounces = {}
-	local function handleTrailChest(plr)
+	local function handleNormalTrailChest(plr)
 		if not plr then return end
 		local key = plr.UserId .. "trail"
 		if trailDebounces[key] then return end
@@ -1499,13 +1671,37 @@ local function createSpawnRoom()
 
 		local pick = TRAIL_COLORS[math.random(1, #TRAIL_COLORS)]
 		local char = plr.Character
-		if char then applyTrail(char, pick.color, false) end
+		if char then applyTrail(char, pick.color, false, false, false) end
 		trailSpinResultEvent:FireClient(plr, pick.name, {pick.color.R, pick.color.G, pick.color.B})
 		purchaseEvent:FireClient(plr, "success", "Trail: " .. pick.name, cost, data.candies)
 	end
 
-	chestPromptL.Triggered:Connect(function(plr) handleTrailChest(plr) end)
-	chestPromptR.Triggered:Connect(function(plr) handleTrailChest(plr) end)
+	local function handlePremiumTrailChest(plr)
+		if not plr then return end
+		local key = plr.UserId .. "premiumtrail"
+		if trailDebounces[key] then return end
+		trailDebounces[key] = true
+		task.delay(3, function() trailDebounces[key] = nil end)
+
+		-- Use MarketplaceService to prompt dev product purchase
+		MarketplaceService:PromptProductPurchase(plr, 2001)
+	end
+
+	chestPromptL.Triggered:Connect(function(plr) handleNormalTrailChest(plr) end)
+	premiumChestPrompt.Triggered:Connect(function(plr) handlePremiumTrailChest(plr) end)
+
+	-- Handle premium trail purchase completion
+	MarketplaceService.PromptProductPurchaseFinished:Connect(function(plr, productId, isPurchased)
+		if productId == 2001 and isPurchased then
+			local pick = PREMIUM_TRAIL_COLORS[math.random(1, #PREMIUM_TRAIL_COLORS)]
+			local char = plr.Character
+			if char then 
+				applyTrail(char, pick.color, pick.isRainbow or false, pick.isGalaxy or false, pick.isCosmic or false)
+			end
+			trailSpinResultEvent:FireClient(plr, pick.name, {pick.color.R, pick.color.G, pick.color.B})
+			purchaseEvent:FireClient(plr, "success", "Premium Trail: " .. pick.name, 29, 0)
+		end
+	end)
 
 	-- ============================================================
 	-- DAILY SPIN WHEEL (front-left, carnival style, VERTICAL facing -Z)
@@ -2159,34 +2355,47 @@ local function createSpawnRoom()
 		tool.Parent = player.Backpack
 	end
 
-	-- Touch detection for capsules (purchase with candy)
+	-- Gamepass purchase system
 	local debounces = {}
 
-	local function tryPurchase(plr, itemName, triggerKey)
-		if not plr or debounces[plr.UserId..triggerKey] then return end
-		debounces[plr.UserId..triggerKey] = true
-		task.delay(2, function() debounces[plr.UserId..triggerKey] = nil end)
+	speedPrompt.Triggered:Connect(function(plr) 
+		MarketplaceService:PromptGamePassPurchase(plr, speedGamepassId) 
+	end)
+	gravityPrompt.Triggered:Connect(function(plr) 
+		MarketplaceService:PromptGamePassPurchase(plr, gravityGamepassId) 
+	end)
+	fusionPrompt.Triggered:Connect(function(plr) 
+		MarketplaceService:PromptGamePassPurchase(plr, fusionGamepassId) 
+	end)
+	carpetPrompt.Triggered:Connect(function(plr) 
+		MarketplaceService:PromptGamePassPurchase(plr, carpetGamepassId) 
+	end)
+	grapplePrompt.Triggered:Connect(function(plr) 
+		MarketplaceService:PromptGamePassPurchase(plr, grappleGamepassId) 
+	end)
 
-		local data = playerData[plr]
-		if not data then return end
-		local price = ITEM_PRICES[itemName] or 0
-		local candies = data.candies or 0
-
-		if candies >= price then
-			data.candies = candies - price
-			candyUpdateEvent:FireClient(plr, data.candies)
-			giveItem(plr, itemName)
-			purchaseEvent:FireClient(plr, "success", itemName, price, data.candies)
-		else
-			purchaseEvent:FireClient(plr, "fail", itemName, price, candies)
+	-- Handle gamepass purchase completion
+	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(plr, gamepassId, wasPurchased)
+		if not wasPurchased then return end
+		
+		local itemName = ""
+		if gamepassId == speedGamepassId then
+			itemName = "Speed Coil"
+		elseif gamepassId == gravityGamepassId then
+			itemName = "Gravity Coil"
+		elseif gamepassId == fusionGamepassId then
+			itemName = "Fusion Coil"
+		elseif gamepassId == carpetGamepassId then
+			itemName = "Magic Carpet"
+		elseif gamepassId == grappleGamepassId then
+			itemName = "Grapple Gun"
 		end
-	end
-
-	speedPrompt.Triggered:Connect(function(plr) tryPurchase(plr, "Speed Coil", "speed") end)
-	gravityPrompt.Triggered:Connect(function(plr) tryPurchase(plr, "Gravity Coil", "gravity") end)
-	fusionPrompt.Triggered:Connect(function(plr) tryPurchase(plr, "Fusion Coil", "fusion") end)
-	carpetPrompt.Triggered:Connect(function(plr) tryPurchase(plr, "Magic Carpet", "carpet") end)
-	grapplePrompt.Triggered:Connect(function(plr) tryPurchase(plr, "Grapple Gun", "grapple") end)
+		
+		if itemName ~= "" then
+			giveItem(plr, itemName)
+			purchaseEvent:FireClient(plr, "success", itemName, 0, 0)
+		end
+	end)
 
 	-- Boombox: server handles song ID changes (validates & sets the Sound)
 	boomboxEvent.OnServerEvent:Connect(function(plr, songId)
