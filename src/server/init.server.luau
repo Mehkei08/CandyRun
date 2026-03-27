@@ -186,30 +186,14 @@ local function buildCandyPlatform(candyName, index, pos, m)
 			end
 		end
 
-		-- CLEANUP: Remove grey platforms/bases and tiny useless parts
-		local partsToRemove = {}
-		for _, part in clone:GetDescendants() do
-			if part:IsA("BasePart") then
-				local r, g, b = part.Color.R * 255, part.Color.G * 255, part.Color.B * 255
-				local sx, sy, sz = part.Size.X, part.Size.Y, part.Size.Z
-				local maxDim = math.max(sx, sy, sz)
-				local minDim = math.min(sx, sy, sz)
-				
-				-- Grey/dark flat platform (base plate) — remove it
-				-- A "platform" is grey AND one dimension is much thinner than others
-				if r < 120 and g < 120 and b < 120 and (minDim < maxDim * 0.25) and maxDim > 5 then
-					table.insert(partsToRemove, part)
-				end
-				
-				-- Tiny decorative bits (all dimensions < 2 studs after scale) — remove
-				if sx < 2 and sy < 2 and sz < 2 then
-					table.insert(partsToRemove, part)
-				end
-			end
+		-- No cleanup — keep all parts from the model as-is
+
+		-- Debug: count parts
+		local partCount = 0
+		for _, p in clone:GetDescendants() do
+			if p:IsA("BasePart") then partCount += 1 end
 		end
-		for _, part in ipairs(partsToRemove) do
-			part:Destroy()
-		end
+		print("[CandyRun] Building " .. candyName .. " with " .. partCount .. " parts at scale " .. m)
 
 		-- Move to target position while KEEPING the model's original rotation
 		-- (candy pieces are oriented correctly in Studio — don't reset that)
@@ -2610,12 +2594,12 @@ local function generateMap()
 			return randomCandy()
 		end
 
-		-- Place 3 candy models around the step center
+		-- Place candy models around the step center
 		local firstModel = nil
 		for ci, cluster in ipairs(CLUSTER_OFFSETS) do
 			local candyPos = stepCenter + Vector3.new(cluster.dx, cluster.dy, cluster.dz)
-			local candySize = getCandyScale(candyName, step.size) * cluster.sizeMultiplier
 			local candyName = pickUnique()
+			local candySize = getCandyScale(candyName, step.size) * cluster.sizeMultiplier
 
 			local walkable, mdl = buildCandyPlatform(candyName, i*10+ci, candyPos, candySize)
 
