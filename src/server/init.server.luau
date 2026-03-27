@@ -216,12 +216,12 @@ local function buildCandyPlatform(candyName, index, pos, m)
 		local originalPivot = clone:GetPivot()
 		local originalRotation = originalPivot - originalPivot.Position -- extract rotation only
 		
-		-- Check if model is taller than it is wide (like candyfloss standing up)
-		-- If so, rotate it 90 degrees on Z to lay it on its side (jumpable)
+		-- Force ALL models to lay flat/horizontal so players can land on them
+		-- Rotate 90° on X so the top becomes the front (laying down)
 		local modelBounds = clone:GetExtentsSize()
-		if modelBounds.Y > modelBounds.X * 1.5 and modelBounds.Y > modelBounds.Z * 1.5 then
-			-- Model is tall and thin — rotate to lay flat
-			originalRotation = originalRotation * CFrame.Angles(0, 0, math.rad(90))
+		if modelBounds.Y > modelBounds.X * 0.8 or modelBounds.Y > modelBounds.Z * 0.8 then
+			-- Model is taller than it is wide — lay it on its side
+			originalRotation = originalRotation * CFrame.Angles(math.rad(90), 0, 0)
 		end
 		
 		clone:PivotTo(CFrame.new(pos) * originalRotation)
@@ -305,67 +305,67 @@ local CLUSTER_OFFSETS = {
 
 local PARKOUR_STEPS = {
 	-- === INTRO (steps 1-6): Single path, learn to jump ===
-	-- === INTRO (steps 1-6): Single path, varied sizes ===
-	{x=0,    y=0,   z=-83,    size=2.5},   -- 1: big starter at door
-	{x=6.5,  y=2,   z=-117,   size=1.8},   -- 2: medium
-	{x=-10,  y=0,   z=-153,   size=2.2},   -- 3: large
-	{x=4,    y=3,   z=-189,   size=1.6},   -- 4: smaller
-	{x=-8,   y=1,   z=-224,   size=2.0},   -- 5: big
-	{x=0,    y=0,   z=-260,   size=2.5, checkpoint=true},  -- 6: CHECKPOINT 1
+	-- === INTRO (steps 1-6): Single path, HUGE varied sizes ===
+	{x=0,    y=0,   z=-83,    size=5.0},   -- 1: massive starter at door
+	{x=8,    y=2,   z=-130,   size=3.5},   -- 2: big
+	{x=-12,  y=0,   z=-180,   size=4.5},   -- 3: huge
+	{x=5,    y=3,   z=-230,   size=3.0},   -- 4: large
+	{x=-10,  y=1,   z=-280,   size=4.0},   -- 5: big
+	{x=0,    y=0,   z=-335,   size=5.0, checkpoint=true},  -- 6: CHECKPOINT 1
 
-	-- === MEDIUM (steps 7-13): Wider jumps, varied sizes ===
-	{x=13,   y=3,   z=-299,   size=2.0},   -- 7
-	{x=-16,  y=0,   z=-332,   size=1.7},   -- 8
-	{x=20,   y=4,   z=-367,   size=2.3},   -- 9: extra big
-	{x=-7,   y=1,   z=-403,   size=1.6},   -- 10: smaller
-	{x=10,   y=-1,  z=-439,   size=1.9},   -- 11
-	{x=-20,  y=3,   z=-475,   size=2.1},   -- 12: big
-	{x=0,    y=0,   z=-514,   size=2.5, checkpoint=true},  -- 13: CHECKPOINT 2
+	-- === MEDIUM (steps 7-13): Wider jumps, still big ===
+	{x=15,   y=3,   z=-390,   size=4.0},   -- 7
+	{x=-18,  y=0,   z=-445,   size=3.5},   -- 8
+	{x=22,   y=4,   z=-500,   size=4.5},   -- 9: extra big
+	{x=-8,   y=1,   z=-555,   size=3.0},   -- 10
+	{x=12,   y=-1,  z=-610,   size=3.8},   -- 11
+	{x=-22,  y=3,   z=-665,   size=4.2},   -- 12: big
+	{x=0,    y=0,   z=-725,   size=5.0, checkpoint=true},  -- 13: CHECKPOINT 2
 
 	-- === BRANCHING: Three paths diverge ===
 	-- LEFT PATH
-	{x=-39,  y=2,   z=-553,   size=2.0},
-	{x=-46,  y=0,   z=-592,   size=1.7},
-	{x=-36,  y=4,   z=-631,   size=2.2},
-	{x=-42,  y=1,   z=-670,   size=1.8},
+	{x=-45,  y=2,   z=-785,   size=4.0},
+	{x=-50,  y=0,   z=-845,   size=3.5},
+	{x=-40,  y=4,   z=-905,   size=4.5},
+	{x=-48,  y=1,   z=-965,   size=3.8},
 
 	-- CENTER PATH (higher, harder)
-	{x=0,    y=5,   z=-559,   size=1.8},
-	{x=7,    y=3,   z=-598,   size=1.6},
-	{x=-4,   y=6,   z=-637,   size=2.0},
-	{x=3,    y=4,   z=-676,   size=1.7},
+	{x=0,    y=5,   z=-790,   size=3.5},
+	{x=8,    y=3,   z=-850,   size=3.0},
+	{x=-5,   y=6,   z=-910,   size=4.0},
+	{x=4,    y=4,   z=-970,   size=3.2},
 
 	-- RIGHT PATH
-	{x=39,   y=2,   z=-553,   size=2.0},
-	{x=46,   y=0,   z=-592,   size=1.7},
-	{x=36,   y=4,   z=-631,   size=2.2},
-	{x=42,   y=1,   z=-670,   size=1.8},
+	{x=45,   y=2,   z=-785,   size=4.0},
+	{x=50,   y=0,   z=-845,   size=3.5},
+	{x=40,   y=4,   z=-905,   size=4.5},
+	{x=48,   y=1,   z=-965,   size=3.8},
 
 	-- === PATHS MERGE ===
-	{x=-20,  y=2,   z=-709,   size=2.0},
-	{x=20,   y=2,   z=-709,   size=2.0},
-	{x=0,    y=0,   z=-748,   size=2.5, checkpoint=true},  -- CHECKPOINT 3
+	{x=-22,  y=2,   z=-1025,  size=4.0},
+	{x=22,   y=2,   z=-1025,  size=4.0},
+	{x=0,    y=0,   z=-1090,  size=5.0, checkpoint=true},  -- CHECKPOINT 3
 
 	-- === HARD: Branches again, moving ===
 	-- LEFT HARD
-	{x=-33,  y=3,   z=-787,   size=1.8, moving=true},
-	{x=-39,  y=0,   z=-826,   size=1.6},
-	{x=-29,  y=5,   z=-865,   size=1.9, moving=true},
+	{x=-38,  y=3,   z=-1150,  size=3.5, moving=true},
+	{x=-44,  y=0,   z=-1210,  size=3.0},
+	{x=-34,  y=5,   z=-1270,  size=3.8, moving=true},
 
 	-- CENTER HARD
-	{x=0,    y=6,   z=-793,   size=1.7, moving=true},
-	{x=7,    y=3,   z=-832,   size=1.5},
-	{x=-4,   y=7,   z=-871,   size=1.8, moving=true},
+	{x=0,    y=6,   z=-1155,  size=3.2, moving=true},
+	{x=8,    y=3,   z=-1215,  size=3.0},
+	{x=-5,   y=7,   z=-1275,  size=3.5, moving=true},
 
 	-- RIGHT HARD
-	{x=33,   y=3,   z=-787,   size=1.8, moving=true},
-	{x=39,   y=0,   z=-826,   size=1.6},
-	{x=29,   y=5,   z=-865,   size=1.9, moving=true},
+	{x=38,   y=3,   z=-1150,  size=3.5, moving=true},
+	{x=44,   y=0,   z=-1210,  size=3.0},
+	{x=34,   y=5,   z=-1270,  size=3.8, moving=true},
 
 	-- === FINAL MERGE ===
-	{x=-13,  y=2,   z=-904,   size=1.9},
-	{x=13,   y=2,   z=-904,   size=1.9},
-	{x=0,    y=0,   z=-943,   size=2.5, checkpoint=true},  -- FINAL CHECKPOINT
+	{x=-15,  y=2,   z=-1330,  size=3.8},
+	{x=15,   y=2,   z=-1330,  size=3.8},
+	{x=0,    y=0,   z=-1400,  size=5.0, checkpoint=true},  -- FINAL CHECKPOINT
 }
 
 -- ============================================================
@@ -1373,13 +1373,13 @@ local function createSpawnRoom()
 				local gpName = gpModel.Name
 				local info = GAMEPASS_INFO[gpName]
 
-				-- Position in shop
-				local pos = Vector3.new(itemX, floorY + 4, itemStartZ + gamepassDisplayCount * itemSpacing)
+				-- Position in shop — on the ground (floorY + 2 for slight lift)
+				local pos = Vector3.new(itemX, floorY + 2, itemStartZ + gamepassDisplayCount * itemSpacing)
 				gamepassDisplayCount = gamepassDisplayCount + 1
 
-				-- Clone and place the model
+				-- Clone and place the model on the ground
 				local clone = gpModel:Clone()
-				clone:PivotTo(CFrame.new(pos + Vector3.new(0, 5, 0)))
+				clone:PivotTo(CFrame.new(pos))
 				for _, part in clone:GetDescendants() do
 					if part:IsA("BasePart") then
 						part.Anchored = true
@@ -1391,7 +1391,7 @@ local function createSpawnRoom()
 				-- Label
 				local labelP = Instance.new("Part")
 				labelP.Size = Vector3.new(1,1,1)
-				labelP.Position = pos + Vector3.new(0, 14, 0)
+				labelP.Position = pos + Vector3.new(0, 10, 0)
 				labelP.Anchored = true; labelP.Transparency = 1; labelP.CanCollide = false
 				labelP.Parent = mapFolder
 				local bb = Instance.new("BillboardGui")
