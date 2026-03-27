@@ -305,66 +305,67 @@ local CLUSTER_OFFSETS = {
 
 local PARKOUR_STEPS = {
 	-- === INTRO (steps 1-6): Single path, learn to jump ===
-	{x=0,    y=0,   z=-83.2,   size=2.34},   -- 1: starter at door
-	{x=6.5,  y=2,   z=-117,    size=2.08},   -- 2: right + up
-	{x=-10.4,y=0,   z=-153.4,  size=1.95},   -- 3: left
-	{x=3.9,  y=3,   z=-188.5,  size=1.82},   -- 4: right + up
-	{x=-7.8, y=1,   z=-223.6,  size=1.95},   -- 5: left
-	{x=0,    y=0,   z=-260,    size=2.21, checkpoint=true},  -- 6: CHECKPOINT 1
+	-- === INTRO (steps 1-6): Single path, varied sizes ===
+	{x=0,    y=0,   z=-83,    size=2.5},   -- 1: big starter at door
+	{x=6.5,  y=2,   z=-117,   size=1.8},   -- 2: medium
+	{x=-10,  y=0,   z=-153,   size=2.2},   -- 3: large
+	{x=4,    y=3,   z=-189,   size=1.6},   -- 4: smaller
+	{x=-8,   y=1,   z=-224,   size=2.0},   -- 5: big
+	{x=0,    y=0,   z=-260,   size=2.5, checkpoint=true},  -- 6: CHECKPOINT 1
 
-	-- === MEDIUM (steps 7-13): Wider jumps ===
-	{x=13,   y=3,   z=-299,    size=1.82},   -- 7
-	{x=-15.6,y=0,   z=-331.5,  size=1.69},   -- 8
-	{x=19.5, y=4,   z=-366.6,  size=1.56},   -- 9
-	{x=-6.5, y=1,   z=-403,    size=1.69},   -- 10
-	{x=10.4, y=-1,  z=-439.4,  size=1.56},   -- 11
-	{x=-19.5,y=3,   z=-474.5,  size=1.56},   -- 12
-	{x=0,    y=0,   z=-513.5,  size=1.95, checkpoint=true},  -- 13: CHECKPOINT 2
+	-- === MEDIUM (steps 7-13): Wider jumps, varied sizes ===
+	{x=13,   y=3,   z=-299,   size=2.0},   -- 7
+	{x=-16,  y=0,   z=-332,   size=1.7},   -- 8
+	{x=20,   y=4,   z=-367,   size=2.3},   -- 9: extra big
+	{x=-7,   y=1,   z=-403,   size=1.6},   -- 10: smaller
+	{x=10,   y=-1,  z=-439,   size=1.9},   -- 11
+	{x=-20,  y=3,   z=-475,   size=2.1},   -- 12: big
+	{x=0,    y=0,   z=-514,   size=2.5, checkpoint=true},  -- 13: CHECKPOINT 2
 
 	-- === BRANCHING: Three paths diverge ===
 	-- LEFT PATH
-	{x=-39,  y=2,   z=-552.5,  size=1.56},
-	{x=-45.5,y=0,   z=-591.5,  size=1.43},
-	{x=-36.4,y=4,   z=-630.5,  size=1.3},
-	{x=-41.6,y=1,   z=-669.5,  size=1.43},
+	{x=-39,  y=2,   z=-553,   size=2.0},
+	{x=-46,  y=0,   z=-592,   size=1.7},
+	{x=-36,  y=4,   z=-631,   size=2.2},
+	{x=-42,  y=1,   z=-670,   size=1.8},
 
 	-- CENTER PATH (higher, harder)
-	{x=0,    y=5,   z=-559,    size=1.43},
-	{x=6.5,  y=3,   z=-598,    size=1.3},
-	{x=-3.9, y=6,   z=-637,    size=1.17},
-	{x=2.6,  y=4,   z=-676,    size=1.3},
+	{x=0,    y=5,   z=-559,   size=1.8},
+	{x=7,    y=3,   z=-598,   size=1.6},
+	{x=-4,   y=6,   z=-637,   size=2.0},
+	{x=3,    y=4,   z=-676,   size=1.7},
 
 	-- RIGHT PATH
-	{x=39,   y=2,   z=-552.5,  size=1.56},
-	{x=45.5, y=0,   z=-591.5,  size=1.43},
-	{x=36.4, y=4,   z=-630.5,  size=1.3},
-	{x=41.6, y=1,   z=-669.5,  size=1.43},
+	{x=39,   y=2,   z=-553,   size=2.0},
+	{x=46,   y=0,   z=-592,   size=1.7},
+	{x=36,   y=4,   z=-631,   size=2.2},
+	{x=42,   y=1,   z=-670,   size=1.8},
 
 	-- === PATHS MERGE ===
-	{x=-19.5,y=2,   z=-708.5,  size=1.56},
-	{x=19.5, y=2,   z=-708.5,  size=1.56},
-	{x=0,    y=0,   z=-747.5,  size=2.08, checkpoint=true},  -- CHECKPOINT 3
+	{x=-20,  y=2,   z=-709,   size=2.0},
+	{x=20,   y=2,   z=-709,   size=2.0},
+	{x=0,    y=0,   z=-748,   size=2.5, checkpoint=true},  -- CHECKPOINT 3
 
 	-- === HARD: Branches again, moving ===
 	-- LEFT HARD
-	{x=-32.5,y=3,   z=-786.5,  size=1.17, moving=true},
-	{x=-39,  y=0,   z=-825.5,  size=1.04},
-	{x=-28.6,y=5,   z=-864.5,  size=1.04, moving=true},
+	{x=-33,  y=3,   z=-787,   size=1.8, moving=true},
+	{x=-39,  y=0,   z=-826,   size=1.6},
+	{x=-29,  y=5,   z=-865,   size=1.9, moving=true},
 
 	-- CENTER HARD
-	{x=0,    y=6,   z=-793,    size=1.04, moving=true},
-	{x=6.5,  y=3,   z=-832,    size=0.91},
-	{x=-3.9, y=7,   z=-871,    size=0.91, moving=true},
+	{x=0,    y=6,   z=-793,   size=1.7, moving=true},
+	{x=7,    y=3,   z=-832,   size=1.5},
+	{x=-4,   y=7,   z=-871,   size=1.8, moving=true},
 
 	-- RIGHT HARD
-	{x=32.5, y=3,   z=-786.5,  size=1.17, moving=true},
-	{x=39,   y=0,   z=-825.5,  size=1.04},
-	{x=28.6, y=5,   z=-864.5,  size=1.04, moving=true},
+	{x=33,   y=3,   z=-787,   size=1.8, moving=true},
+	{x=39,   y=0,   z=-826,   size=1.6},
+	{x=29,   y=5,   z=-865,   size=1.9, moving=true},
 
 	-- === FINAL MERGE ===
-	{x=-13,  y=2,   z=-903.5,  size=1.3},
-	{x=13,   y=2,   z=-903.5,  size=1.3},
-	{x=0,    y=0,   z=-942.5,  size=2.08, checkpoint=true},  -- FINAL CHECKPOINT
+	{x=-13,  y=2,   z=-904,   size=1.9},
+	{x=13,   y=2,   z=-904,   size=1.9},
+	{x=0,    y=0,   z=-943,   size=2.5, checkpoint=true},  -- FINAL CHECKPOINT
 }
 
 -- ============================================================
@@ -1342,111 +1343,111 @@ local function createSpawnRoom()
 		["Grapple Gun"]  = 88714214,   -- Grappling Hook model
 	}
 
-	local function buildGamepassDisplay(position, itemName, itemColor, itemEmoji, robuxPrice, gamepassId)
-		local dModel = Instance.new("Model"); dModel.Name = itemName .. "_Display"
+	-- ============================================================
+	-- GAMEPASS SHOP — loads models from ServerStorage > gamepasses folder
+	-- Each child in the folder becomes a display. Name = item name.
+	-- ============================================================
+	local gamepassFolder = ServerStorage:FindFirstChild("gamepasses")
+		or ServerStorage:FindFirstChild("Gamepasses")
+		or ServerStorage:FindFirstChild("GamePasses")
 
-		-- Pedestal block
-		local ped = Instance.new("Part")
-		ped.Name = "Pedestal"
-		ped.Size = Vector3.new(10, 4, 10)
-		ped.Position = position; ped.Anchored = true
-		ped.Color = Color3.fromRGB(60, 50, 70)
-		ped.Material = Enum.Material.SmoothPlastic
-		ped.TopSurface = Enum.SurfaceType.Smooth; ped.BottomSurface = Enum.SurfaceType.Smooth
-		ped.Parent = dModel
+	-- Gamepass info (maps model name to robux price + gamepass ID)
+	local GAMEPASS_INFO = {
+		["Speed Coil"]   = {robux=49,  id=1001, emoji="⚡", color=Color3.fromRGB(80,200,255)},
+		["Gravity Coil"] = {robux=79,  id=1002, emoji="🌀", color=Color3.fromRGB(180,80,255)},
+		["Fusion Coil"]  = {robux=149, id=1003, emoji="💫", color=Color3.fromRGB(130,140,255)},
+		["Magic Carpet"]	= {robux=199, id=1004, emoji="🧞", color=Color3.fromRGB(255,180,50)},
+		["Grapple Gun"]  = {robux=99,  id=1005, emoji="🪝", color=Color3.fromRGB(255,80,80)},
+	}
 
-		-- Neon accent ring on pedestal
-		local ring = Instance.new("Part")
-		ring.Size = Vector3.new(2, 11, 11)
-		ring.Position = position + Vector3.new(0, 0.5, 0)
-		ring.Anchored = true; ring.Color = itemColor
-		ring.Material = Enum.Material.Neon; ring.Transparency = 0.4
-		ring.Shape = Enum.PartType.Cylinder; ring.Orientation = Vector3.new(0,0,90)
-		ring.CanCollide = false; ring.Parent = dModel
+	local itemX = 85
+	local itemStartZ = -35
+	local itemSpacing = 18
+	local gamepassDisplayCount = 0
+	local allGamepassPrompts = {} -- {prompt, id, name}
 
-		-- Try to load pre-made model from toolbox
-		local assetId = TOOLBOX_MODELS[itemName]
-		if assetId then
-			local ok, toolboxModel = pcall(function()
-				return InsertService:LoadAsset(assetId)
-			end)
-			if ok and toolboxModel then
-				-- Position the loaded model on top of the pedestal
-				toolboxModel:PivotTo(CFrame.new(position + Vector3.new(0, 6, 0)))
-				-- Anchor all parts and disable collision for display
-				for _, part in toolboxModel:GetDescendants() do
+	if gamepassFolder then
+		print("[CandyRun] Loading gamepasses from folder: " .. gamepassFolder.Name)
+		for _, gpModel in gamepassFolder:GetChildren() do
+			if gpModel:IsA("Model") or gpModel:IsA("BasePart") or gpModel:IsA("MeshPart") then
+				local gpName = gpModel.Name
+				local info = GAMEPASS_INFO[gpName]
+
+				-- Position in shop
+				local pos = Vector3.new(itemX, floorY + 4, itemStartZ + gamepassDisplayCount * itemSpacing)
+				gamepassDisplayCount = gamepassDisplayCount + 1
+
+				-- Clone and place the model
+				local clone = gpModel:Clone()
+				clone:PivotTo(CFrame.new(pos + Vector3.new(0, 5, 0)))
+				for _, part in clone:GetDescendants() do
 					if part:IsA("BasePart") then
 						part.Anchored = true
 						part.CanCollide = false
 					end
 				end
-				toolboxModel.Name = "ToolboxDisplay"
-				toolboxModel.Parent = dModel
+				clone.Parent = mapFolder
+
+				-- Label
+				local labelP = Instance.new("Part")
+				labelP.Size = Vector3.new(1,1,1)
+				labelP.Position = pos + Vector3.new(0, 14, 0)
+				labelP.Anchored = true; labelP.Transparency = 1; labelP.CanCollide = false
+				labelP.Parent = mapFolder
+				local bb = Instance.new("BillboardGui")
+				bb.Size = UDim2.fromOffset(180, 55); bb.AlwaysOnTop = false; bb.Parent = labelP
+				local lbl = Instance.new("TextLabel")
+				lbl.Size = UDim2.fromScale(1, 0.55); lbl.BackgroundTransparency = 1
+				lbl.Text = (info and info.emoji or "🎁") .. " " .. gpName
+				lbl.TextColor3 = Color3.fromRGB(255,255,255)
+				lbl.TextScaled = true; lbl.Font = Enum.Font.FredokaOne; lbl.Parent = bb
+				if info then Instance.new("UIStroke", lbl).Color = info.color end
+				local priceLbl = Instance.new("TextLabel")
+				priceLbl.Size = UDim2.fromScale(1, 0.4); priceLbl.Position = UDim2.fromScale(0, 0.6)
+				priceLbl.BackgroundTransparency = 1
+				priceLbl.Text = info and ("R$" .. info.robux) or "R$??"
+				priceLbl.TextColor3 = Color3.fromRGB(255, 220, 100)
+				priceLbl.TextScaled = true; priceLbl.Font = Enum.Font.GothamBold; priceLbl.Parent = bb
+
+				-- ProximityPrompt on the first part of the cloned model
+				local promptParent = clone:FindFirstChildWhichIsA("BasePart", true)
+				if not promptParent then
+					promptParent = Instance.new("Part")
+					promptParent.Size = Vector3.new(10, 10, 10)
+					promptParent.Position = pos; promptParent.Anchored = true
+					promptParent.Transparency = 1; promptParent.CanCollide = false
+					promptParent.Parent = mapFolder
+				end
+				local prompt = Instance.new("ProximityPrompt")
+				prompt.ActionText = "Buy"
+				prompt.ObjectText = gpName .. (info and (" (R$" .. info.robux .. ")") or "")
+				prompt.KeyboardKeyCode = Enum.KeyCode.E
+				prompt.HoldDuration = 0.5
+				prompt.MaxActivationDistance = 14
+				prompt.RequiresLineOfSight = false
+				prompt.Parent = promptParent
+
+				-- Glow
+				if promptParent then
+					local gl = Instance.new("PointLight")
+					gl.Color = info and info.color or Color3.fromRGB(255, 200, 100)
+					gl.Brightness = 1.5; gl.Range = 18
+					gl.Parent = promptParent
+				end
+
+				table.insert(allGamepassPrompts, {
+					prompt = prompt,
+					id = info and info.id or 0,
+					name = gpName,
+				})
+
+				print("[CandyRun] Gamepass display: " .. gpName)
 			end
 		end
-
-		-- Glow
-		local gl = Instance.new("PointLight")
-		gl.Color = itemColor; gl.Brightness = 1.5; gl.Range = 18; gl.Parent = ped
-
-		-- Label (name + price)
-		local labelP = Instance.new("Part")
-		labelP.Size = Vector3.new(1,1,1); labelP.Position = position + Vector3.new(0, 12, 0)
-		labelP.Anchored = true; labelP.Transparency = 1; labelP.CanCollide = false; labelP.Parent = dModel
-		local bb = Instance.new("BillboardGui")
-		bb.Size = UDim2.fromOffset(160, 55); bb.AlwaysOnTop = false; bb.Parent = labelP
-		local lbl = Instance.new("TextLabel")
-		lbl.Size = UDim2.fromScale(1, 0.55); lbl.BackgroundTransparency = 1
-		lbl.Text = itemEmoji .. " " .. itemName
-		lbl.TextColor3 = Color3.fromRGB(255,255,255)
-		lbl.TextScaled = true; lbl.Font = Enum.Font.FredokaOne; lbl.Parent = bb
-		Instance.new("UIStroke", lbl).Color = itemColor
-		local priceLbl = Instance.new("TextLabel")
-		priceLbl.Size = UDim2.fromScale(1, 0.4); priceLbl.Position = UDim2.fromScale(0, 0.6)
-		priceLbl.BackgroundTransparency = 1
-		priceLbl.Text = "R$" .. robuxPrice
-		priceLbl.TextColor3 = Color3.fromRGB(255, 220, 100)
-		priceLbl.TextScaled = true; priceLbl.Font = Enum.Font.GothamBold; priceLbl.Parent = bb
-
-		-- ProximityPrompt (hold E to buy)
-		local prompt = Instance.new("ProximityPrompt")
-		prompt.ActionText = "Buy"
-		prompt.ObjectText = itemName .. " (R$" .. robuxPrice .. ")"
-		prompt.KeyboardKeyCode = Enum.KeyCode.E
-		prompt.HoldDuration = 0.5
-		prompt.MaxActivationDistance = 12
-		prompt.RequiresLineOfSight = false
-		prompt.Parent = ped
-
-		dModel.Parent = mapFolder
-		return prompt, gamepassId
+		print("[CandyRun] Loaded " .. gamepassDisplayCount .. " gamepass displays")
+	else
+		warn("[CandyRun] No 'gamepasses' folder found in ServerStorage!")
 	end
-
-	-- All 5 gamepasses lined up parallel against the far right wall
-	local itemX = 85  -- close to the right wall (wall is at X=100)
-	local itemStartZ = -35
-	local itemSpacing = 16
-
-	local speedPrompt, speedGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ),
-		"Speed Coil", Color3.fromRGB(80, 200, 255), "⚡", 49, 1001
-	)
-	local gravityPrompt, gravityGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing),
-		"Gravity Coil", Color3.fromRGB(180, 80, 255), "🌀", 79, 1002
-	)
-	local fusionPrompt, fusionGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing*2),
-		"Fusion Coil", Color3.fromRGB(130, 140, 255), "💫", 149, 1003
-	)
-	local carpetPrompt, carpetGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing*3),
-		"Magic Carpet", Color3.fromRGB(255, 180, 50), "🧞", 199, 1004
-	)
-	local grapplePrompt, grappleGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing*4),
-		"Grapple Gun", Color3.fromRGB(255, 80, 80), "🪝", 99, 1005
-	)
 
 	-- ============================================================
 	-- TRAIL CHEST SHOPS (left side, near front)
@@ -2294,40 +2295,24 @@ local function createSpawnRoom()
 	-- Gamepass purchase system
 	local debounces = {}
 
-	speedPrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, speedGamepassId) 
-	end)
-	gravityPrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, gravityGamepassId) 
-	end)
-	fusionPrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, fusionGamepassId) 
-	end)
-	carpetPrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, carpetGamepassId) 
-	end)
-	grapplePrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, grappleGamepassId) 
-	end)
+	-- Connect all gamepass prompts from the gamepasses folder
+	for _, gp in ipairs(allGamepassPrompts) do
+		gp.prompt.Triggered:Connect(function(plr)
+			if gp.id > 0 then
+				MarketplaceService:PromptGamePassPurchase(plr, gp.id)
+			end
+		end)
+	end
 
 	-- Handle gamepass purchase completion
+	local GAMEPASS_ID_TO_ITEM = {}
+	for _, gp in ipairs(allGamepassPrompts) do
+		if gp.id > 0 then GAMEPASS_ID_TO_ITEM[gp.id] = gp.name end
+	end
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(plr, gamepassId, wasPurchased)
 		if not wasPurchased then return end
-		
-		local itemName = ""
-		if gamepassId == speedGamepassId then
-			itemName = "Speed Coil"
-		elseif gamepassId == gravityGamepassId then
-			itemName = "Gravity Coil"
-		elseif gamepassId == fusionGamepassId then
-			itemName = "Fusion Coil"
-		elseif gamepassId == carpetGamepassId then
-			itemName = "Magic Carpet"
-		elseif gamepassId == grappleGamepassId then
-			itemName = "Grapple Gun"
-		end
-		
-		if itemName ~= "" then
+		local itemName = GAMEPASS_ID_TO_ITEM[gamepassId]
+		if itemName then
 			giveItem(plr, itemName)
 			purchaseEvent:FireClient(plr, "success", itemName, 0, 0)
 		end
