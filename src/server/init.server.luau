@@ -139,30 +139,57 @@ end
 -- Each child becomes a usable platform type.
 -- ============================================================
 
-local candyPiecesFolder = ServerStorage:FindFirstChild("CandyPieces")
-	or ServerStorage:FindFirstChild("CandyModels")
-	or ReplicatedStorage:FindFirstChild("CandyPieces")
+-- Search for CandyPieces folder everywhere
+local candyPiecesFolder = nil
+for _, name in ipairs({"CandyPieces", "candyPieces", "Candy Pieces", "candypieces", "CandyModels"}) do
+	candyPiecesFolder = ServerStorage:FindFirstChild(name) or ReplicatedStorage:FindFirstChild(name)
+	if candyPiecesFolder then break end
+end
+
+-- Debug: list ALL children of ServerStorage so we can see what's there
+print("[CandyRun] === ServerStorage contents ===")
+for _, child in ServerStorage:GetChildren() do
+	print("[CandyRun]   " .. child.ClassName .. ": " .. child.Name)
+end
+print("[CandyRun] ===============================")
 
 -- Build list of available candy template names from the folder
 local CANDY_TYPES = {}
 local candyTemplates = {} -- name -> template instance
 
--- Load ALL models from CandyPieces — whatever you put in there is used for parkour
 if candyPiecesFolder then
+	print("[CandyRun] Found candy folder: " .. candyPiecesFolder.Name .. " (" .. candyPiecesFolder.ClassName .. ")")
+	
+	-- Load every child regardless of type
 	for _, child in candyPiecesFolder:GetChildren() do
+		print("[CandyRun]   Child: " .. child.Name .. " (" .. child.ClassName .. ")")
+		-- Accept Model, BasePart, MeshPart, or anything with descendants that have BaseParts
 		if child:IsA("Model") or child:IsA("BasePart") or child:IsA("MeshPart") then
 			table.insert(CANDY_TYPES, child.Name)
 			candyTemplates[child.Name] = child
-			print("[CandyRun] Candy piece loaded: " .. child.Name)
+			print("[CandyRun]   ✓ Loaded as candy: " .. child.Name)
+		elseif child:IsA("Folder") then
+			-- If it's a sub-folder, check if it has parts inside
+			local hasParts = false
+			for _, desc in child:GetDescendants() do
+				if desc:IsA("BasePart") then hasParts = true; break end
+			end
+			if hasParts then
+				table.insert(CANDY_TYPES, child.Name)
+				candyTemplates[child.Name] = child
+				print("[CandyRun]   ✓ Loaded folder as candy: " .. child.Name)
+			end
 		end
 	end
-	print("[CandyRun] Loaded " .. #CANDY_TYPES .. " candy pieces from " .. candyPiecesFolder.Name)
+	print("[CandyRun] Total candy pieces loaded: " .. #CANDY_TYPES)
 else
-	warn("[CandyRun] WARNING: No CandyPieces folder found in ServerStorage!")
+	warn("[CandyRun] !!! CandyPieces folder NOT FOUND in ServerStorage !!!")
+	warn("[CandyRun] Make sure you have a folder called 'CandyPieces' in ServerStorage")
 end
 
 -- If no models found, add a fallback type so the game doesn't break
 if #CANDY_TYPES == 0 then
+	warn("[CandyRun] No candy models loaded — using pink ball fallback!")
 	CANDY_TYPES = {"_fallback"}
 end
 
@@ -2594,17 +2621,24 @@ local function generateMap()
 			return randomCandy()
 		end
 
-		-- Place candy models around the step center
+		-- Place candy model at step center
 		local firstModel = nil
 		for ci, cluster in ipairs(CLUSTER_OFFSETS) do
 			local candyPos = stepCenter + Vector3.new(cluster.dx, cluster.dy, cluster.dz)
 			local candyName = pickUnique()
 			local candySize = getCandyScale(candyName, step.size) * cluster.sizeMultiplier
 
-			local walkable, mdl = buildCandyPlatform(candyName, i*10+ci, candyPos, candySize)
-
-			if step.moving then makeMoving(mdl) end
-			if ci == 1 then firstModel = mdl end
+			print("[CandyRun] Step " .. i .. ": placing '" .. candyName .. "' at " .. tostring(candyPos) .. " size=" .. candySize)
+			
+			local buildOk, errOrWalkable, mdl
+			buildOk, errOrWalkable, mdl = pcall(buildCandyPlatform, candyName, i*10+ci, candyPos, candySize)
+			if not buildOk then
+				warn("[CandyRun] ERROR building step " .. i .. " candy '" .. candyName .. "': " .. tostring(errOrWalkable))
+			else
+				local walkable = errOrWalkable
+				if step.moving and mdl then makeMoving(mdl) end
+				if ci == 1 then firstModel = mdl end
+			end
 		end
 
 		-- Step number label (floating above center)
