@@ -301,44 +301,391 @@ end)
 -- DAILY SPIN RESULT
 -- ============================================================
 
-if dailySpinEvent then
-	dailySpinEvent.OnClientEvent:Connect(function(winIdx, rewardName, rewardIcon)
-		local msg = Instance.new("TextLabel")
-		msg.Size = UDim2.fromScale(0.4, 0.1)
-		msg.Position = UDim2.fromScale(0.3, 0.35)
-		msg.BackgroundColor3 = Color3.fromRGB(40, 20, 60)
-		msg.BackgroundTransparency = 0.15
-		msg.Font = Enum.Font.FredokaOne; msg.TextScaled = true
-		msg.Parent = hudGui
-		Instance.new("UICorner", msg).CornerRadius = UDim.new(0, 14)
+-- ============================================================
+-- DAILY SPIN GUI
+-- ============================================================
 
-		if winIdx == 0 and rewardName == "cooldown" then
-			-- Cooldown message
-			msg.Text = "⏰ Next spin in: " .. (rewardIcon or "?")
-			msg.TextColor3 = Color3.fromRGB(255, 150, 150)
-			Instance.new("UIStroke", msg).Color = Color3.fromRGB(200, 80, 80)
-		else
-			-- Win message
-			msg.Text = "🎡 " .. (rewardIcon or "🎁") .. " " .. (rewardName or "Prize") .. "! 🎡"
-			msg.TextColor3 = Color3.fromRGB(255, 220, 80)
-			Instance.new("UIStroke", msg).Color = Color3.fromRGB(255, 200, 50)
+local spinRequestEvent = ReplicatedStorage:WaitForChild("SpinRequest", 10)
+
+if dailySpinEvent then
+	local spinGuiOpen = false
+	local spinGui = nil
+
+	local SPIN_REWARDS_CLIENT = {
+		{name = "50 Candy", icon = "🍬", color = Color3.fromRGB(255, 200, 50)},
+		{name = "2x Speed 15m", icon = "⚡", color = Color3.fromRGB(80, 200, 255)},
+		{name = "25 Candy", icon = "🍬", color = Color3.fromRGB(200, 255, 100)},
+		{name = "Low Gravity 10m", icon = "🌀", color = Color3.fromRGB(180, 80, 255)},
+		{name = "100 Candy", icon = "💰", color = Color3.fromRGB(255, 215, 0)},
+		{name = "Trail: Rainbow", icon = "🌈", color = Color3.fromRGB(255, 100, 200)},
+		{name = "500 Candy", icon = "💎", color = Color3.fromRGB(100, 255, 255)},
+		{name = "JACKPOT: VIP", icon = "👑", color = Color3.fromRGB(255, 50, 50)},
+	}
+
+	local function createSpinGui()
+		if spinGui then spinGui:Destroy() end
+
+		spinGui = Instance.new("ScreenGui")
+		spinGui.Name = "DailySpinGui"
+		spinGui.IgnoreGuiInset = true
+		spinGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		spinGui.Parent = playerGui
+
+		-- Dark overlay
+		local overlay = Instance.new("Frame")
+		overlay.Size = UDim2.fromScale(1, 1)
+		overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		overlay.BackgroundTransparency = 0.5
+		overlay.ZIndex = 100
+		overlay.Parent = spinGui
+
+		-- Main popup frame (centered, candy-themed)
+		local popup = Instance.new("Frame")
+		popup.Name = "Popup"
+		popup.Size = UDim2.fromScale(0.5, 0.75)
+		popup.Position = UDim2.fromScale(0.25, 0.125)
+		popup.BackgroundColor3 = Color3.fromRGB(40, 15, 60)
+		popup.BorderSizePixel = 0
+		popup.ZIndex = 101
+		popup.Parent = spinGui
+		Instance.new("UICorner", popup).CornerRadius = UDim.new(0, 20)
+
+		-- Gradient border
+		local popupStroke = Instance.new("UIStroke")
+		popupStroke.Color = Color3.fromRGB(255, 180, 50)
+		popupStroke.Thickness = 3
+		popupStroke.Parent = popup
+
+		-- Title
+		local title = Instance.new("TextLabel")
+		title.Size = UDim2.fromScale(0.8, 0.08)
+		title.Position = UDim2.fromScale(0.1, 0.02)
+		title.BackgroundTransparency = 1
+		title.Text = "🎡 DAILY SPIN 🎡"
+		title.TextColor3 = Color3.fromRGB(255, 220, 80)
+		title.TextScaled = true
+		title.Font = Enum.Font.FredokaOne
+		title.ZIndex = 102
+		title.Parent = popup
+		Instance.new("UIStroke", title).Color = Color3.fromRGB(200, 140, 20)
+
+		-- Close button (red X, top right)
+		local closeBtn = Instance.new("TextButton")
+		closeBtn.Size = UDim2.fromOffset(36, 36)
+		closeBtn.Position = UDim2.new(1, -42, 0, 6)
+		closeBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+		closeBtn.Text = "✕"
+		closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		closeBtn.TextSize = 22
+		closeBtn.Font = Enum.Font.GothamBold
+		closeBtn.ZIndex = 103
+		closeBtn.Parent = popup
+		Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 18)
+
+		closeBtn.MouseButton1Click:Connect(function()
+			spinGui:Destroy()
+			spinGui = nil
+			spinGuiOpen = false
+		end)
+
+		-- Wheel container (circular area)
+		local wheelFrame = Instance.new("Frame")
+		wheelFrame.Name = "WheelFrame"
+		wheelFrame.Size = UDim2.fromScale(0.7, 0.55)
+		wheelFrame.Position = UDim2.fromScale(0.15, 0.12)
+		wheelFrame.BackgroundTransparency = 1
+		wheelFrame.ZIndex = 102
+		wheelFrame.ClipsDescendants = true
+		wheelFrame.Parent = popup
+
+		-- Wheel image container (this rotates)
+		local wheelRotator = Instance.new("Frame")
+		wheelRotator.Name = "WheelRotator"
+		wheelRotator.Size = UDim2.fromScale(1, 1)
+		wheelRotator.Position = UDim2.fromScale(0, 0)
+		wheelRotator.BackgroundTransparency = 1
+		wheelRotator.AnchorPoint = Vector2.new(0.5, 0.5)
+		wheelRotator.Position = UDim2.fromScale(0.5, 0.5)
+		wheelRotator.ZIndex = 102
+		wheelRotator.Parent = wheelFrame
+
+		-- Draw wheel segments as colored frames radiating from center
+		local numSegs = #SPIN_REWARDS_CLIENT
+		for i, rw in ipairs(SPIN_REWARDS_CLIENT) do
+			local angle = ((i - 1) / numSegs) * 360
+			local segFrame = Instance.new("Frame")
+			segFrame.Size = UDim2.fromScale(0.08, 0.45)
+			segFrame.AnchorPoint = Vector2.new(0.5, 1)
+			segFrame.Position = UDim2.fromScale(0.5, 0.5)
+			segFrame.Rotation = angle
+			segFrame.BackgroundColor3 = rw.color
+			segFrame.BorderSizePixel = 0
+			segFrame.ZIndex = 103
+			segFrame.Parent = wheelRotator
+			Instance.new("UICorner", segFrame).CornerRadius = UDim.new(0, 4)
+
+			-- Label on segment
+			local segLbl = Instance.new("TextLabel")
+			segLbl.Size = UDim2.fromScale(1, 0.35)
+			segLbl.Position = UDim2.fromScale(0, 0.1)
+			segLbl.BackgroundTransparency = 1
+			segLbl.Text = rw.icon
+			segLbl.TextScaled = true
+			segLbl.Font = Enum.Font.FredokaOne
+			segLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+			segLbl.ZIndex = 104
+			segLbl.Rotation = 0 -- keep text upright relative to segment
+			segLbl.Parent = segFrame
 		end
 
-		-- Pop in
-		msg.Size = UDim2.fromScale(0, 0); msg.Position = UDim2.fromScale(0.5, 0.4)
-		TweenService:Create(msg, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-			Size = UDim2.fromScale(0.4, 0.1),
-			Position = UDim2.fromScale(0.3, 0.35),
-		}):Play()
+		-- Center circle
+		local centerCircle = Instance.new("Frame")
+		centerCircle.Size = UDim2.fromScale(0.15, 0.15)
+		centerCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+		centerCircle.Position = UDim2.fromScale(0.5, 0.5)
+		centerCircle.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
+		centerCircle.ZIndex = 105
+		centerCircle.Parent = wheelFrame
+		Instance.new("UICorner", centerCircle).CornerRadius = UDim.new(1, 0)
 
-		task.delay(3, function()
-			TweenService:Create(msg, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				Position = UDim2.fromScale(0.3, 0.28),
-				TextTransparency = 1,
-				BackgroundTransparency = 1,
-			}):Play()
-			task.delay(1.2, function() msg:Destroy() end)
+		-- Pointer (triangle at top, static)
+		local pointerLbl = Instance.new("TextLabel")
+		pointerLbl.Size = UDim2.fromOffset(30, 40)
+		pointerLbl.AnchorPoint = Vector2.new(0.5, 0)
+		pointerLbl.Position = UDim2.fromScale(0.5, -0.02)
+		pointerLbl.BackgroundTransparency = 1
+		pointerLbl.Text = "▼"
+		pointerLbl.TextColor3 = Color3.fromRGB(255, 30, 30)
+		pointerLbl.TextSize = 36
+		pointerLbl.Font = Enum.Font.GothamBold
+		pointerLbl.ZIndex = 106
+		pointerLbl.Parent = wheelFrame
+
+		-- Idle rotation
+		local idleConnection
+		local wheelAngle = 0
+		idleConnection = RunService.Heartbeat:Connect(function(dt)
+			if not spinGui or not spinGui.Parent then
+				if idleConnection then idleConnection:Disconnect() end
+				return
+			end
+			wheelAngle = (wheelAngle + dt * 15) % 360
+			wheelRotator.Rotation = wheelAngle
 		end)
+
+		-- Buttons container
+		local btnFrame = Instance.new("Frame")
+		btnFrame.Size = UDim2.fromScale(0.9, 0.18)
+		btnFrame.Position = UDim2.fromScale(0.05, 0.75)
+		btnFrame.BackgroundTransparency = 1
+		btnFrame.ZIndex = 102
+		btnFrame.Parent = popup
+
+		-- Free Spin button
+		local freeBtn = Instance.new("TextButton")
+		freeBtn.Size = UDim2.fromScale(0.45, 0.8)
+		freeBtn.Position = UDim2.fromScale(0, 0.1)
+		freeBtn.BackgroundColor3 = Color3.fromRGB(80, 200, 80)
+		freeBtn.Text = "🎁 Free Spin"
+		freeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		freeBtn.TextScaled = true
+		freeBtn.Font = Enum.Font.FredokaOne
+		freeBtn.ZIndex = 103
+		freeBtn.Parent = btnFrame
+		Instance.new("UICorner", freeBtn).CornerRadius = UDim.new(0, 14)
+		Instance.new("UIStroke", freeBtn).Color = Color3.fromRGB(50, 150, 50)
+
+		-- Paid Spin button
+		local paidBtn = Instance.new("TextButton")
+		paidBtn.Size = UDim2.fromScale(0.45, 0.8)
+		paidBtn.Position = UDim2.fromScale(0.52, 0.1)
+		paidBtn.BackgroundColor3 = Color3.fromRGB(255, 180, 50)
+		paidBtn.Text = "💎 Spin (R$49)"
+		paidBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		paidBtn.TextScaled = true
+		paidBtn.Font = Enum.Font.FredokaOne
+		paidBtn.ZIndex = 103
+		paidBtn.Parent = btnFrame
+		Instance.new("UICorner", paidBtn).CornerRadius = UDim.new(0, 14)
+		Instance.new("UIStroke", paidBtn).Color = Color3.fromRGB(200, 130, 30)
+
+		-- Result display (hidden until spin completes)
+		local resultFrame = Instance.new("Frame")
+		resultFrame.Name = "ResultFrame"
+		resultFrame.Size = UDim2.fromScale(0.8, 0.12)
+		resultFrame.Position = UDim2.fromScale(0.1, 0.68)
+		resultFrame.BackgroundColor3 = Color3.fromRGB(30, 10, 45)
+		resultFrame.BackgroundTransparency = 0.3
+		resultFrame.Visible = false
+		resultFrame.ZIndex = 102
+		resultFrame.Parent = popup
+		Instance.new("UICorner", resultFrame).CornerRadius = UDim.new(0, 12)
+
+		local resultLbl = Instance.new("TextLabel")
+		resultLbl.Size = UDim2.fromScale(1, 1)
+		resultLbl.BackgroundTransparency = 1
+		resultLbl.TextColor3 = Color3.fromRGB(255, 220, 80)
+		resultLbl.TextScaled = true
+		resultLbl.Font = Enum.Font.FredokaOne
+		resultLbl.ZIndex = 103
+		resultLbl.Parent = resultFrame
+
+		-- Confetti particles function
+		local function showConfetti()
+			for ci = 1, 40 do
+				local conf = Instance.new("TextLabel")
+				conf.Text = ({"🍬","🎉","✨","⭐","🌈","💎"})[math.random(1,6)]
+				conf.TextSize = math.random(16, 30)
+				conf.BackgroundTransparency = 1
+				conf.Size = UDim2.fromOffset(30, 30)
+				conf.Position = UDim2.fromScale(0.5, 0.4)
+				conf.ZIndex = 110
+				conf.Parent = popup
+				local angle = math.random() * math.pi * 2
+				local dist = math.random(15, 45) / 100
+				TweenService:Create(conf, TweenInfo.new(math.random(8,15)/10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Position = UDim2.fromScale(0.5 + math.cos(angle)*dist, 0.4 + math.sin(angle)*dist),
+					TextTransparency = 1,
+					Rotation = math.random(-360, 360),
+				}):Play()
+				task.delay(2, function() if conf then conf:Destroy() end end)
+			end
+		end
+
+		-- Win sound
+		local winSound = Instance.new("Sound")
+		winSound.SoundId = "rbxassetid://5619828673"
+		winSound.Volume = 1.5
+		winSound.Parent = playerGui
+
+		-- Spin animation function
+		local spinning = false
+		local function doSpinAnimation(winIdx, rewardName, rewardIcon)
+			if spinning then return end
+			spinning = true
+			freeBtn.Active = false; freeBtn.BackgroundTransparency = 0.5
+			paidBtn.Active = false; paidBtn.BackgroundTransparency = 0.5
+			resultFrame.Visible = false
+
+			-- Stop idle
+			if idleConnection then idleConnection:Disconnect(); idleConnection = nil end
+
+			-- Calculate target angle
+			local segDeg = 360 / #SPIN_REWARDS_CLIENT
+			local targetAngle = (winIdx - 1) * segDeg + segDeg / 2
+			local startAngle = wheelAngle
+			local totalSpin = math.random(5, 7) * 360 + targetAngle
+
+			-- Fast spin animation with deceleration
+			local duration = 4.5
+			local startT = tick()
+			while true do
+				local elapsed = tick() - startT
+				if elapsed >= duration then break end
+				local t = elapsed / duration
+				local eased = 1 - (1 - t) ^ 3
+				wheelAngle = startAngle + totalSpin * eased
+				wheelRotator.Rotation = wheelAngle
+				task.wait(0.02)
+			end
+
+			-- Final snap
+			wheelAngle = startAngle + totalSpin
+			wheelRotator.Rotation = wheelAngle
+
+			-- Show result
+			task.wait(0.3)
+			resultFrame.Visible = true
+			resultLbl.Text = rewardIcon .. " You won: " .. rewardName .. "! " .. rewardIcon
+			
+			-- Confetti + sound
+			winSound:Play()
+			showConfetti()
+
+			-- Re-enable buttons after delay
+			task.delay(2, function()
+				spinning = false
+				if freeBtn and freeBtn.Parent then
+					freeBtn.Active = true; freeBtn.BackgroundTransparency = 0
+					paidBtn.Active = true; paidBtn.BackgroundTransparency = 0
+				end
+				-- Restart idle
+				if spinGui and spinGui.Parent and not idleConnection then
+					idleConnection = RunService.Heartbeat:Connect(function(dt)
+						if not spinGui or not spinGui.Parent then
+							if idleConnection then idleConnection:Disconnect() end
+							return
+						end
+						wheelAngle = (wheelAngle + dt * 15) % 360
+						wheelRotator.Rotation = wheelAngle
+					end)
+				end
+			end)
+		end
+
+		-- Button handlers
+		freeBtn.MouseButton1Click:Connect(function()
+			if spinning then return end
+			if spinRequestEvent then
+				spinRequestEvent:FireServer("free")
+			end
+		end)
+
+		paidBtn.MouseButton1Click:Connect(function()
+			if spinning then return end
+			if spinRequestEvent then
+				spinRequestEvent:FireServer("paid")
+			end
+		end)
+
+		return {doSpinAnimation = doSpinAnimation}
+	end
+
+	-- Handle server messages
+	local guiHandlers = nil
+	dailySpinEvent.OnClientEvent:Connect(function(msgType, ...)
+		if msgType == "open" then
+			-- Open the GUI
+			if not spinGuiOpen then
+				spinGuiOpen = true
+				guiHandlers = createSpinGui()
+			end
+		elseif msgType == "result" then
+			-- Spin result from server
+			local winIdx, rewardName, rewardIcon = ...
+			if guiHandlers and guiHandlers.doSpinAnimation then
+				guiHandlers.doSpinAnimation(winIdx, rewardName, rewardIcon)
+			else
+				-- GUI not open, show quick notification
+				local msg = Instance.new("TextLabel")
+				msg.Size = UDim2.fromScale(0.4, 0.1)
+				msg.Position = UDim2.fromScale(0.3, 0.35)
+				msg.BackgroundColor3 = Color3.fromRGB(40, 20, 60)
+				msg.BackgroundTransparency = 0.15
+				msg.Text = "🎡 " .. (rewardIcon or "🎁") .. " " .. (rewardName or "Prize") .. "! 🎡"
+				msg.TextColor3 = Color3.fromRGB(255, 220, 80)
+				msg.TextScaled = true; msg.Font = Enum.Font.FredokaOne
+				msg.Parent = hudGui
+				Instance.new("UICorner", msg).CornerRadius = UDim.new(0, 14)
+				task.delay(3, function()
+					TweenService:Create(msg, TweenInfo.new(1), {TextTransparency = 1, BackgroundTransparency = 1}):Play()
+					task.delay(1.2, function() msg:Destroy() end)
+				end)
+			end
+		elseif msgType == "cooldown" then
+			local timeLeft = ...
+			if spinGui and spinGui.Parent then
+				-- Show cooldown in the GUI
+				local popup = spinGui:FindFirstChild("Popup")
+				if popup then
+					local rf = popup:FindFirstChild("ResultFrame")
+					if rf then
+						rf.Visible = true
+						rf:FindFirstChildWhichIsA("TextLabel").Text = "⏰ Next free spin in: " .. (timeLeft or "?")
+					end
+				end
+			end
+		end
 	end)
 end
 

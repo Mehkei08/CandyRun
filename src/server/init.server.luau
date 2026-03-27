@@ -1700,309 +1700,110 @@ local function createSpawnRoom()
 	end)
 
 	-- ============================================================
-	-- LUCKY WHEEL — Bright arcade-style vertical wheel
-	-- Circular disc with colorful wedge segments like a pizza
-	-- Raised outer rim, center hub pivot, fixed pointer at top
-	-- Smooth, bright, eye-catching
+	-- DAILY SPIN — Clone model from ServerStorage > gamepasses
+	-- Opens a client GUI pop-up, spin logic handled via RemoteEvents
 	-- ============================================================
-	local SPIN_X = -55
-	local SPIN_Z = -40
-	local WR = 20 -- wheel radius (slightly bigger for visual impact)
-	local NUM_SEG = #SPIN_REWARDS
-	local SEG_ANGLE = (2 * math.pi) / NUM_SEG
-	local SEG_DEG = 360 / NUM_SEG
-	local wheelModel = Instance.new("Model"); wheelModel.Name = "LuckyWheel"
-
-	local WCY = floorY + WR + 10 -- wheel center Y
-
-	-- ============ BASE / STAND ============
-	-- Sturdy base pedestal
-	local base = Instance.new("Part"); base.Name = "WheelBase"
-	base.Size = Vector3.new(14, 6, 10)
-	base.Position = Vector3.new(SPIN_X, floorY + 5, SPIN_Z)
-	base.Anchored = true; base.Color = Color3.fromRGB(50, 25, 60)
-	base.Material = Enum.Material.SmoothPlastic; base.Parent = wheelModel
-	Instance.new("UICorner", base)
-
-	-- Base accent strip
-	local baseAccent = Instance.new("Part")
-	baseAccent.Size = Vector3.new(15, 1, 11)
-	baseAccent.Position = Vector3.new(SPIN_X, floorY + 8.5, SPIN_Z)
-	baseAccent.Anchored = true; baseAccent.Color = Color3.fromRGB(255, 215, 0)
-	baseAccent.Material = Enum.Material.Neon; baseAccent.Transparency = 0.3
-	baseAccent.CanCollide = false; baseAccent.Parent = wheelModel
-
-	-- Support pole (connects base to wheel center)
-	local pole = Instance.new("Part")
-	pole.Size = Vector3.new(3, WCY - floorY - 8, 3)
-	pole.Position = Vector3.new(SPIN_X, floorY + 8 + pole.Size.Y / 2, SPIN_Z + 2)
-	pole.Anchored = true; pole.Color = Color3.fromRGB(180, 150, 50)
-	pole.Material = Enum.Material.Metal; pole.Parent = wheelModel
-
-	-- ============ WHEEL DISC (the circular background — spins with prizes) ============
-	-- The ENTIRE disc + segments + dividers + labels all rotate together
-	local spinModel = Instance.new("Model"); spinModel.Name = "WheelDisc"; spinModel.Parent = wheelModel
-
-	-- Main circular disc (the pizza base)
-	local disc = Instance.new("Part"); disc.Name = "DiscFace"
-	disc.Size = Vector3.new(WR * 2, 3, WR * 2)
-	disc.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z) * CFrame.Angles(math.rad(90), 0, 0)
-	disc.Anchored = true; disc.Color = Color3.fromRGB(250, 245, 235)
-	disc.Material = Enum.Material.SmoothPlastic; disc.Shape = Enum.PartType.Cylinder
-	disc.Parent = spinModel
-
-	-- Colorful wedge segments (laid on top of disc, pizza-slice shaped)
-	local segColors = {
-		Color3.fromRGB(255, 65, 85),   -- red
-		Color3.fromRGB(255, 200, 50),  -- gold
-		Color3.fromRGB(80, 200, 255),  -- sky blue
-		Color3.fromRGB(255, 100, 200), -- pink
-		Color3.fromRGB(100, 220, 100), -- green
-		Color3.fromRGB(180, 80, 255),  -- purple
-		Color3.fromRGB(255, 160, 50),  -- orange
-		Color3.fromRGB(100, 220, 220), -- teal
-	}
-
-	for i, reward in ipairs(SPIN_REWARDS) do
-		local a0 = (i - 1) * SEG_ANGLE -- start angle
-		local aMid = a0 + SEG_ANGLE / 2 -- middle of segment
-		local col = segColors[((i - 1) % #segColors) + 1]
-
-		-- Wedge fill: 3 overlapping thin parts fanning out to approximate a pie slice
-		for fan = -1, 1 do
-			local fanAngle = aMid + fan * (SEG_ANGLE * 0.28)
-			local seg = Instance.new("Part")
-			seg.Size = Vector3.new(3.8, WR * 0.85, 2.5)
-			seg.CFrame = CFrame.new(
-				SPIN_X + math.cos(fanAngle) * (WR * 0.42),
-				WCY + math.sin(fanAngle) * (WR * 0.42),
-				SPIN_Z - 0.5
-			) * CFrame.Angles(0, 0, fanAngle - math.pi / 2)
-			seg.Anchored = true; seg.Color = col
-			seg.Material = Enum.Material.SmoothPlastic; seg.CanCollide = false
-			seg.Parent = spinModel
-		end
-
-		-- Divider line between segments (thin dark line)
-		local div = Instance.new("Part")
-		div.Size = Vector3.new(0.2, WR * 0.92, 3)
-		div.CFrame = CFrame.new(
-			SPIN_X + math.cos(a0) * (WR * 0.44),
-			WCY + math.sin(a0) * (WR * 0.44),
-			SPIN_Z - 0.6
-		) * CFrame.Angles(0, 0, a0 - math.pi / 2)
-		div.Anchored = true; div.Color = Color3.fromRGB(40, 20, 50)
-		div.Material = Enum.Material.SmoothPlastic; div.CanCollide = false
-		div.Parent = spinModel
-
-		-- Prize label (SurfaceGui on thin part, facing player)
-		local lblP = Instance.new("Part"); lblP.Name = "Lbl" .. i
-		lblP.Size = Vector3.new(5.5, 2, 0.1)
-		lblP.CFrame = CFrame.new(
-			SPIN_X + math.cos(aMid) * (WR * 0.55),
-			WCY + math.sin(aMid) * (WR * 0.55),
-			SPIN_Z - 2
-		) * CFrame.Angles(0, 0, aMid - math.pi / 2)
-		lblP.Anchored = true; lblP.Transparency = 1; lblP.CanCollide = false
-		lblP.Parent = spinModel
-		local sg = Instance.new("SurfaceGui"); sg.Face = Enum.NormalId.Back
-		sg.LightInfluence = 0; sg.Brightness = 1.5; sg.Parent = lblP
-		local tl = Instance.new("TextLabel"); tl.Size = UDim2.fromScale(1, 1)
-		tl.BackgroundTransparency = 1; tl.Text = reward.icon .. " " .. reward.name
-		tl.TextColor3 = Color3.fromRGB(255, 255, 255); tl.TextScaled = true
-		tl.Font = Enum.Font.FredokaOne; tl.Parent = sg
-		local tlStroke = Instance.new("UIStroke"); tlStroke.Color = Color3.fromRGB(0, 0, 0)
-		tlStroke.Thickness = 2; tlStroke.Parent = tl
+	local dailySpinModel = nil
+	local gpFolder = ServerStorage:FindFirstChild("gamepasses") or ServerStorage:FindFirstChild("Gamepasses")
+	if gpFolder then
+		dailySpinModel = gpFolder:FindFirstChild("DailySpin") or gpFolder:FindFirstChild("Daily Spin") or gpFolder:FindFirstChild("dailySpin")
+	end
+	if not dailySpinModel then
+		dailySpinModel = ServerStorage:FindFirstChild("DailySpin") or ServerStorage:FindFirstChild("Daily Spin")
 	end
 
-	-- Center hub (gold, rotates with disc)
-	local hub = Instance.new("Part"); hub.Name = "Hub"
-	hub.Size = Vector3.new(5, 5, 4)
-	hub.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z - 1) * CFrame.Angles(math.rad(90), 0, 0)
-	hub.Anchored = true; hub.Color = Color3.fromRGB(255, 215, 0)
-	hub.Material = Enum.Material.Metal; hub.Shape = Enum.PartType.Cylinder
-	hub.Parent = spinModel
-
-	-- ============ OUTER RIM (static, raised, stays in place) ============
-	local outerRim = Instance.new("Part"); outerRim.Name = "OuterRim"
-	outerRim.Size = Vector3.new(WR * 2 + 5, 4, WR * 2 + 5)
-	outerRim.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z + 0.5) * CFrame.Angles(math.rad(90), 0, 0)
-	outerRim.Anchored = true; outerRim.Color = Color3.fromRGB(255, 215, 0)
-	outerRim.Material = Enum.Material.Metal; outerRim.Shape = Enum.PartType.Cylinder
-	outerRim.CanCollide = false; outerRim.Parent = wheelModel
-
-	-- Arcade bulb lights around rim (static)
-	for i = 1, 24 do
-		local a = (i / 24) * math.pi * 2
-		local bulb = Instance.new("Part")
-		bulb.Size = Vector3.new(1.5, 1.5, 1.5)
-		bulb.Position = Vector3.new(
-			SPIN_X + math.cos(a) * (WR + 3.5),
-			WCY + math.sin(a) * (WR + 3.5),
-			SPIN_Z - 0.8
-		)
-		bulb.Anchored = true; bulb.Shape = Enum.PartType.Ball
-		bulb.Color = if i % 3 == 0 then Color3.fromRGB(255, 50, 50)
-			elseif i % 3 == 1 then Color3.fromRGB(255, 255, 80)
-			else Color3.fromRGB(80, 200, 255)
-		bulb.Material = Enum.Material.Neon; bulb.CanCollide = false
-		bulb.Parent = wheelModel
-	end
-
-	-- ============ POINTER at top (static, never rotates) ============
-	-- Pointer post
-	local pointer = Instance.new("Part"); pointer.Name = "Pointer"
-	pointer.Size = Vector3.new(2.5, 5, 2.5)
-	pointer.Position = Vector3.new(SPIN_X, WCY + WR + 3, SPIN_Z - 1.5)
-	pointer.Anchored = true; pointer.Color = Color3.fromRGB(255, 30, 30)
-	pointer.Material = Enum.Material.Neon; pointer.Parent = wheelModel
-	-- Pointer tip (ball pointing down at wheel)
-	local pTip = Instance.new("Part")
-	pTip.Size = Vector3.new(3.5, 3.5, 3.5)
-	pTip.Position = Vector3.new(SPIN_X, WCY + WR, SPIN_Z - 1.5)
-	pTip.Anchored = true; pTip.Color = Color3.fromRGB(255, 30, 30)
-	pTip.Material = Enum.Material.Neon; pTip.Shape = Enum.PartType.Ball
-	pTip.Parent = wheelModel
-
-	-- ============ SIGN ============
-	local signP = Instance.new("Part")
-	signP.Size = Vector3.new(1,1,1)
-	signP.Position = Vector3.new(SPIN_X, WCY + WR + 12, SPIN_Z)
-	signP.Anchored = true; signP.Transparency = 1; signP.CanCollide = false; signP.Parent = wheelModel
-	local signBB = Instance.new("BillboardGui"); signBB.Size = UDim2.fromOffset(300, 80); signBB.Parent = signP
-	local signLbl = Instance.new("TextLabel"); signLbl.Size = UDim2.fromScale(1,1)
-	signLbl.BackgroundTransparency = 1; signLbl.Text = "🎡 LUCKY WHEEL 🎡"
-	signLbl.TextColor3 = Color3.fromRGB(255, 220, 80); signLbl.TextScaled = true
-	signLbl.Font = Enum.Font.FredokaOne; signLbl.Parent = signBB
-	Instance.new("UIStroke", signLbl).Color = Color3.fromRGB(200, 140, 20)
-
-	-- Tick sound
-	local tickSound = Instance.new("Sound")
-	tickSound.Name = "WheelTick"; tickSound.SoundId = "rbxassetid://6732690176"
-	tickSound.Volume = 0.8; tickSound.RollOffMaxDistance = 60; tickSound.Parent = pointer
-
-	-- ProximityPrompt on the base
-	local spinPrompt = Instance.new("ProximityPrompt")
-	spinPrompt.ActionText = "Spin"; spinPrompt.ObjectText = "Lucky Wheel (Hold E)"
-	spinPrompt.KeyboardKeyCode = Enum.KeyCode.E; spinPrompt.HoldDuration = 0.8
-	spinPrompt.MaxActivationDistance = 18; spinPrompt.RequiresLineOfSight = false
-	spinPrompt.Parent = base
-
-	wheelModel.Parent = mapFolder
-
-	-- ============ ROTATION ============
-	local wheelSpinning = false
-	local currentAngle = 0
-	local IDLE_SPEED = 0.2 -- subtle idle rotation
-	local wheelPivot = CFrame.new(SPIN_X, WCY, SPIN_Z)
-
-	local function setWheelAngle(angleDeg)
-		spinModel:PivotTo(wheelPivot * CFrame.Angles(0, 0, math.rad(-angleDeg)))
-	end
-
-	-- Idle: subtle continuous clockwise spin
-	task.spawn(function()
-		while wheelModel and wheelModel.Parent do
-			if not wheelSpinning then
-				currentAngle = (currentAngle + IDLE_SPEED) % 360
-				setWheelAngle(currentAngle)
+	if dailySpinModel then
+		local spinClone = dailySpinModel:Clone()
+		-- Place on the floor in spawn room, facing back wall (+Z direction)
+		spinClone:PivotTo(CFrame.new(Vector3.new(-55, floorY + 3, -30)) * CFrame.Angles(0, math.rad(180), 0))
+		for _, part in spinClone:GetDescendants() do
+			if part:IsA("BasePart") then
+				part.Anchored = true
 			end
-			task.wait(0.03)
 		end
-	end)
+		spinClone.Parent = mapFolder
 
-	-- ---- SPIN LOGIC: fast start → smooth deceleration → precise landing ----
-	spinPrompt.Triggered:Connect(function(plr)
-		if wheelSpinning then return end
+		-- ProximityPrompt to open the spin GUI
+		local spinTrigger = spinClone:FindFirstChildWhichIsA("BasePart", true)
+		if spinTrigger then
+			local openPrompt = Instance.new("ProximityPrompt")
+			openPrompt.ActionText = "Open"
+			openPrompt.ObjectText = "Daily Spin"
+			openPrompt.KeyboardKeyCode = Enum.KeyCode.E
+			openPrompt.HoldDuration = 0
+			openPrompt.MaxActivationDistance = 14
+			openPrompt.RequiresLineOfSight = false
+			openPrompt.Parent = spinTrigger
+
+			openPrompt.Triggered:Connect(function(plr)
+				-- Tell client to open the spin GUI
+				dailySpinEvent:FireClient(plr, "open")
+			end)
+		end
+		print("[CandyRun] DailySpin model placed in spawn room")
+	else
+		warn("[CandyRun] DailySpin model not found in ServerStorage or gamepasses folder!")
+	end
+
+	-- Remote for client requesting a spin
+	local spinRequestEvent = Instance.new("RemoteEvent")
+	spinRequestEvent.Name = "SpinRequest"
+	spinRequestEvent.Parent = ReplicatedStorage
+
+	-- Handle spin requests from client
+	spinRequestEvent.OnServerEvent:Connect(function(plr, spinType)
 		local data = playerData[plr]
 		if not data then return end
 
-		-- 24h cooldown
-		if data.dailySpinTime and (os.time() - data.dailySpinTime) < 86400 then
-			local remaining = 86400 - (os.time() - data.dailySpinTime)
-			local hours = math.floor(remaining / 3600)
-			local mins = math.floor((remaining % 3600) / 60)
-			dailySpinEvent:FireClient(plr, 0, "cooldown", hours .. "h " .. mins .. "m")
+		if spinType == "free" then
+			-- Check 24h cooldown
+			if data.dailySpinTime and (os.time() - data.dailySpinTime) < 86400 then
+				local remaining = 86400 - (os.time() - data.dailySpinTime)
+				local hours = math.floor(remaining / 3600)
+				local mins = math.floor((remaining % 3600) / 60)
+				dailySpinEvent:FireClient(plr, "cooldown", hours .. "h " .. mins .. "m")
+				return
+			end
+			data.dailySpinTime = os.time()
+		elseif spinType == "paid" then
+			-- Prompt 49 robux purchase (Dev Product)
+			local PAID_SPIN_PRODUCT_ID = 2002 -- placeholder
+			MarketplaceService:PromptProductPurchase(plr, PAID_SPIN_PRODUCT_ID)
+			return -- purchase handler will trigger the spin
+		else
 			return
 		end
 
-		data.dailySpinTime = os.time()
-		wheelSpinning = true
-		spinPrompt.Enabled = false
-
-		-- Pick winner
+		-- Pick winner and send to client
 		local winIdx, reward = weightedSpinPick()
-
-		-- Calculate target angle: segment center at top (pointer position)
-		-- Segment i occupies angle range [(i-1)*segDeg, i*segDeg]
-		-- We want the middle of that segment under the pointer (top = 0°/360°)
-		local segDeg = 360 / NUM_SEG
-		local targetSegCenter = (winIdx - 1) * segDeg + segDeg / 2
-		-- Add full rotations for drama (5-8 full spins)
-		local fullSpins = math.random(5, 8) * 360
-		local startAngle = currentAngle
-		local totalSpin = fullSpins + (targetSegCenter - (startAngle % 360) + 360) % 360
-
-		local SPIN_DURATION = 6.0 -- seconds
-		local startT = tick()
-		local lastSegIdx = -1 -- for tick sound tracking
-
-		task.spawn(function()
-			while true do
-				local elapsed = tick() - startT
-				if elapsed >= SPIN_DURATION then break end
-
-				-- Ease-out: cubic deceleration (fast start, smooth slow-down)
-				local t = elapsed / SPIN_DURATION
-				local eased = 1 - (1 - t) ^ 3
-				local angle = startAngle + totalSpin * eased
-				currentAngle = angle % 360
-				setWheelAngle(currentAngle)
-
-				-- Tick sound: play when a new segment passes the pointer
-				local segIdx = math.floor(currentAngle / segDeg) % NUM_SEG
-				if segIdx ~= lastSegIdx then
-					lastSegIdx = segIdx
-					tickSound:Play()
-				end
-
-				task.wait(0.02)
-			end
-
-			-- Snap to exact final angle
-			currentAngle = (startAngle + totalSpin) % 360
-			setWheelAngle(currentAngle)
-
-			-- Settling wobble (slight overshoot + bounce back)
-			for wobble = 1, 3 do
-				local wobbleAmount = 3 / wobble -- decreasing wobble
-				-- Overshoot
-				for f = 1, 5 do
-					setWheelAngle(currentAngle + wobbleAmount * (f / 5))
-					task.wait(0.03)
-				end
-				-- Bounce back
-				for f = 5, 0, -1 do
-					setWheelAngle(currentAngle + wobbleAmount * (f / 5) * -0.5)
-					task.wait(0.03)
-				end
-			end
-			-- Final snap
-			setWheelAngle(currentAngle)
-
-			-- Award prize
-			applySpinReward(plr, reward)
-			dailySpinEvent:FireClient(plr, winIdx, reward.name, reward.icon)
-
-			task.wait(1)
-			wheelSpinning = false
-			spinPrompt.Enabled = true
-		end)
+		applySpinReward(plr, reward)
+		dailySpinEvent:FireClient(plr, "result", winIdx, reward.name, reward.icon)
 	end)
 
-	dailySpinEvent.OnServerEvent:Connect(function(plr)
-		-- Handled by ProximityPrompt
-	end)
+	-- Handle paid spin purchase completion
+	local PAID_SPIN_PRODUCT_ID = 2002
+	MarketplaceService.ProcessReceipt = function(receiptInfo)
+		local plr = Players:GetPlayerByUserId(receiptInfo.PlayerId)
+		if not plr then return Enum.ProductPurchaseDecision.NotProcessedYet end
+		
+		if receiptInfo.ProductId == PAID_SPIN_PRODUCT_ID then
+			local data = playerData[plr]
+			if data then
+				local winIdx, reward = weightedSpinPick()
+				applySpinReward(plr, reward)
+				dailySpinEvent:FireClient(plr, "result", winIdx, reward.name, reward.icon)
+			end
+			return Enum.ProductPurchaseDecision.PurchaseGranted
+		end
+		
+		-- Handle premium trail chest purchase too (product 2001)
+		if receiptInfo.ProductId == 2001 then
+			-- existing premium trail logic
+			return Enum.ProductPurchaseDecision.PurchaseGranted
+		end
+		
+		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
 
 	-- Build a coil-shaped tool handle
 	local function makeCoilHandle(tool, coilColor, secondaryColor)
