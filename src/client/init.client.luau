@@ -369,17 +369,14 @@ if dailySpinEvent then
 		end)
 
 		-- ========== BIG WHEEL (takes up most of the popup) ==========
-		-- Square container for the wheel (aspect ratio locked)
-		local wheelSize = 0.72 -- fraction of popup width
+		-- Square container for the wheel
 		local wheelContainer = Instance.new("Frame"); wheelContainer.Name = "WheelContainer"
-		wheelContainer.Size = UDim2.fromScale(wheelSize, 0) -- height set by aspect ratio
+		wheelContainer.Size = UDim2.fromScale(0.72, 0.72)
 		wheelContainer.AnchorPoint = Vector2.new(0.5, 0)
 		wheelContainer.Position = UDim2.fromScale(0.5, 0.08)
 		wheelContainer.BackgroundTransparency = 1; wheelContainer.ZIndex = 102
+		wheelContainer.SizeConstraint = Enum.SizeConstraint.RelativeXX -- square based on width
 		wheelContainer.Parent = popup
-		-- Force square aspect ratio
-		local aspectRatio = Instance.new("UIAspectRatioConstraint")
-		aspectRatio.AspectRatio = 1; aspectRatio.Parent = wheelContainer
 
 		-- Outer rim ring (static, gold circle behind the wheel)
 		local outerRing = Instance.new("Frame")
