@@ -186,29 +186,12 @@ local function buildCandyPlatform(candyName, index, pos, m)
 			end
 		end
 
-		-- CLEANUP: Remove grey platforms/bases and tiny useless parts
-		local partsToRemove = {}
+		-- CLEANUP: Only remove invisible/fully-transparent parts
+		-- Keep ALL candy geometry including rectangular chocolate bars
 		for _, part in clone:GetDescendants() do
-			if part:IsA("BasePart") then
-				local r, g, b = part.Color.R * 255, part.Color.G * 255, part.Color.B * 255
-				local sx, sy, sz = part.Size.X, part.Size.Y, part.Size.Z
-				local maxDim = math.max(sx, sy, sz)
-				local minDim = math.min(sx, sy, sz)
-				
-				-- Grey/dark flat platform (base plate) — remove it
-				-- A "platform" is grey AND one dimension is much thinner than others
-				if r < 120 and g < 120 and b < 120 and (minDim < maxDim * 0.25) and maxDim > 5 then
-					table.insert(partsToRemove, part)
-				end
-				
-				-- Tiny decorative bits (all dimensions < 2 studs after scale) — remove
-				if sx < 2 and sy < 2 and sz < 2 then
-					table.insert(partsToRemove, part)
-				end
+			if part:IsA("BasePart") and part.Transparency >= 0.95 then
+				part:Destroy()
 			end
-		end
-		for _, part in ipairs(partsToRemove) do
-			part:Destroy()
 		end
 
 		-- Move to target position while KEEPING the model's original rotation
@@ -284,6 +267,32 @@ end
 -- Helper: pick a random candy type from the available pieces
 local function randomCandy()
 	return CANDY_TYPES[math.random(1, #CANDY_TYPES)]
+end
+
+-- Size multipliers per candy type — makes each candy a unique scale
+-- Candy canes are long/thin so scale bigger, peppermints are flat discs so medium,
+-- ice cream is tall so smaller, chocolate bars are chunky, sugarfloss is big and fluffy
+local CANDY_SIZE_MULTIPLIER = {
+	-- Common names (case-insensitive matching done at build time)
+	candycane = 1.4,    -- long, needs to be big to land on
+	peppermint = 1.0,   -- flat disc, good default size
+	icecream = 0.8,     -- tall cone, smaller scale
+	chocolate = 1.2,    -- chunky bar
+	sugarfloss = 1.5,   -- big fluffy cloud
+	candyfloss = 1.5,   -- alias for sugarfloss
+	-- Fallback for unknown types
+	default = 1.0,
+}
+
+-- Get size multiplier for a candy type (fuzzy match on name)
+local function getCandySizeMultiplier(name)
+	local lower = string.lower(name)
+	for key, mult in pairs(CANDY_SIZE_MULTIPLIER) do
+		if string.find(lower, key) then
+			return mult
+		end
+	end
+	return CANDY_SIZE_MULTIPLIER.default
 end
 
 -- ============================================================
@@ -1342,111 +1351,104 @@ local function createSpawnRoom()
 		["Grapple Gun"]  = 88714214,   -- Grappling Hook model
 	}
 
-	local function buildGamepassDisplay(position, itemName, itemColor, itemEmoji, robuxPrice, gamepassId)
-		local dModel = Instance.new("Model"); dModel.Name = itemName .. "_Display"
+	-- ============================================================
+	-- OBBY GAMEPASSES — Uses the pre-saved ObbyGamepass model from ServerStorage
+	-- ============================================================
+	local obbyGamepassTemplate = ServerStorage:FindFirstChild("ObbyGamepass")
+		or ServerStorage:FindFirstChild("obbyGamepass")
+		or ServerStorage:FindFirstChild("Obby Gamepass")
+		or ServerStorage:FindFirstChild("ObbyGamepasses")
 
-		-- Pedestal block
-		local ped = Instance.new("Part")
-		ped.Name = "Pedestal"
-		ped.Size = Vector3.new(10, 4, 10)
-		ped.Position = position; ped.Anchored = true
-		ped.Color = Color3.fromRGB(60, 50, 70)
-		ped.Material = Enum.Material.SmoothPlastic
-		ped.TopSurface = Enum.SurfaceType.Smooth; ped.BottomSurface = Enum.SurfaceType.Smooth
-		ped.Parent = dModel
+	local GAMEPASSES = {
+		{name="Speed Coil",   emoji="⚡", color=Color3.fromRGB(80,200,255),  robux=49,  id=1001},
+		{name="Gravity Coil", emoji="🌀", color=Color3.fromRGB(180,80,255), robux=79,  id=1002},
+		{name="Fusion Coil",  emoji="💫", color=Color3.fromRGB(130,140,255),robux=149, id=1003},
+		{name="Magic Carpet", emoji="🧞", color=Color3.fromRGB(255,180,50), robux=199, id=1004},
+		{name="Grapple Gun",  emoji="🪝", color=Color3.fromRGB(255,80,80),  robux=99,  id=1005},
+	}
 
-		-- Neon accent ring on pedestal
-		local ring = Instance.new("Part")
-		ring.Size = Vector3.new(2, 11, 11)
-		ring.Position = position + Vector3.new(0, 0.5, 0)
-		ring.Anchored = true; ring.Color = itemColor
-		ring.Material = Enum.Material.Neon; ring.Transparency = 0.4
-		ring.Shape = Enum.PartType.Cylinder; ring.Orientation = Vector3.new(0,0,90)
-		ring.CanCollide = false; ring.Parent = dModel
+	local itemX = 85
+	local itemStartZ = -35
+	local itemSpacing = 16
+	local gamepassPrompts = {} -- {prompt, gamepassId, itemName}
 
-		-- Try to load pre-made model from toolbox
-		local assetId = TOOLBOX_MODELS[itemName]
-		if assetId then
-			local ok, toolboxModel = pcall(function()
-				return InsertService:LoadAsset(assetId)
-			end)
-			if ok and toolboxModel then
-				-- Position the loaded model on top of the pedestal
-				toolboxModel:PivotTo(CFrame.new(position + Vector3.new(0, 6, 0)))
-				-- Anchor all parts and disable collision for display
-				for _, part in toolboxModel:GetDescendants() do
-					if part:IsA("BasePart") then
-						part.Anchored = true
-						part.CanCollide = false
-					end
+	for gi, gp in ipairs(GAMEPASSES) do
+		local pos = Vector3.new(itemX, floorY + 4, itemStartZ + (gi-1) * itemSpacing)
+		local dModel = Instance.new("Model"); dModel.Name = gp.name .. "_Display"
+
+		-- Clone the ObbyGamepass model if available
+		if obbyGamepassTemplate then
+			local clone = obbyGamepassTemplate:Clone()
+			clone:PivotTo(CFrame.new(pos + Vector3.new(0, 5, 0)))
+			for _, part in clone:GetDescendants() do
+				if part:IsA("BasePart") then
+					part.Anchored = true
+					part.CanCollide = false
 				end
-				toolboxModel.Name = "ToolboxDisplay"
-				toolboxModel.Parent = dModel
 			end
+			clone.Parent = dModel
+		else
+			-- Fallback pedestal if model not found
+			local ped = Instance.new("Part")
+			ped.Name = "Pedestal"
+			ped.Size = Vector3.new(10, 4, 10)
+			ped.Position = pos; ped.Anchored = true
+			ped.Color = Color3.fromRGB(60, 50, 70)
+			ped.Material = Enum.Material.SmoothPlastic; ped.Parent = dModel
 		end
 
 		-- Glow
+		local glowPart = dModel:FindFirstChildWhichIsA("BasePart", true) or Instance.new("Part")
 		local gl = Instance.new("PointLight")
-		gl.Color = itemColor; gl.Brightness = 1.5; gl.Range = 18; gl.Parent = ped
+		gl.Color = gp.color; gl.Brightness = 1.5; gl.Range = 18
+		gl.Parent = glowPart
 
-		-- Label (name + price)
+		-- Label (name + Robux price)
 		local labelP = Instance.new("Part")
-		labelP.Size = Vector3.new(1,1,1); labelP.Position = position + Vector3.new(0, 12, 0)
+		labelP.Size = Vector3.new(1,1,1); labelP.Position = pos + Vector3.new(0, 14, 0)
 		labelP.Anchored = true; labelP.Transparency = 1; labelP.CanCollide = false; labelP.Parent = dModel
 		local bb = Instance.new("BillboardGui")
 		bb.Size = UDim2.fromOffset(160, 55); bb.AlwaysOnTop = false; bb.Parent = labelP
 		local lbl = Instance.new("TextLabel")
 		lbl.Size = UDim2.fromScale(1, 0.55); lbl.BackgroundTransparency = 1
-		lbl.Text = itemEmoji .. " " .. itemName
+		lbl.Text = gp.emoji .. " " .. gp.name
 		lbl.TextColor3 = Color3.fromRGB(255,255,255)
 		lbl.TextScaled = true; lbl.Font = Enum.Font.FredokaOne; lbl.Parent = bb
-		Instance.new("UIStroke", lbl).Color = itemColor
+		Instance.new("UIStroke", lbl).Color = gp.color
 		local priceLbl = Instance.new("TextLabel")
 		priceLbl.Size = UDim2.fromScale(1, 0.4); priceLbl.Position = UDim2.fromScale(0, 0.6)
 		priceLbl.BackgroundTransparency = 1
-		priceLbl.Text = "R$" .. robuxPrice
+		priceLbl.Text = "R$" .. gp.robux
 		priceLbl.TextColor3 = Color3.fromRGB(255, 220, 100)
 		priceLbl.TextScaled = true; priceLbl.Font = Enum.Font.GothamBold; priceLbl.Parent = bb
 
-		-- ProximityPrompt (hold E to buy)
+		-- ProximityPrompt
+		local promptParent = dModel:FindFirstChildWhichIsA("BasePart", true)
+		if not promptParent then
+			promptParent = Instance.new("Part")
+			promptParent.Size = Vector3.new(10, 10, 10)
+			promptParent.Position = pos; promptParent.Anchored = true
+			promptParent.Transparency = 1; promptParent.CanCollide = false
+			promptParent.Parent = dModel
+		end
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.ActionText = "Buy"
-		prompt.ObjectText = itemName .. " (R$" .. robuxPrice .. ")"
+		prompt.ObjectText = gp.name .. " (R$" .. gp.robux .. ")"
 		prompt.KeyboardKeyCode = Enum.KeyCode.E
 		prompt.HoldDuration = 0.5
 		prompt.MaxActivationDistance = 12
 		prompt.RequiresLineOfSight = false
-		prompt.Parent = ped
+		prompt.Parent = promptParent
 
 		dModel.Parent = mapFolder
-		return prompt, gamepassId
+		table.insert(gamepassPrompts, {prompt=prompt, id=gp.id, name=gp.name})
 	end
 
-	-- All 5 gamepasses lined up parallel against the far right wall
-	local itemX = 85  -- close to the right wall (wall is at X=100)
-	local itemStartZ = -35
-	local itemSpacing = 16
-
-	local speedPrompt, speedGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ),
-		"Speed Coil", Color3.fromRGB(80, 200, 255), "⚡", 49, 1001
-	)
-	local gravityPrompt, gravityGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing),
-		"Gravity Coil", Color3.fromRGB(180, 80, 255), "🌀", 79, 1002
-	)
-	local fusionPrompt, fusionGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing*2),
-		"Fusion Coil", Color3.fromRGB(130, 140, 255), "💫", 149, 1003
-	)
-	local carpetPrompt, carpetGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing*3),
-		"Magic Carpet", Color3.fromRGB(255, 180, 50), "🧞", 199, 1004
-	)
-	local grapplePrompt, grappleGamepassId = buildGamepassDisplay(
-		Vector3.new(itemX, floorY + 4, itemStartZ + itemSpacing*4),
-		"Grapple Gun", Color3.fromRGB(255, 80, 80), "🪝", 99, 1005
-	)
+	if obbyGamepassTemplate then
+		print("[CandyRun] ObbyGamepass model loaded for gamepass displays")
+	else
+		warn("[CandyRun] ObbyGamepass model not found in ServerStorage — using fallback pedestals")
+	end
 
 	-- ============================================================
 	-- TRAIL CHEST SHOPS (left side, near front)
@@ -2294,40 +2296,22 @@ local function createSpawnRoom()
 	-- Gamepass purchase system
 	local debounces = {}
 
-	speedPrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, speedGamepassId) 
-	end)
-	gravityPrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, gravityGamepassId) 
-	end)
-	fusionPrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, fusionGamepassId) 
-	end)
-	carpetPrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, carpetGamepassId) 
-	end)
-	grapplePrompt.Triggered:Connect(function(plr) 
-		MarketplaceService:PromptGamePassPurchase(plr, grappleGamepassId) 
-	end)
+	-- Connect all gamepass prompts
+	for _, gp in ipairs(gamepassPrompts) do
+		gp.prompt.Triggered:Connect(function(plr)
+			MarketplaceService:PromptGamePassPurchase(plr, gp.id)
+		end)
+	end
 
 	-- Handle gamepass purchase completion
+	local GAMEPASS_ITEMS = {
+		[1001] = "Speed Coil", [1002] = "Gravity Coil", [1003] = "Fusion Coil",
+		[1004] = "Magic Carpet", [1005] = "Grapple Gun",
+	}
 	MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(plr, gamepassId, wasPurchased)
 		if not wasPurchased then return end
-		
-		local itemName = ""
-		if gamepassId == speedGamepassId then
-			itemName = "Speed Coil"
-		elseif gamepassId == gravityGamepassId then
-			itemName = "Gravity Coil"
-		elseif gamepassId == fusionGamepassId then
-			itemName = "Fusion Coil"
-		elseif gamepassId == carpetGamepassId then
-			itemName = "Magic Carpet"
-		elseif gamepassId == grappleGamepassId then
-			itemName = "Grapple Gun"
-		end
-		
-		if itemName ~= "" then
+		local itemName = GAMEPASS_ITEMS[gamepassId]
+		if itemName then
 			giveItem(plr, itemName)
 			purchaseEvent:FireClient(plr, "success", itemName, 0, 0)
 		end
@@ -2616,12 +2600,13 @@ local function generateMap()
 			return randomCandy()
 		end
 
-		-- Place 3 candy models around the step center
+		-- Place candy models around the step center
 		local firstModel = nil
 		for ci, cluster in ipairs(CLUSTER_OFFSETS) do
 			local candyPos = stepCenter + Vector3.new(cluster.dx, cluster.dy, cluster.dz)
-			local candySize = step.size * cluster.sizeMultiplier
 			local candyName = pickUnique()
+			-- Each candy type has its own unique size multiplier
+			local candySize = step.size * cluster.sizeMultiplier * getCandySizeMultiplier(candyName)
 
 			local walkable, mdl = buildCandyPlatform(candyName, i*10+ci, candyPos, candySize)
 
