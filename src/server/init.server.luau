@@ -406,157 +406,80 @@ boomboxEvent.Name = "BoomboxPlay"; boomboxEvent.Parent = ReplicatedStorage
 local candyUpdateEvent = Instance.new("RemoteEvent")
 candyUpdateEvent.Name = "CandyUpdate"; candyUpdateEvent.Parent = ReplicatedStorage
 
-local function createCollectible(position, index)
-	-- 3D candy model instead of simple ball
-	local model = Instance.new("Model")
-	model.Name = "CandyCollectible_"..index
+-- Speed Candy collectible template (from ServerStorage)
+local speedCandyTemplate = ServerStorage:FindFirstChild("speed candy")
+	or ServerStorage:FindFirstChild("Speed Candy")
+	or ServerStorage:FindFirstChild("SpeedCandy")
+	or ServerStorage:FindFirstChild("speed_candy")
 
-	local candyTypes = {"wrapper", "lollipop", "gummy", "jawbreaker"}
-	local ctype = candyTypes[math.random(1, #candyTypes)]
-	local baseColor = ({
-		Color3.fromRGB(255,80,140), Color3.fromRGB(140,80,255),
-		Color3.fromRGB(80,200,255), Color3.fromRGB(255,180,50),
-	})[math.random(1,4)]
+if speedCandyTemplate then
+	print("[CandyRun] Found speed candy collectible model: " .. speedCandyTemplate.Name)
+else
+	warn("[CandyRun] WARNING: No 'speed candy' model found in ServerStorage — using fallback sphere for collectibles")
+end
+
+-- Collect sound ID (magical candy pickup)
+local COLLECT_SOUND_ID = "rbxassetid://5619828673" -- sparkly collect sound
+
+local function createCollectible(position, index)
+	local model = Instance.new("Model")
+	model.Name = "SpeedCandy_"..index
 
 	local pos = position + Vector3.new(0, 8, 0)
 
-	if ctype == "wrapper" then
-		-- Wrapped candy: cylinder body + twisted ends
-		local body = Instance.new("Part")
-		body.Name = "CandyBody"; body.Size = Vector3.new(2, 3, 3)
-		body.Position = pos; body.Anchored = true; body.CanCollide = false
-		body.Color = baseColor; body.Material = Enum.Material.SmoothPlastic
-		body.Shape = Enum.PartType.Cylinder
-		body.Orientation = Vector3.new(0,0,90)
-		body.Parent = model
-
-		-- Wrapper twist left
-		local twL = Instance.new("Part")
-		twL.Size = Vector3.new(1.5, 2, 2)
-		twL.Position = pos + Vector3.new(-2, 0, 0)
-		twL.Anchored = true; twL.CanCollide = false
-		twL.Color = Color3.new(baseColor.R*0.8, baseColor.G*0.8, baseColor.B*0.8)
-		twL.Material = Enum.Material.Foil
-		twL.Rotation = Vector3.new(0, 0, 25)
-		twL.Parent = model
-
-		-- Wrapper twist right
-		local twR = Instance.new("Part")
-		twR.Size = Vector3.new(1.5, 2, 2)
-		twR.Position = pos + Vector3.new(2, 0, 0)
-		twR.Anchored = true; twR.CanCollide = false
-		twR.Color = Color3.new(baseColor.R*0.8, baseColor.G*0.8, baseColor.B*0.8)
-		twR.Material = Enum.Material.Foil
-		twR.Rotation = Vector3.new(0, 0, -25)
-		twR.Parent = model
-
-		-- Stripe
-		local stripe = Instance.new("Part")
-		stripe.Size = Vector3.new(0.3, 3.2, 3.2)
-		stripe.Position = pos; stripe.Anchored = true; stripe.CanCollide = false
-		stripe.Color = Color3.fromRGB(255,255,255)
-		stripe.Material = Enum.Material.SmoothPlastic
-		stripe.Shape = Enum.PartType.Cylinder
-		stripe.Orientation = Vector3.new(0,0,90)
-		stripe.Transparency = 0.3; stripe.Parent = model
-
-	elseif ctype == "lollipop" then
-		-- Mini lollipop: disc + stick
-		local stick = Instance.new("Part")
-		stick.Size = Vector3.new(0.3, 3, 0.3)
-		stick.Position = pos + Vector3.new(0, -2, 0)
-		stick.Anchored = true; stick.CanCollide = false
-		stick.Color = Color3.fromRGB(240,230,200)
-		stick.Material = Enum.Material.SmoothPlastic
-		stick.Parent = model
-
-		local disc = Instance.new("Part")
-		disc.Name = "CandyBody"; disc.Size = Vector3.new(1, 3.5, 3.5)
-		disc.Position = pos; disc.Anchored = true; disc.CanCollide = false
-		disc.Color = baseColor; disc.Material = Enum.Material.SmoothPlastic
-		disc.Shape = Enum.PartType.Cylinder
-		disc.Orientation = Vector3.new(0,0,90)
-		disc.Parent = model
-
-		-- Swirl
-		local swirl = Instance.new("Part")
-		swirl.Size = Vector3.new(1.2, 2.5, 2.5)
-		swirl.Position = pos; swirl.Anchored = true; swirl.CanCollide = false
-		swirl.Color = Color3.fromRGB(255,255,255)
-		swirl.Material = Enum.Material.SmoothPlastic
-		swirl.Shape = Enum.PartType.Cylinder
-		swirl.Orientation = Vector3.new(0,0,90)
-		swirl.Transparency = 0.4; swirl.Parent = model
-
-	elseif ctype == "gummy" then
-		-- Mini gummy bear shape
-		local body = Instance.new("Part")
-		body.Name = "CandyBody"; body.Size = Vector3.new(2.5, 1.5, 2)
-		body.Position = pos; body.Anchored = true; body.CanCollide = false
-		body.Color = baseColor; body.Material = Enum.Material.SmoothPlastic
-		body.Transparency = 0.15; body.Parent = model
-
-		local head = Instance.new("Part")
-		head.Size = Vector3.new(1.8, 1.5, 1.5)
-		head.Position = pos + Vector3.new(0, 1.5, 0)
-		head.Anchored = true; head.CanCollide = false
-		head.Color = baseColor; head.Material = Enum.Material.SmoothPlastic
-		head.Shape = Enum.PartType.Ball
-		head.Transparency = 0.15; head.Parent = model
-
-		-- Ears
-		for _, side in ipairs({-1, 1}) do
-			local ear = Instance.new("Part")
-			ear.Size = Vector3.new(0.6, 0.6, 0.6)
-			ear.Position = pos + Vector3.new(side*0.7, 2.3, 0)
-			ear.Anchored = true; ear.CanCollide = false
-			ear.Color = baseColor; ear.Shape = Enum.PartType.Ball
-			ear.Material = Enum.Material.SmoothPlastic
-			ear.Transparency = 0.15; ear.Parent = model
+	if speedCandyTemplate then
+		-- Clone the speed candy model
+		local clone = speedCandyTemplate:Clone()
+		clone:PivotTo(CFrame.new(pos))
+		for _, part in clone:GetDescendants() do
+			if part:IsA("BasePart") then
+				part.Anchored = true
+				part.CanCollide = false
+			end
 		end
-
-	else -- jawbreaker
+		-- Reparent into our model
+		if clone:IsA("Model") then
+			for _, child in clone:GetChildren() do
+				child.Parent = model
+			end
+			clone:Destroy()
+		else
+			clone.Parent = model
+		end
+	else
+		-- Fallback: glowing candy sphere
 		local sphere = Instance.new("Part")
-		sphere.Name = "CandyBody"; sphere.Size = Vector3.new(3, 3, 3)
+		sphere.Name = "CandyBody"
+		sphere.Size = Vector3.new(3, 3, 3)
 		sphere.Position = pos; sphere.Anchored = true; sphere.CanCollide = false
-		sphere.Color = baseColor; sphere.Material = Enum.Material.SmoothPlastic
-		sphere.Shape = Enum.PartType.Ball; sphere.Parent = model
-
-		-- Inner layers
-		for li, info in ipairs({{2.2, Color3.fromRGB(255,255,100)}, {1.4, Color3.fromRGB(100,200,255)}}) do
-			local layer = Instance.new("Part")
-			layer.Size = Vector3.new(info[1], info[1], info[1])
-			layer.Position = pos; layer.Anchored = true; layer.CanCollide = false
-			layer.Color = info[2]; layer.Material = Enum.Material.SmoothPlastic
-			layer.Shape = Enum.PartType.Ball
-			layer.Transparency = 0.2; layer.Parent = model
-		end
-
-		-- Glass sheen
-		local glass = Instance.new("Part")
-		glass.Size = Vector3.new(3.2, 3.2, 3.2)
-		glass.Position = pos; glass.Anchored = true; glass.CanCollide = false
-		glass.Color = Color3.fromRGB(255,255,255)
-		glass.Material = Enum.Material.Glass
-		glass.Shape = Enum.PartType.Ball
-		glass.Transparency = 0.85; glass.Parent = model
+		sphere.Color = Color3.fromRGB(255, 200, 50)
+		sphere.Material = Enum.Material.Neon
+		sphere.Shape = Enum.PartType.Ball
+		sphere.Parent = model
 	end
 
 	-- Glow light
-	local light = Instance.new("PointLight")
-	light.Color = baseColor; light.Brightness = 1.5; light.Range = 14
-	light.Parent = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+	local firstPart = model:FindFirstChildWhichIsA("BasePart", true)
+	if firstPart then
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(255, 220, 80)
+		light.Brightness = 1.5; light.Range = 14
+		light.Parent = firstPart
+	end
+
+	-- Collect sound (attached to model, plays on pickup)
+	local collectSound = Instance.new("Sound")
+	collectSound.Name = "CollectSound"
+	collectSound.SoundId = COLLECT_SOUND_ID
+	collectSound.Volume = 2
+	collectSound.RollOffMaxDistance = 60
+	collectSound.Parent = firstPart or model
 
 	-- Floating + spinning animation
 	model.Parent = collectiblesFolder
 	local bp = pos
 	task.spawn(function()
 		while model and model.Parent do
-			for _, p in model:GetDescendants() do
-				if p:IsA("BasePart") then
-					p.Orientation += Vector3.new(0, 3, 0)
-				end
-			end
 			local yOff = math.sin(tick()*2.5)*1.5
 			model:PivotTo(CFrame.new(bp + Vector3.new(0, yOff, 0)) * CFrame.Angles(0, math.rad(tick()*60 % 360), 0))
 			task.wait(0.03)
@@ -574,7 +497,15 @@ local function createCollectible(position, index)
 	touchPart.Touched:Connect(function(hit)
 		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
 		if plr and model.Parent then
-			model.Parent = nil
+			-- Play the collect sound before removing
+			local snd = model:FindFirstChild("CollectSound", true)
+			if snd then snd:Play() end
+
+			-- Brief delay so sound plays, then hide
+			task.delay(0.15, function()
+				model.Parent = nil
+			end)
+
 			-- Add candy to player's balance
 			local data = playerData[plr]
 			if data then
@@ -2550,100 +2481,26 @@ local function generateMap()
 			checkpointPositions[i] = currentPos + Vector3.new(0,5,0)
 
 			-- ============================================================
-			-- CHECKPOINT PLATFORM: Large decorated candy spawn pad
+			-- CHECKPOINT: A big candy piece from CandyPieces (no basic shapes)
 			-- ============================================================
 
-			-- Main platform (big, solid, safe landing)
-			local cpBase = Instance.new("Part")
-			cpBase.Name = "CheckpointBase_"..i
-			cpBase.Size = Vector3.new(5, 40, 40)
-			cpBase.Position = currentPos + Vector3.new(0, 0, 0)
-			cpBase.Anchored = true; cpBase.Color = Color3.fromRGB(255, 220, 180)
-			cpBase.Material = Enum.Material.SmoothPlastic
-			cpBase.Shape = Enum.PartType.Cylinder
-			cpBase.Orientation = Vector3.new(0,0,90)
-			cpBase.TopSurface = Enum.SurfaceType.Smooth
-			cpBase.BottomSurface = Enum.SurfaceType.Smooth
-			cpBase.Parent = mapFolder
-
-			-- Frosting top layer
-			local cpFrost = Instance.new("Part")
-			cpFrost.Size = Vector3.new(2.5, 38, 38)
-			cpFrost.Position = currentPos + Vector3.new(0, 3, 0)
-			cpFrost.Anchored = true; cpFrost.Color = Color3.fromRGB(255, 180, 220)
-			cpFrost.Material = Enum.Material.SmoothPlastic
-			cpFrost.Shape = Enum.PartType.Cylinder
-			cpFrost.Orientation = Vector3.new(0,0,90)
-			cpFrost.CanCollide = true; cpFrost.Parent = mapFolder
-
-			-- Neon ring border
-			local cpRing = Instance.new("Part")
-			cpRing.Size = Vector3.new(1.5, 44, 44)
-			cpRing.Position = currentPos + Vector3.new(0, -1, 0)
-			cpRing.Anchored = true; cpRing.Color = Color3.fromRGB(60, 150, 90)
-			cpRing.Material = Enum.Material.Neon
-			cpRing.Shape = Enum.PartType.Cylinder
-			cpRing.Orientation = Vector3.new(0,0,90)
-			cpRing.Transparency = 0.5; cpRing.CanCollide = false
-			cpRing.Parent = mapFolder
-
-			-- Inner glow ring (dimmed)
-			local cpGlow = Instance.new("Part")
-			cpGlow.Size = Vector3.new(0.5, 30, 30)
-			cpGlow.Position = currentPos + Vector3.new(0, 4, 0)
-			cpGlow.Anchored = true; cpGlow.Color = Color3.fromRGB(180, 180, 140)
-			cpGlow.Material = Enum.Material.Neon
-			cpGlow.Shape = Enum.PartType.Cylinder
-			cpGlow.Orientation = Vector3.new(0,0,90)
-			cpGlow.Transparency = 0.7; cpGlow.CanCollide = false
-			cpGlow.Parent = mapFolder
-
-			-- Subtle light (dimmed)
-			local cpLight = Instance.new("PointLight")
-			cpLight.Color = Color3.fromRGB(80, 180, 110)
-			cpLight.Brightness = 1.2; cpLight.Range = 35
-			cpLight.Parent = cpBase
-
-			-- 4 candy cane pillars around the checkpoint
-			for pi = 1, 4 do
-				local angle = (pi/4)*math.pi*2
-				local px = math.cos(angle)*18
-				local pz = math.sin(angle)*18
-				local pillar = Instance.new("Part")
-				pillar.Size = Vector3.new(2, 20, 2)
-				pillar.Position = currentPos + Vector3.new(px, 12, pz)
-				pillar.Anchored = true; pillar.Color = Color3.fromRGB(255,30,30)
-				pillar.Material = Enum.Material.SmoothPlastic; pillar.Parent = mapFolder
-
-				local pStripe = Instance.new("Part")
-				pStripe.Size = Vector3.new(1.5, 20.5, 1.5)
-				pStripe.Position = currentPos + Vector3.new(px, 12, pz)
-				pStripe.Anchored = true; pStripe.Color = Color3.fromRGB(255,255,255)
-				pStripe.Transparency = 0.35; pStripe.CanCollide = false
-				pStripe.Material = Enum.Material.SmoothPlastic; pStripe.Parent = mapFolder
-
-				local topBall = Instance.new("Part")
-				topBall.Size = Vector3.new(3,3,3)
-				topBall.Position = currentPos + Vector3.new(px, 23, pz)
-				topBall.Anchored = true; topBall.Color = Color3.fromRGB(60,150,90)
-				topBall.Shape = Enum.PartType.Ball
-				topBall.Material = Enum.Material.Neon
-				topBall.CanCollide = false; topBall.Parent = mapFolder
+			-- Use a random candy model scaled up as the checkpoint platform
+			local cpCandyName = randomCandy()
+			local _, cpModel = buildCandyPlatform(cpCandyName, 9000 + i, currentPos, 3.0)
+			-- Make all parts in checkpoint walkable/collidable
+			for _, part in cpModel:GetDescendants() do
+				if part:IsA("BasePart") then
+					part.CanCollide = true
+				end
 			end
 
-			-- Sprinkles on platform
-			local sprCols = {Color3.fromRGB(255,80,80),Color3.fromRGB(80,255,80),Color3.fromRGB(80,80,255),Color3.fromRGB(255,255,80)}
-			for si = 1, 20 do
-				local sa = (si/20)*math.pi*2
-				local sr = math.random(3, 16)
-				local spr = Instance.new("Part")
-				spr.Size = Vector3.new(0.4,0.4,1.4)
-				spr.Position = currentPos + Vector3.new(math.cos(sa)*sr, 4.5, math.sin(sa)*sr)
-				spr.Rotation = Vector3.new(0, math.random(0,360), 0)
-				spr.Anchored = true; spr.CanCollide = false
-				spr.Color = sprCols[math.random(1,#sprCols)]
-				spr.Material = Enum.Material.SmoothPlastic
-				spr.Parent = mapFolder
+			-- Checkpoint glow
+			local cpFirstPart = cpModel:FindFirstChildWhichIsA("BasePart", true)
+			if cpFirstPart then
+				local cpLight = Instance.new("PointLight")
+				cpLight.Color = Color3.fromRGB(80, 255, 130)
+				cpLight.Brightness = 2; cpLight.Range = 40
+				cpLight.Parent = cpFirstPart
 			end
 
 			-- Checkpoint sign
