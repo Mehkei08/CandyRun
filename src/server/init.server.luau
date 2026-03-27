@@ -127,59 +127,57 @@ end
 -- ============================================================
 -- CANDY PLATFORM LOADER
 -- Loads candy models from ServerStorage > CandyModels folder.
--- To use: In Roblox Studio, create a Folder in ServerStorage called "CandyModels".
--- Inside it, place your candy models named exactly:
---   candycane, candycorn, chocolate, lollipop, gummy, donut, cupcake, jawbreaker
--- Each model should have one large part as the main walkable surface.
+-- Loads candy models from ServerStorage > CandyPieces folder.
+-- All models inside that folder are auto-discovered and used as parkour platforms.
 -- The script clones them, scales them, and positions them as platforms.
--- Falls back to a colored part if the model isn't found.
 -- ============================================================
 
--- Fallback colors/shapes if model not found in ServerStorage
-local CANDY_FALLBACK = {
-	candycane  = {Color3.fromRGB(220, 20, 20), Enum.PartType.Cylinder, Vector3.new(22, 6, 6)}, -- red+white striped cylinder
-	icecream   = {Color3.fromRGB(85, 45, 18), Enum.PartType.Ball, Vector3.new(14, 14, 14)}, -- brown ball (scoop)
-	candypieces = {Color3.fromRGB(85, 45, 18), Enum.PartType.Ball, Vector3.new(12, 10, 12)}, -- chocolate scoop pieces
-	peppermint = {Color3.fromRGB(255, 20, 20), Enum.PartType.Cylinder, Vector3.new(5, 18, 18)}, -- red+white flat cylinder
-}
+-- ============================================================
+-- DYNAMIC CANDY MODEL LOADER
+-- Scans ServerStorage > CandyPieces for all models/meshparts.
+-- Each child becomes a usable platform type.
+-- ============================================================
 
--- Cache: clone templates from ServerStorage (or ReplicatedStorage/workspace fallback)
-local candyTemplateCache = {}
-local candyModelsFolder = ServerStorage:FindFirstChild("CandyModels")
-	or ReplicatedStorage:FindFirstChild("CandyModels")
-	or workspace:FindFirstChild("CandyModels")
+local candyPiecesFolder = ServerStorage:FindFirstChild("CandyPieces")
+	or ServerStorage:FindFirstChild("CandyModels")
+	or ReplicatedStorage:FindFirstChild("CandyPieces")
 
-local function getCandyTemplate(candyType)
-	if candyTemplateCache[candyType] then return candyTemplateCache[candyType] end
-	-- Search the CandyModels folder
-	if candyModelsFolder then
-		local template = candyModelsFolder:FindFirstChild(candyType)
-		if template then
-			candyTemplateCache[candyType] = template
-			return template
+-- Build list of available candy template names from the folder
+local CANDY_TYPES = {}
+local candyTemplates = {} -- name -> template instance
+
+if candyPiecesFolder then
+	for _, child in candyPiecesFolder:GetChildren() do
+		if child:IsA("Model") or child:IsA("BasePart") or child:IsA("MeshPart") then
+			local name = child.Name
+			table.insert(CANDY_TYPES, name)
+			candyTemplates[name] = child
+			print("[CandyRun] Found candy piece: " .. name)
 		end
 	end
-	-- Also search ServerStorage root directly (in case models aren't in a folder)
-	local direct = ServerStorage:FindFirstChild(candyType)
-	if direct and (direct:IsA("Model") or direct:IsA("BasePart")) then
-		candyTemplateCache[candyType] = direct
-		return direct
-	end
-	return nil
+	print("[CandyRun] Loaded " .. #CANDY_TYPES .. " candy pieces from " .. candyPiecesFolder.Name)
+else
+	warn("[CandyRun] WARNING: No CandyPieces folder found in ServerStorage! Parkour will use fallback shapes.")
 end
 
-local function buildCandyFromModel(candyType, index, pos, m)
-	m = m or 1
-	local model = Instance.new("Model"); model.Name = candyType .. "_" .. index
+-- If no models found, add a fallback type so the game doesn't break
+if #CANDY_TYPES == 0 then
+	CANDY_TYPES = {"_fallback"}
+end
 
-	local template = getCandyTemplate(candyType)
+-- Build a candy platform from a template model
+local function buildCandyPlatform(candyName, index, pos, m)
+	m = m or 1
+	local model = Instance.new("Model"); model.Name = candyName .. "_" .. index
+
+	local template = candyTemplates[candyName]
 	local loaded = false
 
 	if template then
-		-- Clone the template model
+		-- Clone the template
 		local clone = template:Clone()
 
-		-- Scale all parts by m
+		-- Scale all parts by m and anchor them
 		for _, part in clone:GetDescendants() do
 			if part:IsA("BasePart") then
 				part.Size = part.Size * m
@@ -204,36 +202,34 @@ local function buildCandyFromModel(candyType, index, pos, m)
 		end
 
 		-- Reparent children into our model
-		for _, child in clone:GetChildren() do
-			child.Parent = model
+		if clone:IsA("Model") then
+			for _, child in clone:GetChildren() do
+				child.Parent = model
+			end
+			clone:Destroy()
+		else
+			-- Single BasePart/MeshPart template
+			clone.Name = "Walkable"
+			clone.CanCollide = true
+			clone.Parent = model
 		end
-		clone:Destroy()
 		loaded = true
 	end
 
-	-- Fallback: simple colored part if model wasn't found
+	-- Fallback: pink ball if model wasn't found
 	if not loaded then
-		local fb = CANDY_FALLBACK[candyType] or {Color3.fromRGB(255,100,200), Enum.PartType.Ball, Vector3.new(14,14,14)}
+		warn("[CandyRun] Missing candy model: " .. candyName .. " — using fallback shape")
 		local main = Instance.new("Part")
 		main.Name = "Walkable"
-		main.Size = fb[3] * m
+		main.Size = Vector3.new(14, 14, 14) * m
 		main.Position = pos; main.Anchored = true
-		main.Color = fb[1]
+		main.Color = Color3.fromRGB(255, 100, 200)
 		main.Material = Enum.Material.SmoothPlastic
-		if fb[2] ~= Enum.PartType.Block then main.Shape = fb[2] end
-		if fb[2] == Enum.PartType.Cylinder and (candyType == "lollipop" or candyType == "donut") then
-			main.Orientation = Vector3.new(0,0,90)
-		end
+		main.Shape = Enum.PartType.Ball
 		main.TopSurface = Enum.SurfaceType.Smooth
 		main.BottomSurface = Enum.SurfaceType.Smooth
 		main.Parent = model
-		glow(main, fb[1], 22, 0.5)
-
-		-- Glass sheen
-		addSheen(model, main.Size + Vector3.new(0.3*m, 0.3*m, 0.3*m), pos, Color3.fromRGB(255,255,255),
-			fb[2] ~= Enum.PartType.Block and fb[2] or nil,
-			(fb[2] == Enum.PartType.Cylinder and (candyType == "lollipop" or candyType == "donut")) and Vector3.new(0,0,90) or nil
-		)
+		glow(main, Color3.fromRGB(255, 100, 200), 22, 0.5)
 	end
 
 	model.Parent = mapFolder
@@ -241,122 +237,96 @@ local function buildCandyFromModel(candyType, index, pos, m)
 	return walkable or model:FindFirstChildWhichIsA("BasePart"), model
 end
 
--- Wrapper functions for the 4 real candy model types
-local function buildCandyCane(index, pos, m)
-	return buildCandyFromModel("candycane", index, pos, m)
+-- Helper: pick a random candy type from the available pieces
+local function randomCandy()
+	return CANDY_TYPES[math.random(1, #CANDY_TYPES)]
 end
-
-local function buildIceCream(index, pos, m)
-	return buildCandyFromModel("icecream", index, pos, m)
-end
-
-local function buildCandyPieces(index, pos, m)
-	return buildCandyFromModel("candypieces", index, pos, m)
-end
-
-local function buildPeppermint(index, pos, m)
-	return buildCandyFromModel("peppermint", index, pos, m)
-end
-
-
-
-local BUILDERS = {
-	candycane = buildCandyCane, icecream = buildIceCream,
-	candypieces = buildCandyPieces, peppermint = buildPeppermint,
-}
-
--- ============================================================
--- LEVELS (50)
--- ============================================================
-
--- Candy parkour — platforms made from your candy models at different scales
-local CANDY_TYPES = {"candycane", "icecream", "candypieces", "peppermint"}
 
 local LEVELS = {
-	-- ====== PHASE 1: EASY (Levels 1-5) — 3 pieces, decent gaps to learn jumping ======
-	-- Level 1: Straight intro — learn the rhythm
+	-- ====== PHASE 1: EASY (Levels 1-5) — 3 random candy pieces, decent gaps ======
+	-- Level 1: Straight intro
 	{
 		pieces = {
-			{offset={0, 0, -28}, candy="candycane", size=1.8},
-			{offset={6, 2, -26}, candy="icecream", size=1.6},
-			{offset={-5, -1, -28}, candy="peppermint", size=1.7},
+			{offset={0, 0, -28}, size=1.8},
+			{offset={6, 2, -26}, size=1.6},
+			{offset={-5, -1, -28}, size=1.7},
 		},
 	},
-	-- Level 2: Zigzag with gaps
+	-- Level 2: Zigzag
 	{
 		pieces = {
-			{offset={-8, 1, -30}, candy="icecream", size=1.7},
-			{offset={10, 3, -26}, candy="candypieces", size=1.5},
-			{offset={-7, -2, -28}, candy="candycane", size=1.6},
+			{offset={-8, 1, -30}, size=1.7},
+			{offset={10, 3, -26}, size=1.5},
+			{offset={-7, -2, -28}, size=1.6},
 		},
 	},
-	-- Level 3: Height changes force precision
+	-- Level 3: Height changes
 	{
 		pieces = {
-			{offset={5, 4, -28}, candy="peppermint", size=1.7},
-			{offset={-8, -3, -30}, candy="icecream", size=1.6},
-			{offset={9, 2, -26}, candy="candypieces", size=1.5},
+			{offset={5, 4, -28}, size=1.7},
+			{offset={-8, -3, -30}, size=1.6},
+			{offset={9, 2, -26}, size=1.5},
 		},
 	},
 	-- Level 4: Wide diagonal jumps
 	{
 		pieces = {
-			{offset={-10, 0, -30}, candy="candycane", size=1.6},
-			{offset={12, 3, -28}, candy="peppermint", size=1.5},
-			{offset={-8, -2, -26}, candy="icecream", size=1.7},
+			{offset={-10, 0, -30}, size=1.6},
+			{offset={12, 3, -28}, size=1.5},
+			{offset={-8, -2, -26}, size=1.7},
 		},
 	},
 	-- Level 5: CHECKPOINT
 	{
 		pieces = {
-			{offset={0, 1, -28}, candy="candypieces", size=1.8},
-			{offset={8, 0, -26}, candy="candycane", size=1.6},
-			{offset={-6, 3, -28}, candy="peppermint", size=1.7},
+			{offset={0, 1, -28}, size=1.8},
+			{offset={8, 0, -26}, size=1.6},
+			{offset={-6, 3, -28}, size=1.7},
 		},
 		checkpoint = true,
 	},
 
-	-- ====== PHASE 2: MEDIUM (Levels 6-10) — 3-4 pieces, smaller platforms, bigger gaps ======
-	-- Level 6: Longer jumps, smaller landing spots
+	-- ====== PHASE 2: MEDIUM (Levels 6-10) — 3-4 pieces, smaller, bigger gaps ======
+	-- Level 6: Longer jumps
 	{
 		pieces = {
-			{offset={-12, 2, -32}, candy="icecream", size=1.3},
-			{offset={14, -3, -30}, candy="candycane", size=1.2},
-			{offset={-10, 4, -32}, candy="peppermint", size=1.1},
+			{offset={-12, 2, -32}, size=1.3},
+			{offset={14, -3, -30}, size=1.2},
+			{offset={-10, 4, -32}, size=1.1},
 		},
 	},
-	-- Level 7: 4 pieces, tight platforms, big X swings
+	-- Level 7: 4 pieces, big X swings
 	{
 		pieces = {
-			{offset={8, 0, -34}, candy="candypieces", size=1.2},
-			{offset={-14, 3, -28}, candy="icecream", size=1.1},
-			{offset={12, -2, -32}, candy="candycane", size=1.3},
-			{offset={-10, 5, -28}, candy="peppermint", size=1.1},
+			{offset={8, 0, -34}, size=1.2},
+			{offset={-14, 3, -28}, size=1.1},
+			{offset={12, -2, -32}, size=1.3},
+			{offset={-10, 5, -28}, size=1.1},
 		},
 	},
-	-- Level 8: Staircase up — height jumps
+	-- Level 8: Staircase up
 	{
 		pieces = {
-			{offset={-8, 5, -30}, candy="candycane", size=1.3},
-			{offset={14, -4, -32}, candy="candypieces", size=1.2},
-			{offset={-12, 6, -28}, candy="icecream", size=1.1},
+			{offset={-8, 5, -30}, size=1.3},
+			{offset={14, -4, -32}, size=1.2},
+			{offset={-12, 6, -28}, size=1.1},
 		},
 	},
 	-- Level 9: 4 pieces, max spread
 	{
 		pieces = {
-			{offset={10, -2, -34}, candy="peppermint", size=1.2},
-			{offset={-16, 4, -30}, candy="candycane", size=1.1},
-			{offset={14, 0, -32}, candy="candypieces", size=1.2},
-			{offset={-12, 5, -28}, candy="icecream", size=1.1},
+			{offset={10, -2, -34}, size=1.2},
+			{offset={-16, 4, -30}, size=1.1},
+			{offset={14, 0, -32}, size=1.2},
+			{offset={-12, 5, -28}, size=1.1},
 		},
 	},
 	-- Level 10: CHECKPOINT
 	{
 		pieces = {
-			{offset={0, 2, -32}, candy="icecream", size=1.4},
-			{offset={-10, 3, -30}, candy="candycane", size=1.2},
-			{offset={8, 0, -28}, candy="peppermint", size=1.3},
+			{offset={0, 2, -32}, size=1.4},
+			{offset={-10, 3, -30}, size=1.2},
+			{offset={8, 0, -28}, size=1.3},
 		},
 		checkpoint = true,
 	},
@@ -365,48 +335,48 @@ local LEVELS = {
 	-- Level 11: Punishing gaps
 	{
 		pieces = {
-			{offset={-14, 3, -36}, candy="candycane", size=1.0},
-			{offset={18, -4, -32}, candy="icecream", size=0.9},
-			{offset={-16, 5, -34}, candy="peppermint", size=0.9},
-			{offset={12, 0, -30}, candy="candypieces", size=1.0},
+			{offset={-14, 3, -36}, size=1.0},
+			{offset={18, -4, -32}, size=0.9},
+			{offset={-16, 5, -34}, size=0.9},
+			{offset={12, 0, -30}, size=1.0},
 		},
 	},
-	-- Level 12: Moving platforms — timing matters
+	-- Level 12: Moving platforms
 	{
 		pieces = {
-			{offset={8, 2, -36}, candy="icecream", size=1.0},
-			{offset={-18, -3, -32}, candy="candypieces", size=0.9},
-			{offset={16, 5, -34}, candy="candycane", size=0.9},
-			{offset={-12, 0, -30}, candy="peppermint", size=1.0},
+			{offset={8, 2, -36}, size=1.0},
+			{offset={-18, -3, -32}, size=0.9},
+			{offset={16, 5, -34}, size=0.9},
+			{offset={-12, 0, -30}, size=1.0},
 		},
 		moving = true,
 	},
 	-- Level 13: Brutal height swings
 	{
 		pieces = {
-			{offset={-16, 7, -36}, candy="peppermint", size=0.9},
-			{offset={20, -5, -34}, candy="candycane", size=1.0},
-			{offset={-18, 4, -32}, candy="candypieces", size=0.9},
-			{offset={14, 8, -34}, candy="icecream", size=0.9},
+			{offset={-16, 7, -36}, size=0.9},
+			{offset={20, -5, -34}, size=1.0},
+			{offset={-18, 4, -32}, size=0.9},
+			{offset={14, 8, -34}, size=0.9},
 		},
 	},
-	-- Level 14: Moving + tiny — the real test
+	-- Level 14: Moving + tiny
 	{
 		pieces = {
-			{offset={10, -2, -38}, candy="candypieces", size=0.9},
-			{offset={-20, 5, -34}, candy="icecream", size=0.8},
-			{offset={18, 0, -32}, candy="peppermint", size=0.9},
-			{offset={-14, 6, -34}, candy="candycane", size=0.8},
+			{offset={10, -2, -38}, size=0.9},
+			{offset={-20, 5, -34}, size=0.8},
+			{offset={18, 0, -32}, size=0.9},
+			{offset={-14, 6, -34}, size=0.8},
 		},
 		moving = true,
 	},
-	-- Level 15: FINAL CHECKPOINT — you made it
+	-- Level 15: FINAL CHECKPOINT
 	{
 		pieces = {
-			{offset={0, 3, -34}, candy="icecream", size=1.1},
-			{offset={-10, 0, -30}, candy="candycane", size=1.0},
-			{offset={8, 2, -32}, candy="peppermint", size=1.1},
-			{offset={0, 0, -28}, candy="candypieces", size=1.2},
+			{offset={0, 3, -34}, size=1.1},
+			{offset={-10, 0, -30}, size=1.0},
+			{offset={8, 2, -32}, size=1.1},
+			{offset={0, 0, -28}, size=1.2},
 		},
 		checkpoint = true,
 	},
@@ -2558,8 +2528,8 @@ local function generateMap()
 				piecePos = currentPos + Vector3.new(piece.offset[1], piece.offset[2], piece.offset[3])
 			end
 			
-			local builder = BUILDERS[piece.candy] or buildIceCream
-			local walkable, mdl = builder(i*10+pi, piecePos, piece.size)
+			local candyName = piece.candy or randomCandy()
+			local walkable, mdl = buildCandyPlatform(candyName, i*10+pi, piecePos, piece.size)
 			
 			if level.moving then makeMoving(mdl) end
 			if level.crumbling then makeCrumbling(mdl, walkable) end
