@@ -1734,16 +1734,14 @@ local function createSpawnRoom()
 	backing.Material = Enum.Material.SmoothPlastic; backing.Shape = Enum.PartType.Cylinder
 	backing.CanCollide = false; backing.Parent = wheelModel
 
-	-- ---- SPINNING MODEL (everything that rotates) ----
-	local spinModel = Instance.new("Model"); spinModel.Name = "SpinDisc"; spinModel.Parent = wheelModel
-
-	-- Main disc
+	-- ---- STATIC WHEEL FRAME (disc, rim, lights — does NOT rotate) ----
+	-- Main disc face
 	local disc = Instance.new("Part"); disc.Name = "Disc"
 	disc.Size = Vector3.new(WR * 2, 2, WR * 2)
 	disc.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z) * CFrame.Angles(math.rad(90), 0, 0)
 	disc.Anchored = true; disc.Color = Color3.fromRGB(240, 230, 210)
 	disc.Material = Enum.Material.SmoothPlastic; disc.Shape = Enum.PartType.Cylinder
-	disc.Parent = spinModel
+	disc.Parent = wheelModel
 
 	-- Gold outer rim
 	local outerRim = Instance.new("Part")
@@ -1752,7 +1750,30 @@ local function createSpawnRoom()
 	outerRim.Anchored = true; outerRim.Color = Color3.fromRGB(255, 215, 0)
 	outerRim.Material = Enum.Material.Metal; outerRim.Transparency = 0.15
 	outerRim.Shape = Enum.PartType.Cylinder; outerRim.CanCollide = false
-	outerRim.Parent = spinModel
+	outerRim.Parent = wheelModel
+
+	-- Rim lights (static, around the frame)
+	for i = 1, 20 do
+		local a = (i / 20) * math.pi * 2
+		local bulb = Instance.new("Part")
+		bulb.Size = Vector3.new(1.2, 1.2, 1.2)
+		bulb.Position = Vector3.new(SPIN_X + math.cos(a) * (WR + 3), WCY + math.sin(a) * (WR + 3), SPIN_Z - 0.5)
+		bulb.Anchored = true; bulb.Shape = Enum.PartType.Ball
+		bulb.Color = if i % 2 == 0 then Color3.fromRGB(255, 50, 50) else Color3.fromRGB(255, 255, 80)
+		bulb.Material = Enum.Material.Neon; bulb.CanCollide = false
+		bulb.Parent = wheelModel
+	end
+
+	-- Center hub (static, stays in place)
+	local hub = Instance.new("Part")
+	hub.Size = Vector3.new(4, 4, 3)
+	hub.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z - 0.8) * CFrame.Angles(math.rad(90), 0, 0)
+	hub.Anchored = true; hub.Color = Color3.fromRGB(255, 215, 0)
+	hub.Material = Enum.Material.Metal; hub.Shape = Enum.PartType.Cylinder
+	hub.Parent = wheelModel
+
+	-- ---- SPINNING PRIZE SLICES (only segments + dividers + labels rotate) ----
+	local spinModel = Instance.new("Model"); spinModel.Name = "PrizeSlices"; spinModel.Parent = wheelModel
 
 	-- Segment colors
 	local segColors = {
@@ -1808,26 +1829,6 @@ local function createSpawnRoom()
 		tl.TextColor3 = Color3.fromRGB(0,0,0); tl.TextScaled = true
 		tl.Font = Enum.Font.FredokaOne; tl.Parent = sg
 	end
-
-	-- Rim lights
-	for i = 1, 20 do
-		local a = (i / 20) * math.pi * 2
-		local bulb = Instance.new("Part")
-		bulb.Size = Vector3.new(1.2, 1.2, 1.2)
-		bulb.Position = Vector3.new(SPIN_X + math.cos(a) * (WR + 3), WCY + math.sin(a) * (WR + 3), SPIN_Z - 0.5)
-		bulb.Anchored = true; bulb.Shape = Enum.PartType.Ball
-		bulb.Color = if i % 2 == 0 then Color3.fromRGB(255, 50, 50) else Color3.fromRGB(255, 255, 80)
-		bulb.Material = Enum.Material.Neon; bulb.CanCollide = false
-		bulb.Parent = spinModel
-	end
-
-	-- Center hub
-	local hub = Instance.new("Part")
-	hub.Size = Vector3.new(4, 4, 3)
-	hub.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z - 0.8) * CFrame.Angles(math.rad(90), 0, 0)
-	hub.Anchored = true; hub.Color = Color3.fromRGB(255, 215, 0)
-	hub.Material = Enum.Material.Metal; hub.Shape = Enum.PartType.Cylinder
-	hub.Parent = spinModel
 
 	-- ---- STATIC POINTER at top (does NOT rotate) ----
 	local pointer = Instance.new("Part"); pointer.Name = "Pointer"
