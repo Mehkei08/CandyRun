@@ -273,140 +273,140 @@ local BUILDERS = {
 local CANDY_TYPES = {"candycane", "icecream", "candypieces", "peppermint"}
 
 local LEVELS = {
-	-- ====== PHASE 1: EASY (Levels 1-5) — 3 pieces, large, short jumps, single lane ======
-	-- Level 1: Gentle intro — straight line of candy
+	-- ====== PHASE 1: EASY (Levels 1-5) — 3 pieces, decent gaps to learn jumping ======
+	-- Level 1: Straight intro — learn the rhythm
 	{
 		pieces = {
-			{offset={0, 0, -20}, candy="candycane", size=2.0},
-			{offset={3, 1, -18}, candy="icecream", size=1.8},
-			{offset={-2, 0, -18}, candy="peppermint", size=1.9},
+			{offset={0, 0, -28}, candy="candycane", size=1.8},
+			{offset={6, 2, -26}, candy="icecream", size=1.6},
+			{offset={-5, -1, -28}, candy="peppermint", size=1.7},
 		},
 	},
-	-- Level 2: Slight zigzag
+	-- Level 2: Zigzag with gaps
 	{
 		pieces = {
-			{offset={-3, 0, -20}, candy="icecream", size=1.9},
-			{offset={5, 2, -18}, candy="candypieces", size=1.7},
-			{offset={-4, -1, -18}, candy="candycane", size=1.8},
+			{offset={-8, 1, -30}, candy="icecream", size=1.7},
+			{offset={10, 3, -26}, candy="candypieces", size=1.5},
+			{offset={-7, -2, -28}, candy="candycane", size=1.6},
 		},
 	},
-	-- Level 3: Small height changes
+	-- Level 3: Height changes force precision
 	{
 		pieces = {
-			{offset={2, 2, -22}, candy="peppermint", size=2.0},
-			{offset={-3, -1, -18}, candy="icecream", size=1.8},
-			{offset={4, 1, -18}, candy="candypieces", size=1.7},
+			{offset={5, 4, -28}, candy="peppermint", size=1.7},
+			{offset={-8, -3, -30}, candy="icecream", size=1.6},
+			{offset={9, 2, -26}, candy="candypieces", size=1.5},
 		},
 	},
-	-- Level 4: Wider spacing
+	-- Level 4: Wide diagonal jumps
 	{
 		pieces = {
-			{offset={-4, 0, -22}, candy="candycane", size=1.8},
-			{offset={5, 2, -20}, candy="peppermint", size=1.6},
-			{offset={-3, -1, -18}, candy="icecream", size=1.9},
+			{offset={-10, 0, -30}, candy="candycane", size=1.6},
+			{offset={12, 3, -28}, candy="peppermint", size=1.5},
+			{offset={-8, -2, -26}, candy="icecream", size=1.7},
 		},
 	},
-	-- Level 5: CHECKPOINT — easy landing pad
+	-- Level 5: CHECKPOINT
 	{
 		pieces = {
-			{offset={0, 1, -20}, candy="candypieces", size=1.9},
-			{offset={3, 0, -18}, candy="candycane", size=1.8},
-			{offset={-2, 2, -18}, candy="peppermint", size=2.0},
+			{offset={0, 1, -28}, candy="candypieces", size=1.8},
+			{offset={8, 0, -26}, candy="candycane", size=1.6},
+			{offset={-6, 3, -28}, candy="peppermint", size=1.7},
 		},
 		checkpoint = true,
 	},
 
-	-- ====== PHASE 2: MEDIUM (Levels 6-10) — 3-4 pieces, medium sizes, wider gaps ======
-	-- Level 6: Bigger X offsets
+	-- ====== PHASE 2: MEDIUM (Levels 6-10) — 3-4 pieces, smaller platforms, bigger gaps ======
+	-- Level 6: Longer jumps, smaller landing spots
 	{
 		pieces = {
-			{offset={-6, 1, -22}, candy="icecream", size=1.4},
-			{offset={8, -1, -20}, candy="candycane", size=1.3},
-			{offset={-5, 2, -22}, candy="peppermint", size=1.2},
+			{offset={-12, 2, -32}, candy="icecream", size=1.3},
+			{offset={14, -3, -30}, candy="candycane", size=1.2},
+			{offset={-10, 4, -32}, candy="peppermint", size=1.1},
 		},
 	},
-	-- Level 7: 4 pieces, tighter platforms
+	-- Level 7: 4 pieces, tight platforms, big X swings
 	{
 		pieces = {
-			{offset={4, 0, -24}, candy="candypieces", size=1.3},
-			{offset={-8, 2, -20}, candy="icecream", size=1.2},
-			{offset={7, -1, -22}, candy="candycane", size=1.4},
-			{offset={-6, 3, -20}, candy="peppermint", size=1.2},
+			{offset={8, 0, -34}, candy="candypieces", size=1.2},
+			{offset={-14, 3, -28}, candy="icecream", size=1.1},
+			{offset={12, -2, -32}, candy="candycane", size=1.3},
+			{offset={-10, 5, -28}, candy="peppermint", size=1.1},
 		},
 	},
-	-- Level 8: Height jumps
+	-- Level 8: Staircase up — height jumps
 	{
 		pieces = {
-			{offset={-5, 3, -22}, candy="candycane", size=1.5},
-			{offset={10, -2, -22}, candy="candypieces", size=1.3},
-			{offset={-8, 4, -20}, candy="icecream", size=1.2},
+			{offset={-8, 5, -30}, candy="candycane", size=1.3},
+			{offset={14, -4, -32}, candy="candypieces", size=1.2},
+			{offset={-12, 6, -28}, candy="icecream", size=1.1},
 		},
 	},
-	-- Level 9: 4 pieces, more spread
+	-- Level 9: 4 pieces, max spread
 	{
 		pieces = {
-			{offset={6, -1, -24}, candy="peppermint", size=1.3},
-			{offset={-10, 2, -20}, candy="candycane", size=1.2},
-			{offset={8, 0, -22}, candy="candypieces", size=1.4},
-			{offset={-7, 3, -20}, candy="icecream", size=1.2},
+			{offset={10, -2, -34}, candy="peppermint", size=1.2},
+			{offset={-16, 4, -30}, candy="candycane", size=1.1},
+			{offset={14, 0, -32}, candy="candypieces", size=1.2},
+			{offset={-12, 5, -28}, candy="icecream", size=1.1},
 		},
 	},
 	-- Level 10: CHECKPOINT
 	{
 		pieces = {
-			{offset={0, 1, -22}, candy="icecream", size=1.5},
-			{offset={-5, 2, -22}, candy="candycane", size=1.3},
-			{offset={4, 0, -20}, candy="peppermint", size=1.4},
+			{offset={0, 2, -32}, candy="icecream", size=1.4},
+			{offset={-10, 3, -30}, candy="candycane", size=1.2},
+			{offset={8, 0, -28}, candy="peppermint", size=1.3},
 		},
 		checkpoint = true,
 	},
 
-	-- ====== PHASE 3: HARD (Levels 11-15) — 4 pieces, smaller, some moving ======
-	-- Level 11: Tighter jumps
+	-- ====== PHASE 3: HARD (Levels 11-15) — 4 pieces, small, big gaps, some moving ======
+	-- Level 11: Punishing gaps
 	{
 		pieces = {
-			{offset={-8, 2, -25}, candy="candycane", size=1.1},
-			{offset={12, -1, -22}, candy="icecream", size=1.0},
-			{offset={-10, 3, -24}, candy="peppermint", size=0.9},
-			{offset={8, 0, -22}, candy="candypieces", size=1.0},
+			{offset={-14, 3, -36}, candy="candycane", size=1.0},
+			{offset={18, -4, -32}, candy="icecream", size=0.9},
+			{offset={-16, 5, -34}, candy="peppermint", size=0.9},
+			{offset={12, 0, -30}, candy="candypieces", size=1.0},
 		},
 	},
-	-- Level 12: Moving platforms!
+	-- Level 12: Moving platforms — timing matters
 	{
 		pieces = {
-			{offset={5, 1, -26}, candy="icecream", size=1.1},
-			{offset={-12, -2, -22}, candy="candypieces", size=1.0},
-			{offset={10, 3, -24}, candy="candycane", size=0.9},
-			{offset={-8, 0, -22}, candy="peppermint", size=1.1},
-		},
-		moving = true,
-	},
-	-- Level 13: Big height variation
-	{
-		pieces = {
-			{offset={-10, 4, -25}, candy="peppermint", size=1.0},
-			{offset={14, -3, -24}, candy="candycane", size=1.1},
-			{offset={-12, 2, -22}, candy="candypieces", size=0.9},
-			{offset={8, 5, -24}, candy="icecream", size=1.0},
-		},
-	},
-	-- Level 14: Moving + small
-	{
-		pieces = {
-			{offset={6, -1, -26}, candy="candypieces", size=1.0},
-			{offset={-15, 3, -24}, candy="icecream", size=0.9},
-			{offset={12, 0, -22}, candy="peppermint", size=1.0},
-			{offset={-8, 4, -24}, candy="candycane", size=0.9},
+			{offset={8, 2, -36}, candy="icecream", size=1.0},
+			{offset={-18, -3, -32}, candy="candypieces", size=0.9},
+			{offset={16, 5, -34}, candy="candycane", size=0.9},
+			{offset={-12, 0, -30}, candy="peppermint", size=1.0},
 		},
 		moving = true,
 	},
-	-- Level 15: FINAL CHECKPOINT (finish area)
+	-- Level 13: Brutal height swings
 	{
 		pieces = {
-			{offset={0, 2, -25}, candy="icecream", size=1.2},
-			{offset={-5, 0, -22}, candy="candycane", size=1.1},
-			{offset={4, 1, -22}, candy="peppermint", size=1.2},
-			{offset={0, 0, -24}, candy="candypieces", size=1.3},
+			{offset={-16, 7, -36}, candy="peppermint", size=0.9},
+			{offset={20, -5, -34}, candy="candycane", size=1.0},
+			{offset={-18, 4, -32}, candy="candypieces", size=0.9},
+			{offset={14, 8, -34}, candy="icecream", size=0.9},
+		},
+	},
+	-- Level 14: Moving + tiny — the real test
+	{
+		pieces = {
+			{offset={10, -2, -38}, candy="candypieces", size=0.9},
+			{offset={-20, 5, -34}, candy="icecream", size=0.8},
+			{offset={18, 0, -32}, candy="peppermint", size=0.9},
+			{offset={-14, 6, -34}, candy="candycane", size=0.8},
+		},
+		moving = true,
+	},
+	-- Level 15: FINAL CHECKPOINT — you made it
+	{
+		pieces = {
+			{offset={0, 3, -34}, candy="icecream", size=1.1},
+			{offset={-10, 0, -30}, candy="candycane", size=1.0},
+			{offset={8, 2, -32}, candy="peppermint", size=1.1},
+			{offset={0, 0, -28}, candy="candypieces", size=1.2},
 		},
 		checkpoint = true,
 	},
