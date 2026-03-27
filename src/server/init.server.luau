@@ -302,6 +302,16 @@ local function randomCandy()
 	return CANDY_TYPES[math.random(1, #CANDY_TYPES)]
 end
 
+-- Per-candy size override: candyfloss/sugarfloss stays at original scale (1.0)
+-- Everything else uses the step's size value
+local function getCandyScale(candyName, stepSize)
+	local lower = string.lower(candyName)
+	if string.find(lower, "floss") or string.find(lower, "cotton") then
+		return 1.0  -- candyfloss stays original size
+	end
+	return stepSize
+end
+
 -- ============================================================
 -- PARKOUR STEPS — Each step is a jump target with 3 DIFFERENT
 -- candy models at varying scales clustered together.
@@ -320,13 +330,13 @@ local CLUSTER_OFFSETS = {
 }
 
 local PARKOUR_STEPS = {
-	-- === INTRO (steps 1-6): Single path, big platforms, stretched gaps ===
-	{x=0,    y=0,   z=-120,   size=5.5},   -- 1: starter (clear of door)
-	{x=10,   y=1,   z=-175,   size=4.5},   -- 2
-	{x=-12,  y=0,   z=-235,   size=5.0},   -- 3
-	{x=8,    y=2,   z=-295,   size=4.5},   -- 4
-	{x=-10,  y=0,   z=-355,   size=5.0},   -- 5
-	{x=0,    y=0,   z=-420,   size=6.0, checkpoint=true},  -- 6: CHECKPOINT 1
+	-- === INTRO (steps 1-6): Single path, easy first jumps then stretch out ===
+	{x=0,    y=0,   z=-115,   size=5.5},   -- 1: starter (clear of door)
+	{x=8,    y=0,   z=-150,   size=5.0},   -- 2: easy first jump (35 studs)
+	{x=-10,  y=0,   z=-190,   size=5.0},   -- 3: (40 studs)
+	{x=8,    y=1,   z=-240,   size=4.5},   -- 4: (50 studs)
+	{x=-10,  y=0,   z=-295,   size=5.0},   -- 5: (55 studs)
+	{x=0,    y=0,   z=-360,   size=6.0, checkpoint=true},  -- 6: CHECKPOINT 1
 
 	-- === MEDIUM (steps 7-13): Wider jumps ===
 	{x=16,   y=2,   z=-490,   size=5.0},   -- 7
@@ -2620,7 +2630,7 @@ local function generateMap()
 		local firstModel = nil
 		for ci, cluster in ipairs(CLUSTER_OFFSETS) do
 			local candyPos = stepCenter + Vector3.new(cluster.dx, cluster.dy, cluster.dz)
-			local candySize = step.size * cluster.sizeMultiplier
+			local candySize = getCandyScale(candyName, step.size) * cluster.sizeMultiplier
 			local candyName = pickUnique()
 
 			local walkable, mdl = buildCandyPlatform(candyName, i*10+ci, candyPos, candySize)
