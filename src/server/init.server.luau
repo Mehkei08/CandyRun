@@ -287,151 +287,84 @@ local function randomCandy()
 end
 
 -- ============================================================
--- LEVELS — Absolute X,Y positions per piece (Z is auto-calculated)
--- Each level uses absolute X coords so pieces spread across the hallway.
--- Levels 1-4: single lane (one path, learn the jumps)
--- Level 5+: branches into LEFT / CENTER / RIGHT paths
--- Each piece gets a random candy model from CandyPieces.
+-- PARKOUR PIECES — Each piece is an absolute (x, y, z) position.
+-- This is a real parkour: you jump from piece to piece.
+-- Pieces 1-15: single path (learn the jumps)
+-- Pieces 16+: branches into LEFT / CENTER / RIGHT paths
+-- z goes negative (forward away from spawn)
+-- y=0 means START_HEIGHT
 -- ============================================================
 
--- Z_STEP: how far forward (-Z) each level advances
-local Z_STEP = 35
--- Starting Z (just outside spawn room door)
-local PARKOUR_START_Z = -62
--- Base Y for platforms
+local PARKOUR_START_Z = -64  -- right at the spawn room exit
 local BASE_Y = START_HEIGHT
 
-local LEVELS = {
-	-- ====== SINGLE LANE (Levels 1-4) — one path, 2-3 pieces, learn to jump ======
-	-- Level 1: Starter piece right at spawn exit
-	{
-		pieces = {
-			{x=0,   y=0,  size=2.0},  -- dead center at the door
-		},
-	},
-	-- Level 2: Slight left-right
-	{
-		pieces = {
-			{x=-8,  y=2,  size=1.7},
-			{x=10,  y=0,  size=1.6},
-		},
-	},
-	-- Level 3: Zigzag
-	{
-		pieces = {
-			{x=12,  y=3,  size=1.6},
-			{x=-10, y=-1, size=1.5},
-		},
-	},
-	-- Level 4: Three across — pick one
-	{
-		pieces = {
-			{x=-15, y=0,  size=1.5},
-			{x=0,   y=3,  size=1.4},
-			{x=15,  y=1,  size=1.5},
-		},
-	},
+-- Every single jumpable candy piece in the parkour, in order.
+-- Players jump from one to the next. Each has a unique position.
+local PARKOUR_PIECES = {
+	-- === INTRO (pieces 1-6): Single path, learn to jump ===
+	{x=0,    y=0,   z=-64,   size=2.0},   -- 1: starter, right at door
+	{x=5,    y=2,   z=-90,   size=1.8},   -- 2: slight right + up
+	{x=-8,   y=0,   z=-118,  size=1.7},   -- 3: left
+	{x=3,    y=3,   z=-145,  size=1.6},   -- 4: right + up
+	{x=-6,   y=1,   z=-172,  size=1.7},   -- 5: left
+	{x=0,    y=0,   z=-200,  size=1.9, checkpoint=true},  -- 6: CHECKPOINT 1
 
-	-- ====== BRANCHING STARTS (Level 5) — checkpoint, then 3 paths ======
-	-- Level 5: CHECKPOINT — wide landing
-	{
-		pieces = {
-			{x=-12, y=1,  size=1.8},
-			{x=12,  y=0,  size=1.8},
-		},
-		checkpoint = true,
-	},
+	-- === MEDIUM (pieces 7-15): Wider jumps, starts to branch ===
+	{x=10,   y=3,   z=-230,  size=1.5},   -- 7: right
+	{x=-12,  y=0,   z=-255,  size=1.4},   -- 8: left
+	{x=15,   y=4,   z=-282,  size=1.3},   -- 9: far right + high
+	{x=-5,   y=1,   z=-310,  size=1.4},   -- 10: center-left
+	{x=8,    y=-1,  z=-338,  size=1.3},   -- 11: right + low
+	{x=-15,  y=3,   z=-365,  size=1.3},   -- 12: far left + high
+	{x=0,    y=0,   z=-395,  size=1.6, checkpoint=true},  -- 13: CHECKPOINT 2
 
-	-- ====== THREE PATHS: LEFT / CENTER / RIGHT (Levels 6-9) ======
-	-- Level 6: Paths diverge
-	{
-		pieces = {
-			{x=-35, y=0,  size=1.4},  -- LEFT path
-			{x=0,   y=4,  size=1.3},  -- CENTER path (high)
-			{x=35,  y=0,  size=1.4},  -- RIGHT path
-		},
-	},
-	-- Level 7: Paths continue, each has 1-2 pieces
-	{
-		pieces = {
-			{x=-40, y=2,  size=1.3},  -- LEFT continues
-			{x=-25, y=-1, size=1.2},  -- LEFT alternate
-			{x=5,   y=3,  size=1.2},  -- CENTER
-			{x=38,  y=1,  size=1.3},  -- RIGHT continues
-		},
-	},
-	-- Level 8: Paths get harder
-	{
-		pieces = {
-			{x=-38, y=4,  size=1.2},  -- LEFT (high)
-			{x=-5,  y=-2, size=1.1},  -- CENTER
-			{x=15,  y=5,  size=1.0},  -- CENTER-RIGHT crossover
-			{x=40,  y=0,  size=1.2},  -- RIGHT
-		},
-	},
-	-- Level 9: Paths start converging
-	{
-		pieces = {
-			{x=-28, y=1,  size=1.1},  -- LEFT moving inward
-			{x=0,   y=3,  size=1.0},  -- CENTER
-			{x=28,  y=1,  size=1.1},  -- RIGHT moving inward
-		},
-	},
+	-- === BRANCHING (pieces 14+): Three paths diverge ===
+	-- From checkpoint, player can reach any of 3 next pieces:
 
-	-- Level 10: CHECKPOINT — paths merge
-	{
-		pieces = {
-			{x=-10, y=2,  size=1.5},
-			{x=10,  y=0,  size=1.5},
-		},
-		checkpoint = true,
-	},
+	-- LEFT PATH
+	{x=-30,  y=2,   z=-425,  size=1.3},   -- 14L
+	{x=-35,  y=0,   z=-455,  size=1.2},   -- 15L
+	{x=-28,  y=4,   z=-485,  size=1.1},   -- 16L
+	{x=-32,  y=1,   z=-515,  size=1.2},   -- 17L
 
-	-- ====== HARD (Levels 11-14) — branches again, smaller, some moving ======
-	-- Level 11: Split again
-	{
-		pieces = {
-			{x=-35, y=3,  size=1.0},
-			{x=0,   y=-1, size=0.9},
-			{x=35,  y=2,  size=1.0},
-		},
-	},
-	-- Level 12: Moving platforms
-	{
-		pieces = {
-			{x=-40, y=0,  size=0.9},
-			{x=-10, y=5,  size=0.8},
-			{x=20,  y=-2, size=0.9},
-			{x=42,  y=3,  size=0.8},
-		},
-		moving = true,
-	},
-	-- Level 13: Converge through chaos
-	{
-		pieces = {
-			{x=-25, y=4,  size=0.9},
-			{x=8,   y=-3, size=0.8},
-			{x=30,  y=6,  size=0.9},
-		},
-	},
-	-- Level 14: Moving gauntlet
-	{
-		pieces = {
-			{x=-18, y=2,  size=0.8},
-			{x=0,   y=5,  size=0.8},
-			{x=18,  y=0,  size=0.8},
-		},
-		moving = true,
-	},
+	-- CENTER PATH
+	{x=0,    y=5,   z=-430,  size=1.2},   -- 14C (higher, harder)
+	{x=5,    y=3,   z=-460,  size=1.1},   -- 15C
+	{x=-3,   y=6,   z=-490,  size=1.0},   -- 16C
+	{x=2,    y=4,   z=-520,  size=1.1},   -- 17C
 
-	-- Level 15: FINAL CHECKPOINT
-	{
-		pieces = {
-			{x=-8,  y=1,  size=1.3},
-			{x=8,   y=0,  size=1.3},
-		},
-		checkpoint = true,
-	},
+	-- RIGHT PATH
+	{x=30,   y=2,   z=-425,  size=1.3},   -- 14R
+	{x=35,   y=0,   z=-455,  size=1.2},   -- 15R
+	{x=28,   y=4,   z=-485,  size=1.1},   -- 16R
+	{x=32,   y=1,   z=-515,  size=1.2},   -- 17R
+
+	-- === PATHS MERGE (piece 26+) ===
+	-- All three paths lead to these convergence pieces
+	{x=-15,  y=2,   z=-545,  size=1.3},   -- 26: left merge
+	{x=15,   y=2,   z=-545,  size=1.3},   -- 27: right merge
+	{x=0,    y=0,   z=-575,  size=1.7, checkpoint=true},  -- 28: CHECKPOINT 3
+
+	-- === HARD (pieces 29-38): Branches again, smaller, some moving ===
+	-- LEFT HARD
+	{x=-25,  y=3,   z=-605,  size=1.0, moving=true},  -- 29
+	{x=-30,  y=0,   z=-635,  size=0.9},                -- 30
+	{x=-22,  y=5,   z=-665,  size=0.9, moving=true},  -- 31
+
+	-- CENTER HARD
+	{x=0,    y=6,   z=-610,  size=0.9, moving=true},  -- 32
+	{x=5,    y=3,   z=-640,  size=0.8},                -- 33
+	{x=-3,   y=7,   z=-670,  size=0.8, moving=true},  -- 34
+
+	-- RIGHT HARD
+	{x=25,   y=3,   z=-605,  size=1.0, moving=true},  -- 35
+	{x=30,   y=0,   z=-635,  size=0.9},                -- 36
+	{x=22,   y=5,   z=-665,  size=0.9, moving=true},  -- 37
+
+	-- === FINAL MERGE ===
+	{x=-10,  y=2,   z=-695,  size=1.1},   -- 38: left merge
+	{x=10,   y=2,   z=-695,  size=1.1},   -- 39: right merge
+	{x=0,    y=0,   z=-725,  size=1.8, checkpoint=true},  -- 40: FINAL CHECKPOINT
 }
 
 -- ============================================================
@@ -2493,9 +2426,12 @@ end
 
 local function createHallway()
 	hallwayFolder:ClearAllChildren()
-	-- Calculate Z range from level positions
-	local lastLevelZ = PARKOUR_START_Z - (#LEVELS - 1) * Z_STEP
-	local minZ = lastLevelZ - 80
+	-- Calculate Z range from parkour piece positions
+	local minPieceZ = PARKOUR_START_Z
+	for _, piece in ipairs(PARKOUR_PIECES) do
+		if piece.z < minPieceZ then minPieceZ = piece.z end
+	end
+	local minZ = minPieceZ - 400  -- extend past the final hallway
 	local maxZ = math.min(PARKOUR_START_Z + 30, -65)
 
 	local totalLen = maxZ - minZ
@@ -2656,127 +2592,83 @@ local function generateMap()
 	mapFolder:ClearAllChildren(); collectiblesFolder:ClearAllChildren()
 	checkpointPositions = {}; createSpawnRoom()
 
-	-- Each level gets its own Z position, pieces use absolute X + Y offset
-	local levelCenterPos = nil -- tracks center of current level for labels/checkpoints
+	local checkpointCount = 0
+	local lastPiecePos = Vector3.new(0, BASE_Y, PARKOUR_START_Z)
 
-	for i, level in ipairs(LEVELS) do
-		-- Calculate Z for this level (each level advances forward by Z_STEP)
-		local levelZ = PARKOUR_START_Z - (i - 1) * Z_STEP
+	-- Build every parkour piece
+	for i, piece in ipairs(PARKOUR_PIECES) do
+		local piecePos = Vector3.new(piece.x, BASE_Y + (piece.y or 0), piece.z)
 
-		-- Use a DIFFERENT random candy for EACH piece in this level
-		local usedCandies = {}
-		local function uniqueCandy()
-			-- Try to pick a candy not already used this level
-			if #CANDY_TYPES <= 1 then return randomCandy() end
-			for attempt = 1, 10 do
-				local pick = randomCandy()
-				if not usedCandies[pick] then
-					usedCandies[pick] = true
-					return pick
-				end
-			end
-			return randomCandy() -- give up, allow duplicates
-		end
+		-- Each piece gets a random candy model
+		local candyName = piece.candy or randomCandy()
+		local walkable, mdl = buildCandyPlatform(candyName, i, piecePos, piece.size)
 
-		-- Build all pieces for this level
-		for pi, piece in ipairs(level.pieces) do
-			local piecePos = Vector3.new(
-				piece.x,
-				BASE_Y + (piece.y or 0),
-				levelZ
-			)
+		-- Moving platforms
+		if piece.moving then makeMoving(mdl) end
 
-			local candyName = piece.candy or uniqueCandy()
-			local walkable, mdl = buildCandyPlatform(candyName, i*100+pi, piecePos, piece.size)
-
-			if level.moving then makeMoving(mdl) end
-			if level.crumbling then makeCrumbling(mdl, walkable) end
-		end
-
-		-- Track center position for this level (average of all pieces)
-		local avgX, avgY = 0, 0
-		for _, p in ipairs(level.pieces) do
-			avgX = avgX + p.x
-			avgY = avgY + (p.y or 0)
-		end
-		avgX = avgX / #level.pieces
-		avgY = avgY / #level.pieces
-		levelCenterPos = Vector3.new(avgX, BASE_Y + avgY, levelZ)
-
-		-- Level number label
+		-- Piece number label (floating above)
 		local np = Instance.new("Part")
-		np.Size = Vector3.new(1,1,1); np.Position = levelCenterPos + Vector3.new(0,16,0)
+		np.Size = Vector3.new(1,1,1); np.Position = piecePos + Vector3.new(0,14,0)
 		np.Anchored = true; np.Transparency = 1; np.CanCollide = false; np.Parent = mapFolder
-		local ng = Instance.new("BillboardGui"); ng.Size = UDim2.fromOffset(60,40); ng.AlwaysOnTop = false; ng.Parent = np
+		local ng = Instance.new("BillboardGui"); ng.Size = UDim2.fromOffset(50,35); ng.AlwaysOnTop = false; ng.Parent = np
 		local nl = Instance.new("TextLabel"); nl.Size = UDim2.fromScale(1,1); nl.BackgroundTransparency = 1
 		nl.Text = tostring(i); nl.TextColor3 = Color3.fromRGB(255,255,255)
-		nl.TextTransparency = 0.3; nl.TextScaled = true; nl.Font = Enum.Font.FredokaOne; nl.Parent = ng
+		nl.TextTransparency = 0.4; nl.TextScaled = true; nl.Font = Enum.Font.FredokaOne; nl.Parent = ng
 		local ns = Instance.new("UIStroke"); ns.Color = Color3.fromRGB(200,100,150); ns.Thickness = 2; ns.Parent = nl
 
-		-- Checkpoint logic
-		if level.checkpoint then
-			checkpointPositions[i] = levelCenterPos + Vector3.new(0,5,0)
+		-- Checkpoint handling
+		if piece.checkpoint then
+			checkpointCount = checkpointCount + 1
+			checkpointPositions[checkpointCount] = piecePos + Vector3.new(0,5,0)
 
-			-- ============================================================
-			-- CHECKPOINT: A big candy piece from CandyPieces (no basic shapes)
-			-- ============================================================
-
-			-- Use a random candy model scaled up as the checkpoint platform
-			local cpCandyName = randomCandy()
-			local _, cpModel = buildCandyPlatform(cpCandyName, 9000 + i, levelCenterPos, 3.0)
-			-- Make all parts in checkpoint walkable/collidable
-			for _, part in cpModel:GetDescendants() do
-				if part:IsA("BasePart") then
-					part.CanCollide = true
-				end
-			end
-
-			-- Checkpoint glow
-			local cpFirstPart = cpModel:FindFirstChildWhichIsA("BasePart", true)
+			-- Checkpoint glow on the piece itself
+			local cpFirstPart = mdl:FindFirstChildWhichIsA("BasePart", true)
 			if cpFirstPart then
 				local cpLight = Instance.new("PointLight")
 				cpLight.Color = Color3.fromRGB(80, 255, 130)
-				cpLight.Brightness = 2; cpLight.Range = 40
+				cpLight.Brightness = 2.5; cpLight.Range = 45
 				cpLight.Parent = cpFirstPart
 			end
 
-			-- Checkpoint sign
+			-- Checkpoint sign floating above
 			local cpSign = Instance.new("Part")
 			cpSign.Size = Vector3.new(14, 5, 1.5)
-			cpSign.Position = levelCenterPos + Vector3.new(0, 26, -18)
+			cpSign.Position = piecePos + Vector3.new(0, 22, 0)
 			cpSign.Anchored = true; cpSign.Color = Color3.fromRGB(60,150,90)
 			cpSign.Material = Enum.Material.Neon; cpSign.Parent = mapFolder
 			local sGui = Instance.new("SurfaceGui"); sGui.Face = Enum.NormalId.Front; sGui.Parent = cpSign
 			local sLbl = Instance.new("TextLabel"); sLbl.Size = UDim2.fromScale(1,1); sLbl.BackgroundTransparency = 1
-			sLbl.Text = "✓ CHECKPOINT " .. i; sLbl.TextColor3 = Color3.fromRGB(255,255,255)
+			sLbl.Text = "✓ CHECKPOINT " .. checkpointCount; sLbl.TextColor3 = Color3.fromRGB(255,255,255)
 			sLbl.TextScaled = true; sLbl.Font = Enum.Font.FredokaOne; sLbl.Parent = sGui
-			-- Back face too
 			local sGui2 = Instance.new("SurfaceGui"); sGui2.Face = Enum.NormalId.Back; sGui2.Parent = cpSign
-			local sLbl2 = Instance.new("TextLabel"); sLbl2.Size = UDim2.fromScale(1,1); sLbl2.BackgroundTransparency = 1
-			sLbl2.Text = "✓ CHECKPOINT " .. i; sLbl2.TextColor3 = Color3.fromRGB(255,255,255)
-			sLbl2.TextScaled = true; sLbl2.Font = Enum.Font.FredokaOne; sLbl2.Parent = sGui2
+			local sLbl2 = sLbl:Clone(); sLbl2.Parent = sGui2
 
-			-- Trigger zone (sets spawn point)
-			local cpt = Instance.new("Part"); cpt.Size = Vector3.new(40,20,40)
-			cpt.Position = levelCenterPos + Vector3.new(0,10,0); cpt.Anchored = true
+			-- Trigger zone (invisible, sets spawn point)
+			local cpt = Instance.new("Part"); cpt.Size = Vector3.new(30,20,30)
+			cpt.Position = piecePos + Vector3.new(0,10,0); cpt.Anchored = true
 			cpt.Transparency = 1; cpt.CanCollide = false; cpt.Parent = mapFolder
+			local cpIdx = checkpointCount
 			cpt.Touched:Connect(function(hit)
 				local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
 				if plr then
 					local data = playerData[plr]
-					if data and (not data.checkpoint or data.checkpoint < i) then data.checkpoint = i end
+					if data and (not data.checkpoint or data.checkpoint < cpIdx) then data.checkpoint = cpIdx end
 				end
 			end)
 		end
 
-		-- Collectible every 3 levels (keep existing)
-		if i % 3 == 0 then createCollectible(levelCenterPos, i) end
+		-- Collectible every 5 pieces
+		if i % 5 == 0 and not piece.checkpoint then
+			createCollectible(piecePos, i)
+		end
+
+		lastPiecePos = piecePos
 	end
 
 	-- ============================================================
 	-- FINAL HALLWAY RUN (disappearing tiles before finish)
 	-- ============================================================
-	local hallwayStart = levelCenterPos + Vector3.new(0, 0, -20)
+	local hallwayStart = lastPiecePos + Vector3.new(0, 0, -20)
 	local FINAL_W = 20     -- narrow corridor width
 	local FINAL_H = 40     -- corridor height
 	local FINAL_LEN = 300  -- corridor length
