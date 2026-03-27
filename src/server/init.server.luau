@@ -213,9 +213,32 @@ local function buildCandyPlatform(candyName, index, pos, m)
 			end
 		end
 
-		-- No cleanup — keep all parts from the model as-is
+		-- Remove grey/dark base platforms that came with the .obj import
+		-- Only removes parts that are: grey AND flat AND large (base plates)
+		-- Keeps ALL colorful candy parts
+		local toRemove = {}
+		for _, part in clone:GetDescendants() do
+			if part:IsA("BasePart") then
+				local c = part.Color
+				local r, g, b = c.R * 255, c.G * 255, c.B * 255
+				local isGrey = (math.abs(r - g) < 30 and math.abs(g - b) < 30 and r < 150)
+				local sx, sy, sz = part.Size.X, part.Size.Y, part.Size.Z
+				local maxDim = math.max(sx, sy, sz)
+				local minDim = math.min(sx, sy, sz)
+				local isFlat = (minDim < maxDim * 0.15)
+				local isBig = (maxDim > 8)
+				
+				if isGrey and isFlat and isBig then
+					table.insert(toRemove, part)
+				end
+			end
+		end
+		for _, part in ipairs(toRemove) do
+			print("[CandyRun] Removed grey platform from " .. candyName .. ": " .. part.Name .. " color=(" .. math.floor(part.Color.R*255) .. "," .. math.floor(part.Color.G*255) .. "," .. math.floor(part.Color.B*255) .. ")")
+			part:Destroy()
+		end
 
-		-- Debug: count parts
+		-- Debug: count remaining parts
 		local partCount = 0
 		for _, p in clone:GetDescendants() do
 			if p:IsA("BasePart") then partCount += 1 end
