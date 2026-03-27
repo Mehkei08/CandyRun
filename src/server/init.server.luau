@@ -342,6 +342,9 @@ local function getCandyScale(candyName, stepSize)
 	if string.find(lower, "floss") or string.find(lower, "cotton") then
 		return 1.0  -- candyfloss stays original size
 	end
+	if string.find(lower, "cane") or string.find(lower, "candycane") then
+		return stepSize * 0.5  -- candy canes cut in half
+	end
 	if string.find(lower, "donut") or string.find(lower, "doughnut") then
 		return stepSize * 4.0  -- donuts quadrupled (doubled again)
 	end
@@ -1117,7 +1120,7 @@ local function applySpinReward(plr, reward)
 		if hum then
 			hum.WalkSpeed = 76
 			task.delay(reward.value * 60, function()
-				if hum and hum.Parent then hum.WalkSpeed = 82 end
+				if hum and hum.Parent then hum.WalkSpeed = 100 end
 			end)
 		end
 	elseif reward.type == "gravity_boost" then
@@ -1575,8 +1578,8 @@ local function createSpawnRoom()
 
 	if dailySpinModel then
 		local spinClone = dailySpinModel:Clone()
-		-- Place against front wall, facing INTO the room (+Z), sitting on the floor
-		spinClone:PivotTo(CFrame.new(Vector3.new(-55, floorY + 5, -55)) * CFrame.Angles(0, math.rad(180), 0))
+		-- Place against front wall, facing INTO the room (+Z), standing on the floor
+		spinClone:PivotTo(CFrame.new(Vector3.new(-55, floorY + 8, -55)) * CFrame.Angles(0, math.rad(180), 0))
 		for _, part in spinClone:GetDescendants() do
 			if part:IsA("BasePart") then
 				part.Anchored = true
@@ -1833,7 +1836,7 @@ local function createSpawnRoom()
 				if hum then hum.WalkSpeed = hum.WalkSpeed + 30 end
 			end)
 			tool.Unequipped:Connect(function()
-				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 30, 82) end
+				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 30, 100) end
 			end)
 
 		elseif itemName == "Gravity Coil" then
@@ -1908,7 +1911,7 @@ local function createSpawnRoom()
 				end
 			end)
 			tool.Unequipped:Connect(function()
-				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 25, 82) end
+				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 25, 100) end
 				local rootPart = char:FindFirstChild("HumanoidRootPart")
 				if rootPart then
 					local bf = rootPart:FindFirstChild("FusionGravityReducer")
@@ -2054,13 +2057,31 @@ local function createSpawnRoom()
 	-- ============================================================
 	-- LEADERBOARD (Top Donations) — clone from ServerStorage if available
 	-- ============================================================
-	local leaderboardTemplate = ServerStorage:FindFirstChild("Donationboard")
-		or ServerStorage:FindFirstChild("DonationBoard")
-		or ServerStorage:FindFirstChild("DonationLeaderboard")
-		or ServerStorage:FindFirstChild("LeaderboardModel")
-		or ServerStorage:FindFirstChild("Leaderboard")
-		or ServerStorage:FindFirstChild("TopDonations")
+	-- Search everywhere for the donation board
+	local leaderboardTemplate = nil
+	for _, searchName in ipairs({"Donationboard", "DonationBoard", "DonationLeaderboard", "Donation Board", "donation board", "LeaderboardModel", "Leaderboard", "TopDonations"}) do
+		leaderboardTemplate = ServerStorage:FindFirstChild(searchName)
+		if leaderboardTemplate then break end
+		-- Also check inside gamepasses folder
+		local gpF = ServerStorage:FindFirstChild("gamepasses") or ServerStorage:FindFirstChild("Gamepasses")
+		if gpF then
+			leaderboardTemplate = gpF:FindFirstChild(searchName)
+			if leaderboardTemplate then break end
+		end
+	end
+	-- Last resort: search all children of ServerStorage for anything with "donat" or "leader" in name
+	if not leaderboardTemplate then
+		for _, child in ServerStorage:GetChildren() do
+			local lower = string.lower(child.Name)
+			if string.find(lower, "donat") or string.find(lower, "leader") then
+				leaderboardTemplate = child
+				print("[CandyRun] Found leaderboard by fuzzy match: " .. child.Name)
+				break
+			end
+		end
+	end
 	if leaderboardTemplate then
+		print("[CandyRun] Using leaderboard: " .. leaderboardTemplate.Name)
 		local lb = leaderboardTemplate:Clone()
 		-- Position in spawn room — left side, near the back wall
 		lb:PivotTo(CFrame.new(Vector3.new(-40, floorY + 5, 45)))
@@ -2503,7 +2524,7 @@ end
 
 local function onCharacterAdded(player, character)
 	local humanoid = character:WaitForChild("Humanoid")
-	humanoid.WalkSpeed = 82
+	humanoid.WalkSpeed = 100
 	humanoid.Died:Connect(function() onPlayerDied(player) end)
 end
 
