@@ -316,38 +316,6 @@ local function buildCandyPlatform(candyName, index, pos, m)
 	return walkable or model:FindFirstChildWhichIsA("BasePart"), model
 end
 
--- Helper: pick a random candy type from the available pieces
-local function randomCandy()
-	-- Try to pick a candy that isn't excluded (wrapped rectangles etc.)
-	for _ = 1, 30 do
-		local pick = CANDY_TYPES[math.random(1, #CANDY_TYPES)]
-		if not isCandyExcluded(pick) then
-			return pick
-		end
-	end
-	-- Give up, return anything
-	return CANDY_TYPES[math.random(1, #CANDY_TYPES)]
-end
-
--- Per-candy size override: candyfloss/sugarfloss stays at original scale (1.0)
--- Per-candy size adjustments
-local function getCandyScale(candyName, stepSize)
-	local lower = string.lower(candyName)
-	-- Candyfloss stays original size
-	if string.find(lower, "floss") or string.find(lower, "cotton") then
-		return 1.0
-	end
-	-- Donuts upscaled by 100% (double size)
-	if string.find(lower, "donut") or string.find(lower, "doughnut") then
-		return stepSize * 2.0
-	end
-	-- Gumball machines upscaled by 100% (double size)
-	if string.find(lower, "gumball") or string.find(lower, "gum ball") then
-		return stepSize * 2.0
-	end
-	return stepSize
-end
-
 -- Filter out candy-wrapped rectangular pieces from parkour selection
 local function isCandyExcluded(candyName)
 	local lower = string.lower(candyName)
@@ -355,6 +323,32 @@ local function isCandyExcluded(candyName)
 		return true
 	end
 	return false
+end
+
+-- Helper: pick a random candy type from the available pieces
+local function randomCandy()
+	for _ = 1, 30 do
+		local pick = CANDY_TYPES[math.random(1, #CANDY_TYPES)]
+		if not isCandyExcluded(pick) then
+			return pick
+		end
+	end
+	return CANDY_TYPES[math.random(1, #CANDY_TYPES)]
+end
+
+-- Per-candy size adjustments
+local function getCandyScale(candyName, stepSize)
+	local lower = string.lower(candyName)
+	if string.find(lower, "floss") or string.find(lower, "cotton") then
+		return 1.0
+	end
+	if string.find(lower, "donut") or string.find(lower, "doughnut") then
+		return stepSize * 2.0
+	end
+	if string.find(lower, "gumball") or string.find(lower, "gum ball") then
+		return stepSize * 2.0
+	end
+	return stepSize
 end
 
 -- ============================================================
