@@ -243,140 +243,141 @@ local function randomCandy()
 end
 
 local LEVELS = {
-	-- ====== PHASE 1: EASY (Levels 1-5) — 3 random candy pieces, decent gaps ======
-	-- Level 1: Straight intro
+	-- ============================================================
+	-- BRANCHING PARKOUR: Each level has 2-4 candy pieces spread wide.
+	-- Multiple pieces are reachable from the previous level, so
+	-- players CHOOSE which path/route to take through the course.
+	-- First piece offset advances the "main line" forward.
+	-- Other pieces are alternate routes at different X positions.
+	-- ============================================================
+
+	-- ====== PHASE 1: EASY (Levels 1-5) — 2-3 pieces, wide spread, pick your path ======
+	-- Level 1: Two paths diverge — left or right?
 	{
 		pieces = {
-			{offset={0, 0, -28}, size=1.8},
-			{offset={6, 2, -26}, size=1.6},
-			{offset={-5, -1, -28}, size=1.7},
+			{offset={-15, 0, -28}, size=1.8},  -- left path
+			{offset={15, 2, -26}, size=1.7},    -- right path
 		},
 	},
-	-- Level 2: Zigzag
+	-- Level 2: Three options — left, center, right
 	{
 		pieces = {
-			{offset={-8, 1, -30}, size=1.7},
-			{offset={10, 3, -26}, size=1.5},
-			{offset={-7, -2, -28}, size=1.6},
+			{offset={-20, 1, -30}, size=1.7},   -- far left
+			{offset={0, -1, -28}, size=1.6},     -- center
+			{offset={18, 3, -26}, size=1.5},     -- right
 		},
 	},
-	-- Level 3: Height changes
+	-- Level 3: Two paths with height difference
 	{
 		pieces = {
-			{offset={5, 4, -28}, size=1.7},
-			{offset={-8, -3, -30}, size=1.6},
-			{offset={9, 2, -26}, size=1.5},
+			{offset={12, 4, -30}, size=1.7},    -- high right
+			{offset={-14, -2, -28}, size=1.6},  -- low left
 		},
 	},
-	-- Level 4: Wide diagonal jumps
+	-- Level 4: Three spread out, converging forward
 	{
 		pieces = {
-			{offset={-10, 0, -30}, size=1.6},
-			{offset={12, 3, -28}, size=1.5},
-			{offset={-8, -2, -26}, size=1.7},
+			{offset={-22, 0, -28}, size=1.6},   -- far left
+			{offset={5, 3, -32}, size=1.5},      -- center-right, further out
+			{offset={20, -1, -26}, size=1.7},    -- far right
 		},
 	},
-	-- Level 5: CHECKPOINT
+	-- Level 5: CHECKPOINT — wide candy, easy to land
 	{
 		pieces = {
-			{offset={0, 1, -28}, size=1.8},
-			{offset={8, 0, -26}, size=1.6},
-			{offset={-6, 3, -28}, size=1.7},
+			{offset={-10, 1, -28}, size=1.9},   -- left landing
+			{offset={10, 0, -28}, size=1.9},     -- right landing
 		},
 		checkpoint = true,
 	},
 
-	-- ====== PHASE 2: MEDIUM (Levels 6-10) — 3-4 pieces, smaller, bigger gaps ======
-	-- Level 6: Longer jumps
+	-- ====== PHASE 2: MEDIUM (Levels 6-10) — 3-4 pieces, bigger gaps, choose wisely ======
+	-- Level 6: Diamond pattern — 4 choices
 	{
 		pieces = {
-			{offset={-12, 2, -32}, size=1.3},
-			{offset={14, -3, -30}, size=1.2},
-			{offset={-10, 4, -32}, size=1.1},
+			{offset={0, 3, -34}, size=1.3},      -- center top
+			{offset={-25, 0, -28}, size=1.2},    -- far left
+			{offset={25, 0, -28}, size=1.2},     -- far right
+			{offset={0, -2, -24}, size=1.1},     -- center short (risky)
 		},
 	},
-	-- Level 7: 4 pieces, big X swings
+	-- Level 7: Stagger — left high, right low
 	{
 		pieces = {
-			{offset={8, 0, -34}, size=1.2},
-			{offset={-14, 3, -28}, size=1.1},
-			{offset={12, -2, -32}, size=1.3},
-			{offset={-10, 5, -28}, size=1.1},
+			{offset={-18, 5, -32}, size=1.2},   -- high left
+			{offset={16, -3, -30}, size=1.3},    -- low right
+			{offset={-8, 1, -26}, size=1.1},     -- mid-left close
 		},
 	},
-	-- Level 8: Staircase up
+	-- Level 8: Spread wide — commit to a side
 	{
 		pieces = {
-			{offset={-8, 5, -30}, size=1.3},
-			{offset={14, -4, -32}, size=1.2},
-			{offset={-12, 6, -28}, size=1.1},
+			{offset={-28, 2, -30}, size=1.3},   -- far far left
+			{offset={0, 4, -34}, size=1.1},      -- center far
+			{offset={28, -1, -30}, size=1.3},    -- far far right
 		},
 	},
-	-- Level 9: 4 pieces, max spread
+	-- Level 9: 4 pieces scattered — maze-like
 	{
 		pieces = {
-			{offset={10, -2, -34}, size=1.2},
-			{offset={-16, 4, -30}, size=1.1},
-			{offset={14, 0, -32}, size=1.2},
-			{offset={-12, 5, -28}, size=1.1},
+			{offset={-20, -2, -34}, size=1.1},  -- left far
+			{offset={10, 5, -28}, size=1.2},     -- right close high
+			{offset={-8, 0, -26}, size=1.0},     -- left close
+			{offset={22, 3, -32}, size=1.1},     -- right far
 		},
 	},
-	-- Level 10: CHECKPOINT
+	-- Level 10: CHECKPOINT — two generous landing spots
 	{
 		pieces = {
-			{offset={0, 2, -32}, size=1.4},
-			{offset={-10, 3, -30}, size=1.2},
-			{offset={8, 0, -28}, size=1.3},
+			{offset={-12, 2, -30}, size=1.5},   -- left
+			{offset={12, 0, -30}, size=1.5},     -- right
 		},
 		checkpoint = true,
 	},
 
-	-- ====== PHASE 3: HARD (Levels 11-15) — 4 pieces, small, big gaps, some moving ======
-	-- Level 11: Punishing gaps
+	-- ====== PHASE 3: HARD (Levels 11-15) — 3-4 pieces, small, big gaps, some moving ======
+	-- Level 11: Narrow choices, punishing gaps
 	{
 		pieces = {
-			{offset={-14, 3, -36}, size=1.0},
-			{offset={18, -4, -32}, size=0.9},
-			{offset={-16, 5, -34}, size=0.9},
-			{offset={12, 0, -30}, size=1.0},
+			{offset={-22, 3, -36}, size=1.0},   -- left far
+			{offset={18, -4, -32}, size=0.9},    -- right mid
+			{offset={-6, 6, -28}, size=0.9},     -- center-left high
 		},
 	},
-	-- Level 12: Moving platforms
+	-- Level 12: Moving targets — timing + path choice
 	{
 		pieces = {
-			{offset={8, 2, -36}, size=1.0},
-			{offset={-18, -3, -32}, size=0.9},
-			{offset={16, 5, -34}, size=0.9},
-			{offset={-12, 0, -30}, size=1.0},
-		},
-		moving = true,
-	},
-	-- Level 13: Brutal height swings
-	{
-		pieces = {
-			{offset={-16, 7, -36}, size=0.9},
-			{offset={20, -5, -34}, size=1.0},
-			{offset={-18, 4, -32}, size=0.9},
-			{offset={14, 8, -34}, size=0.9},
-		},
-	},
-	-- Level 14: Moving + tiny
-	{
-		pieces = {
-			{offset={10, -2, -38}, size=0.9},
-			{offset={-20, 5, -34}, size=0.8},
-			{offset={18, 0, -32}, size=0.9},
-			{offset={-14, 6, -34}, size=0.8},
+			{offset={-16, 2, -36}, size=1.0},   -- left
+			{offset={20, -3, -32}, size=0.9},    -- right
+			{offset={0, 5, -34}, size=0.9},      -- center high
+			{offset={-24, 0, -28}, size=1.0},    -- far left close
 		},
 		moving = true,
 	},
-	-- Level 15: FINAL CHECKPOINT
+	-- Level 13: Brutal spread — every piece is a gamble
 	{
 		pieces = {
-			{offset={0, 3, -34}, size=1.1},
-			{offset={-10, 0, -30}, size=1.0},
-			{offset={8, 2, -32}, size=1.1},
-			{offset={0, 0, -28}, size=1.2},
+			{offset={-30, 4, -36}, size=0.9},   -- far far left
+			{offset={30, -2, -34}, size=0.9},    -- far far right
+			{offset={0, 7, -30}, size=0.8},      -- center very high
+		},
+	},
+	-- Level 14: Moving + tiny — the real test
+	{
+		pieces = {
+			{offset={-20, -2, -38}, size=0.9},  -- left
+			{offset={24, 5, -34}, size=0.8},     -- right high
+			{offset={-10, 3, -30}, size=0.8},    -- mid-left
+			{offset={14, 0, -36}, size=0.9},     -- mid-right far
+		},
+		moving = true,
+	},
+	-- Level 15: FINAL CHECKPOINT — generous but earn it
+	{
+		pieces = {
+			{offset={-15, 2, -32}, size=1.2},   -- left
+			{offset={15, 0, -32}, size=1.2},     -- right
+			{offset={0, 4, -36}, size=1.3},      -- center far (bonus route)
 		},
 		checkpoint = true,
 	},
