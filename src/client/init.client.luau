@@ -368,115 +368,111 @@ if dailySpinEvent then
 			spinGui:Destroy(); spinGui = nil; spinGuiOpen = false
 		end)
 
-		-- ========== BIG WHEEL (takes up most of the popup) ==========
-		-- Square container for the wheel
+		-- ========== BIG DISC WHEEL ==========
+		-- Square container
 		local wheelContainer = Instance.new("Frame"); wheelContainer.Name = "WheelContainer"
 		wheelContainer.Size = UDim2.fromScale(0.72, 0.72)
 		wheelContainer.AnchorPoint = Vector2.new(0.5, 0)
 		wheelContainer.Position = UDim2.fromScale(0.5, 0.08)
 		wheelContainer.BackgroundTransparency = 1; wheelContainer.ZIndex = 102
-		wheelContainer.SizeConstraint = Enum.SizeConstraint.RelativeXX -- square based on width
+		wheelContainer.SizeConstraint = Enum.SizeConstraint.RelativeXX
 		wheelContainer.Parent = popup
 
-		-- Outer rim ring (static, gold circle behind the wheel)
+		-- Gold outer rim (static circle)
 		local outerRing = Instance.new("Frame")
-		outerRing.Size = UDim2.fromScale(1.06, 1.06)
+		outerRing.Size = UDim2.fromScale(1.04, 1.04)
 		outerRing.AnchorPoint = Vector2.new(0.5, 0.5)
 		outerRing.Position = UDim2.fromScale(0.5, 0.5)
-		outerRing.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
-		outerRing.ZIndex = 102; outerRing.Parent = wheelContainer
+		outerRing.BackgroundColor3 = Color3.fromRGB(255, 215, 0); outerRing.ZIndex = 102
+		outerRing.Parent = wheelContainer
 		Instance.new("UICorner", outerRing).CornerRadius = UDim.new(1, 0)
 
-		-- Wheel disc background (static, darker circle)
-		local discBg = Instance.new("Frame")
-		discBg.Size = UDim2.fromScale(0.97, 0.97)
-		discBg.AnchorPoint = Vector2.new(0.5, 0.5)
-		discBg.Position = UDim2.fromScale(0.5, 0.5)
-		discBg.BackgroundColor3 = Color3.fromRGB(30, 10, 45)
-		discBg.ZIndex = 103; discBg.Parent = wheelContainer
-		Instance.new("UICorner", discBg).CornerRadius = UDim.new(1, 0)
-
-		-- Rotating part (segments + labels spin inside)
+		-- The spinning disc: CIRCULAR with ClipsDescendants
+		-- Rectangular segments inside get clipped into pie/wedge shapes!
 		local wheelRotator = Instance.new("Frame"); wheelRotator.Name = "WheelRotator"
-		wheelRotator.Size = UDim2.fromScale(0.94, 0.94)
+		wheelRotator.Size = UDim2.fromScale(0.96, 0.96)
 		wheelRotator.AnchorPoint = Vector2.new(0.5, 0.5)
 		wheelRotator.Position = UDim2.fromScale(0.5, 0.5)
-		wheelRotator.BackgroundTransparency = 1; wheelRotator.ZIndex = 104
+		wheelRotator.BackgroundColor3 = Color3.fromRGB(240, 235, 220)
+		wheelRotator.ZIndex = 103; wheelRotator.ClipsDescendants = true
 		wheelRotator.Parent = wheelContainer
+		Instance.new("UICorner", wheelRotator).CornerRadius = UDim.new(1, 0)
 
-		-- Build wide wedge segments with icon + reward name text
+		-- Build wedge segments: wide rectangles anchored at center, clipped by circle
 		local numSegs = #SPIN_REWARDS_CLIENT
 		local segAngle = 360 / numSegs
+		-- Width of each segment: needs to cover the full arc angle
+		-- For 8 segments (45° each): tan(22.5°) ≈ 0.414, so width ≈ 0.414 * height
+		-- Segment goes from center to edge = 0.5 of wheel height
+		local segWidth = math.tan(math.rad(segAngle / 2)) * 2 -- relative to height
+
 		for i, rw in ipairs(SPIN_REWARDS_CLIENT) do
 			local angle = (i - 1) * segAngle
 
-			-- Each segment = wide colored bar radiating from center
-			-- Width = proportional to the arc at that radius
+			-- Colored wedge (tall rectangle from center to edge, circle clips it into wedge)
 			local segFrame = Instance.new("Frame")
-			segFrame.Size = UDim2.fromScale(0.22, 0.46) -- wide enough for text
-			segFrame.AnchorPoint = Vector2.new(0.5, 1)
+			segFrame.Size = UDim2.fromScale(segWidth * 0.5, 0.5)
+			segFrame.AnchorPoint = Vector2.new(0.5, 1) -- anchor at bottom-center = wheel center
 			segFrame.Position = UDim2.fromScale(0.5, 0.5)
 			segFrame.Rotation = angle
 			segFrame.BackgroundColor3 = rw.color; segFrame.BorderSizePixel = 0
-			segFrame.ZIndex = 105; segFrame.Parent = wheelRotator
-			Instance.new("UICorner", segFrame).CornerRadius = UDim.new(0, 6)
+			segFrame.ZIndex = 104; segFrame.Parent = wheelRotator
 
-			-- Dark border between segments
-			local segStroke = Instance.new("UIStroke")
-			segStroke.Color = Color3.fromRGB(25, 8, 40); segStroke.Thickness = 1.5
-			segStroke.Parent = segFrame
-
-			-- Icon (top of segment, near rim)
+			-- Icon near the rim
 			local iconLbl = Instance.new("TextLabel")
-			iconLbl.Size = UDim2.fromScale(1, 0.3)
-			iconLbl.Position = UDim2.fromScale(0, 0.02)
+			iconLbl.Size = UDim2.fromScale(0.9, 0.25)
+			iconLbl.AnchorPoint = Vector2.new(0.5, 0)
+			iconLbl.Position = UDim2.fromScale(0.5, 0.05)
 			iconLbl.BackgroundTransparency = 1; iconLbl.Text = rw.icon
 			iconLbl.TextScaled = true; iconLbl.Font = Enum.Font.FredokaOne
-			iconLbl.TextColor3 = Color3.fromRGB(255,255,255)
-			iconLbl.ZIndex = 106; iconLbl.Parent = segFrame
+			iconLbl.TextColor3 = Color3.fromRGB(255,255,255); iconLbl.ZIndex = 105
+			iconLbl.Parent = segFrame
 
-			-- Reward name text (below icon, written into the segment)
+			-- Reward name below icon
 			local nameLbl = Instance.new("TextLabel")
-			nameLbl.Size = UDim2.fromScale(0.95, 0.55)
-			nameLbl.Position = UDim2.fromScale(0.025, 0.32)
+			nameLbl.Size = UDim2.fromScale(0.85, 0.5)
+			nameLbl.AnchorPoint = Vector2.new(0.5, 0)
+			nameLbl.Position = UDim2.fromScale(0.5, 0.28)
 			nameLbl.BackgroundTransparency = 1; nameLbl.Text = rw.name
 			nameLbl.TextScaled = true; nameLbl.Font = Enum.Font.FredokaOne
-			nameLbl.TextColor3 = Color3.fromRGB(255,255,255)
-			nameLbl.TextWrapped = true; nameLbl.ZIndex = 106; nameLbl.Parent = segFrame
-			local nameStroke = Instance.new("UIStroke")
-			nameStroke.Color = Color3.fromRGB(0,0,0); nameStroke.Thickness = 1.5
-			nameStroke.Parent = nameLbl
+			nameLbl.TextColor3 = Color3.fromRGB(255,255,255); nameLbl.TextWrapped = true
+			nameLbl.ZIndex = 105; nameLbl.Parent = segFrame
+			local ns = Instance.new("UIStroke"); ns.Color = Color3.fromRGB(0,0,0)
+			ns.Thickness = 1.5; ns.Parent = nameLbl
+
+			-- Divider line at segment boundary
+			local divLine = Instance.new("Frame")
+			divLine.Size = UDim2.fromScale(0.008, 0.5)
+			divLine.AnchorPoint = Vector2.new(0.5, 1)
+			divLine.Position = UDim2.fromScale(0.5, 0.5)
+			divLine.Rotation = angle - segAngle / 2
+			divLine.BackgroundColor3 = Color3.fromRGB(30, 10, 45); divLine.BorderSizePixel = 0
+			divLine.ZIndex = 106; divLine.Parent = wheelRotator
 		end
 
-		-- Center hub (gold circle)
+		-- Center hub (gold circle, on top of everything)
 		local hub = Instance.new("Frame")
-		hub.Size = UDim2.fromScale(0.14, 0.14)
+		hub.Size = UDim2.fromScale(0.16, 0.16)
 		hub.AnchorPoint = Vector2.new(0.5, 0.5)
 		hub.Position = UDim2.fromScale(0.5, 0.5)
 		hub.BackgroundColor3 = Color3.fromRGB(255, 215, 0); hub.ZIndex = 108
 		hub.Parent = wheelContainer
 		Instance.new("UICorner", hub).CornerRadius = UDim.new(1, 0)
 		local hubStroke = Instance.new("UIStroke")
-		hubStroke.Color = Color3.fromRGB(180, 140, 30); hubStroke.Thickness = 3
-		hubStroke.Parent = hub
+		hubStroke.Color = Color3.fromRGB(180, 140, 30); hubStroke.Thickness = 3; hubStroke.Parent = hub
 		local hubText = Instance.new("TextLabel")
 		hubText.Size = UDim2.fromScale(1,1); hubText.BackgroundTransparency = 1
-		hubText.Text = "SPIN"; hubText.TextColor3 = Color3.fromRGB(80, 40, 10)
-		hubText.TextScaled = true; hubText.Font = Enum.Font.FredokaOne
+		hubText.Text = "🎡"; hubText.TextScaled = true; hubText.Font = Enum.Font.FredokaOne
 		hubText.ZIndex = 109; hubText.Parent = hub
 
-		-- Pointer (red arrow at top, static, outside the wheel)
-		local pointerFrame = Instance.new("Frame")
-		pointerFrame.Size = UDim2.fromOffset(40, 50)
-		pointerFrame.AnchorPoint = Vector2.new(0.5, 1)
-		pointerFrame.Position = UDim2.fromScale(0.5, 0.01)
-		pointerFrame.BackgroundTransparency = 1; pointerFrame.ZIndex = 110
-		pointerFrame.Parent = wheelContainer
+		-- Pointer (red arrow at top, static)
 		local pointerLbl = Instance.new("TextLabel")
-		pointerLbl.Size = UDim2.fromScale(1,1); pointerLbl.BackgroundTransparency = 1
-		pointerLbl.Text = "🔻"; pointerLbl.TextScaled = true
-		pointerLbl.Font = Enum.Font.GothamBold; pointerLbl.ZIndex = 110
-		pointerLbl.Parent = pointerFrame
+		pointerLbl.Size = UDim2.fromOffset(44, 52)
+		pointerLbl.AnchorPoint = Vector2.new(0.5, 1)
+		pointerLbl.Position = UDim2.fromScale(0.5, 0.02)
+		pointerLbl.BackgroundTransparency = 1; pointerLbl.Text = "🔻"
+		pointerLbl.TextScaled = true; pointerLbl.ZIndex = 110
+		pointerLbl.Parent = wheelContainer
 
 		-- ========== IDLE ROTATION ==========
 		local idleConnection
