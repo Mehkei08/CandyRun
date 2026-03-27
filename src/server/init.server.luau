@@ -250,11 +250,12 @@ local function buildCandyPlatform(candyName, index, pos, m)
 		local originalPivot = clone:GetPivot()
 		local originalRotation = originalPivot - originalPivot.Position -- extract rotation only
 		
-		-- Only lay down models that are VERY tall and thin (like candy canes, candyfloss sticks)
-		-- Donuts, peppermints, ice cream scoops etc. should stay upright
-		local modelBounds = clone:GetExtentsSize()
-		if modelBounds.Y > modelBounds.X * 2.5 and modelBounds.Y > modelBounds.Z * 2.5 then
-			-- Model is extremely tall and thin (like a stick) — lay it on its side
+		-- Lay down candyfloss and candycanes flat so players can walk on them
+		local lowerName = string.lower(candyName)
+		local shouldLayFlat = string.find(lowerName, "floss") or string.find(lowerName, "cotton")
+			or string.find(lowerName, "cane") or string.find(lowerName, "candy cane")
+			or string.find(lowerName, "candycane")
+		if shouldLayFlat then
 			originalRotation = originalRotation * CFrame.Angles(math.rad(90), 0, 0)
 		end
 		
@@ -317,17 +318,43 @@ end
 
 -- Helper: pick a random candy type from the available pieces
 local function randomCandy()
+	-- Try to pick a candy that isn't excluded (wrapped rectangles etc.)
+	for _ = 1, 30 do
+		local pick = CANDY_TYPES[math.random(1, #CANDY_TYPES)]
+		if not isCandyExcluded(pick) then
+			return pick
+		end
+	end
+	-- Give up, return anything
 	return CANDY_TYPES[math.random(1, #CANDY_TYPES)]
 end
 
 -- Per-candy size override: candyfloss/sugarfloss stays at original scale (1.0)
--- Everything else uses the step's size value
+-- Per-candy size adjustments
 local function getCandyScale(candyName, stepSize)
 	local lower = string.lower(candyName)
+	-- Candyfloss stays original size
 	if string.find(lower, "floss") or string.find(lower, "cotton") then
-		return 1.0  -- candyfloss stays original size
+		return 1.0
+	end
+	-- Donuts upscaled by 100% (double size)
+	if string.find(lower, "donut") or string.find(lower, "doughnut") then
+		return stepSize * 2.0
+	end
+	-- Gumball machines upscaled by 100% (double size)
+	if string.find(lower, "gumball") or string.find(lower, "gum ball") then
+		return stepSize * 2.0
 	end
 	return stepSize
+end
+
+-- Filter out candy-wrapped rectangular pieces from parkour selection
+local function isCandyExcluded(candyName)
+	local lower = string.lower(candyName)
+	if string.find(lower, "wrap") or string.find(lower, "rect") or string.find(lower, "block") then
+		return true
+	end
+	return false
 end
 
 -- ============================================================
@@ -1549,7 +1576,8 @@ local function createSpawnRoom()
 	if dailySpinModel then
 		local spinClone = dailySpinModel:Clone()
 		-- Place on the floor in spawn room, facing back wall (+Z direction)
-		spinClone:PivotTo(CFrame.new(Vector3.new(-55, floorY + 3, -30)) * CFrame.Angles(0, math.rad(180), 0))
+		-- Place against the front wall (-Z side), raised so it sits on the floor
+		spinClone:PivotTo(CFrame.new(Vector3.new(-55, floorY + 10, -55)) * CFrame.Angles(0, 0, 0))
 		for _, part in spinClone:GetDescendants() do
 			if part:IsA("BasePart") then
 				part.Anchored = true
