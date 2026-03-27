@@ -147,34 +147,18 @@ local candyPiecesFolder = ServerStorage:FindFirstChild("CandyPieces")
 local CANDY_TYPES = {}
 local candyTemplates = {} -- name -> template instance
 
--- Only allow these candy types for parkour (lowercase matching)
--- Skips rectangular colored blocks, speed candies, and other non-parkour pieces
-local ALLOWED_CANDY_KEYWORDS = {"candy", "cane", "sugar", "floss", "peppermint", "mint", "icecream", "ice cream", "cream", "donut", "doughnut", "chocolate", "choco", "gumball", "lollipop", "lolli"}
-
-local function isCandyAllowed(name)
-	local lower = string.lower(name)
-	for _, keyword in ipairs(ALLOWED_CANDY_KEYWORDS) do
-		if string.find(lower, keyword) then return true end
-	end
-	return false
-end
-
+-- Load ALL models from CandyPieces — whatever you put in there is used for parkour
 if candyPiecesFolder then
 	for _, child in candyPiecesFolder:GetChildren() do
 		if child:IsA("Model") or child:IsA("BasePart") or child:IsA("MeshPart") then
-			local name = child.Name
-			if isCandyAllowed(name) then
-				table.insert(CANDY_TYPES, name)
-				candyTemplates[name] = child
-				print("[CandyRun] ✓ Candy piece loaded: " .. name)
-			else
-				print("[CandyRun] ✗ Skipped (not a candy): " .. name)
-			end
+			table.insert(CANDY_TYPES, child.Name)
+			candyTemplates[child.Name] = child
+			print("[CandyRun] Candy piece loaded: " .. child.Name)
 		end
 	end
 	print("[CandyRun] Loaded " .. #CANDY_TYPES .. " candy pieces from " .. candyPiecesFolder.Name)
 else
-	warn("[CandyRun] WARNING: No CandyPieces folder found in ServerStorage! Parkour will use fallback shapes.")
+	warn("[CandyRun] WARNING: No CandyPieces folder found in ServerStorage!")
 end
 
 -- If no models found, add a fallback type so the game doesn't break
