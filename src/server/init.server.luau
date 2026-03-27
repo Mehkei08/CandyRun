@@ -287,84 +287,86 @@ local function randomCandy()
 end
 
 -- ============================================================
--- PARKOUR PIECES — Each piece is an absolute (x, y, z) position.
--- This is a real parkour: you jump from piece to piece.
--- Pieces 1-15: single path (learn the jumps)
--- Pieces 16+: branches into LEFT / CENTER / RIGHT paths
--- z goes negative (forward away from spawn)
--- y=0 means START_HEIGHT
+-- PARKOUR STEPS — Each step is a jump target with 3 DIFFERENT
+-- candy models at varying scales clustered together.
+-- Example: a small candyfloss + big peppermint + medium chocolate
+-- Each step has an absolute (x, y, z) center position.
+-- The 3 candies are placed around that center with slight offsets.
 -- ============================================================
 
-local PARKOUR_START_Z = -64  -- right at the spawn room exit
+local PARKOUR_START_Z = -64
 local BASE_Y = START_HEIGHT
 
--- Every single jumpable candy piece in the parkour, in order.
--- Players jump from one to the next. Each has a unique position.
-local PARKOUR_PIECES = {
-	-- === INTRO (pieces 1-6): Single path, learn to jump ===
-	{x=0,    y=0,   z=-64,   size=2.0},   -- 1: starter, right at door
-	{x=5,    y=2,   z=-90,   size=1.8},   -- 2: slight right + up
-	{x=-8,   y=0,   z=-118,  size=1.7},   -- 3: left
-	{x=3,    y=3,   z=-145,  size=1.6},   -- 4: right + up
-	{x=-6,   y=1,   z=-172,  size=1.7},   -- 5: left
-	{x=0,    y=0,   z=-200,  size=1.9, checkpoint=true},  -- 6: CHECKPOINT 1
+-- Offsets for the 3 candy models within each step (relative to step center)
+-- candy1: small, left-back | candy2: big, center | candy3: medium, right-front
+local CLUSTER_OFFSETS = {
+	{dx=-6, dy=0, dz=-4,  sizeMultiplier=0.6},  -- small piece
+	{dx=0,  dy=0, dz=0,   sizeMultiplier=1.0},  -- main piece (biggest)
+	{dx=6,  dy=0, dz=4,   sizeMultiplier=0.8},  -- medium piece
+}
 
-	-- === MEDIUM (pieces 7-15): Wider jumps, starts to branch ===
-	{x=10,   y=3,   z=-230,  size=1.5},   -- 7: right
-	{x=-12,  y=0,   z=-255,  size=1.4},   -- 8: left
-	{x=15,   y=4,   z=-282,  size=1.3},   -- 9: far right + high
-	{x=-5,   y=1,   z=-310,  size=1.4},   -- 10: center-left
-	{x=8,    y=-1,  z=-338,  size=1.3},   -- 11: right + low
-	{x=-15,  y=3,   z=-365,  size=1.3},   -- 12: far left + high
-	{x=0,    y=0,   z=-395,  size=1.6, checkpoint=true},  -- 13: CHECKPOINT 2
+local PARKOUR_STEPS = {
+	-- === INTRO (steps 1-6): Single path, learn to jump ===
+	{x=0,    y=0,   z=-64,   size=1.8},   -- 1: starter at door
+	{x=5,    y=2,   z=-90,   size=1.6},   -- 2: right + up
+	{x=-8,   y=0,   z=-118,  size=1.5},   -- 3: left
+	{x=3,    y=3,   z=-145,  size=1.4},   -- 4: right + up
+	{x=-6,   y=1,   z=-172,  size=1.5},   -- 5: left
+	{x=0,    y=0,   z=-200,  size=1.7, checkpoint=true},  -- 6: CHECKPOINT 1
 
-	-- === BRANCHING (pieces 14+): Three paths diverge ===
-	-- From checkpoint, player can reach any of 3 next pieces:
+	-- === MEDIUM (steps 7-13): Wider jumps ===
+	{x=10,   y=3,   z=-230,  size=1.4},   -- 7
+	{x=-12,  y=0,   z=-255,  size=1.3},   -- 8
+	{x=15,   y=4,   z=-282,  size=1.2},   -- 9
+	{x=-5,   y=1,   z=-310,  size=1.3},   -- 10
+	{x=8,    y=-1,  z=-338,  size=1.2},   -- 11
+	{x=-15,  y=3,   z=-365,  size=1.2},   -- 12
+	{x=0,    y=0,   z=-395,  size=1.5, checkpoint=true},  -- 13: CHECKPOINT 2
 
+	-- === BRANCHING: Three paths diverge ===
 	-- LEFT PATH
-	{x=-30,  y=2,   z=-425,  size=1.3},   -- 14L
-	{x=-35,  y=0,   z=-455,  size=1.2},   -- 15L
-	{x=-28,  y=4,   z=-485,  size=1.1},   -- 16L
-	{x=-32,  y=1,   z=-515,  size=1.2},   -- 17L
+	{x=-30,  y=2,   z=-425,  size=1.2},
+	{x=-35,  y=0,   z=-455,  size=1.1},
+	{x=-28,  y=4,   z=-485,  size=1.0},
+	{x=-32,  y=1,   z=-515,  size=1.1},
 
-	-- CENTER PATH
-	{x=0,    y=5,   z=-430,  size=1.2},   -- 14C (higher, harder)
-	{x=5,    y=3,   z=-460,  size=1.1},   -- 15C
-	{x=-3,   y=6,   z=-490,  size=1.0},   -- 16C
-	{x=2,    y=4,   z=-520,  size=1.1},   -- 17C
+	-- CENTER PATH (higher, harder)
+	{x=0,    y=5,   z=-430,  size=1.1},
+	{x=5,    y=3,   z=-460,  size=1.0},
+	{x=-3,   y=6,   z=-490,  size=0.9},
+	{x=2,    y=4,   z=-520,  size=1.0},
 
 	-- RIGHT PATH
-	{x=30,   y=2,   z=-425,  size=1.3},   -- 14R
-	{x=35,   y=0,   z=-455,  size=1.2},   -- 15R
-	{x=28,   y=4,   z=-485,  size=1.1},   -- 16R
-	{x=32,   y=1,   z=-515,  size=1.2},   -- 17R
+	{x=30,   y=2,   z=-425,  size=1.2},
+	{x=35,   y=0,   z=-455,  size=1.1},
+	{x=28,   y=4,   z=-485,  size=1.0},
+	{x=32,   y=1,   z=-515,  size=1.1},
 
-	-- === PATHS MERGE (piece 26+) ===
-	-- All three paths lead to these convergence pieces
-	{x=-15,  y=2,   z=-545,  size=1.3},   -- 26: left merge
-	{x=15,   y=2,   z=-545,  size=1.3},   -- 27: right merge
-	{x=0,    y=0,   z=-575,  size=1.7, checkpoint=true},  -- 28: CHECKPOINT 3
+	-- === PATHS MERGE ===
+	{x=-15,  y=2,   z=-545,  size=1.2},
+	{x=15,   y=2,   z=-545,  size=1.2},
+	{x=0,    y=0,   z=-575,  size=1.6, checkpoint=true},  -- CHECKPOINT 3
 
-	-- === HARD (pieces 29-38): Branches again, smaller, some moving ===
+	-- === HARD: Branches again, moving ===
 	-- LEFT HARD
-	{x=-25,  y=3,   z=-605,  size=1.0, moving=true},  -- 29
-	{x=-30,  y=0,   z=-635,  size=0.9},                -- 30
-	{x=-22,  y=5,   z=-665,  size=0.9, moving=true},  -- 31
+	{x=-25,  y=3,   z=-605,  size=0.9, moving=true},
+	{x=-30,  y=0,   z=-635,  size=0.8},
+	{x=-22,  y=5,   z=-665,  size=0.8, moving=true},
 
 	-- CENTER HARD
-	{x=0,    y=6,   z=-610,  size=0.9, moving=true},  -- 32
-	{x=5,    y=3,   z=-640,  size=0.8},                -- 33
-	{x=-3,   y=7,   z=-670,  size=0.8, moving=true},  -- 34
+	{x=0,    y=6,   z=-610,  size=0.8, moving=true},
+	{x=5,    y=3,   z=-640,  size=0.7},
+	{x=-3,   y=7,   z=-670,  size=0.7, moving=true},
 
 	-- RIGHT HARD
-	{x=25,   y=3,   z=-605,  size=1.0, moving=true},  -- 35
-	{x=30,   y=0,   z=-635,  size=0.9},                -- 36
-	{x=22,   y=5,   z=-665,  size=0.9, moving=true},  -- 37
+	{x=25,   y=3,   z=-605,  size=0.9, moving=true},
+	{x=30,   y=0,   z=-635,  size=0.8},
+	{x=22,   y=5,   z=-665,  size=0.8, moving=true},
 
 	-- === FINAL MERGE ===
-	{x=-10,  y=2,   z=-695,  size=1.1},   -- 38: left merge
-	{x=10,   y=2,   z=-695,  size=1.1},   -- 39: right merge
-	{x=0,    y=0,   z=-725,  size=1.8, checkpoint=true},  -- 40: FINAL CHECKPOINT
+	{x=-10,  y=2,   z=-695,  size=1.0},
+	{x=10,   y=2,   z=-695,  size=1.0},
+	{x=0,    y=0,   z=-725,  size=1.6, checkpoint=true},  -- FINAL CHECKPOINT
 }
 
 -- ============================================================
@@ -2426,10 +2428,10 @@ end
 
 local function createHallway()
 	hallwayFolder:ClearAllChildren()
-	-- Calculate Z range from parkour piece positions
+	-- Calculate Z range from parkour step positions
 	local minPieceZ = PARKOUR_START_Z
-	for _, piece in ipairs(PARKOUR_PIECES) do
-		if piece.z < minPieceZ then minPieceZ = piece.z end
+	for _, step in ipairs(PARKOUR_STEPS) do
+		if step.z < minPieceZ then minPieceZ = step.z end
 	end
 	local minZ = minPieceZ - 400  -- extend past the final hallway
 	local maxZ = math.min(PARKOUR_START_Z + 30, -65)
@@ -2593,22 +2595,42 @@ local function generateMap()
 	checkpointPositions = {}; createSpawnRoom()
 
 	local checkpointCount = 0
-	local lastPiecePos = Vector3.new(0, BASE_Y, PARKOUR_START_Z)
+	local lastStepPos = Vector3.new(0, BASE_Y, PARKOUR_START_Z)
 
-	-- Build every parkour piece
-	for i, piece in ipairs(PARKOUR_PIECES) do
-		local piecePos = Vector3.new(piece.x, BASE_Y + (piece.y or 0), piece.z)
+	-- Build every parkour step (each step = 3 different candy models)
+	for i, step in ipairs(PARKOUR_STEPS) do
+		local stepCenter = Vector3.new(step.x, BASE_Y + (step.y or 0), step.z)
 
-		-- Each piece gets a random candy model
-		local candyName = piece.candy or randomCandy()
-		local walkable, mdl = buildCandyPlatform(candyName, i, piecePos, piece.size)
+		-- Pick 3 DIFFERENT candy models for this step
+		local usedNames = {}
+		local function pickUnique()
+			if #CANDY_TYPES <= 1 then return randomCandy() end
+			for _ = 1, 20 do
+				local pick = randomCandy()
+				if not usedNames[pick] then
+					usedNames[pick] = true
+					return pick
+				end
+			end
+			return randomCandy()
+		end
 
-		-- Moving platforms
-		if piece.moving then makeMoving(mdl) end
+		-- Place 3 candy models around the step center
+		local firstModel = nil
+		for ci, cluster in ipairs(CLUSTER_OFFSETS) do
+			local candyPos = stepCenter + Vector3.new(cluster.dx, cluster.dy, cluster.dz)
+			local candySize = step.size * cluster.sizeMultiplier
+			local candyName = pickUnique()
 
-		-- Piece number label (floating above)
+			local walkable, mdl = buildCandyPlatform(candyName, i*10+ci, candyPos, candySize)
+
+			if step.moving then makeMoving(mdl) end
+			if ci == 1 then firstModel = mdl end
+		end
+
+		-- Step number label (floating above center)
 		local np = Instance.new("Part")
-		np.Size = Vector3.new(1,1,1); np.Position = piecePos + Vector3.new(0,14,0)
+		np.Size = Vector3.new(1,1,1); np.Position = stepCenter + Vector3.new(0,14,0)
 		np.Anchored = true; np.Transparency = 1; np.CanCollide = false; np.Parent = mapFolder
 		local ng = Instance.new("BillboardGui"); ng.Size = UDim2.fromOffset(50,35); ng.AlwaysOnTop = false; ng.Parent = np
 		local nl = Instance.new("TextLabel"); nl.Size = UDim2.fromScale(1,1); nl.BackgroundTransparency = 1
@@ -2617,23 +2639,27 @@ local function generateMap()
 		local ns = Instance.new("UIStroke"); ns.Color = Color3.fromRGB(200,100,150); ns.Thickness = 2; ns.Parent = nl
 
 		-- Checkpoint handling
-		if piece.checkpoint then
+		if step.checkpoint then
 			checkpointCount = checkpointCount + 1
-			checkpointPositions[checkpointCount] = piecePos + Vector3.new(0,5,0)
+			checkpointPositions[checkpointCount] = stepCenter + Vector3.new(0,5,0)
 
-			-- Checkpoint glow on the piece itself
-			local cpFirstPart = mdl:FindFirstChildWhichIsA("BasePart", true)
-			if cpFirstPart then
-				local cpLight = Instance.new("PointLight")
-				cpLight.Color = Color3.fromRGB(80, 255, 130)
-				cpLight.Brightness = 2.5; cpLight.Range = 45
-				cpLight.Parent = cpFirstPart
+			-- Checkpoint glow on all 3 pieces
+			for _, child in mapFolder:GetChildren() do
+				if child.Name:find(tostring(i*10)) then
+					local fp = child:FindFirstChildWhichIsA("BasePart", true)
+					if fp then
+						local cpLight = Instance.new("PointLight")
+						cpLight.Color = Color3.fromRGB(80, 255, 130)
+						cpLight.Brightness = 2.5; cpLight.Range = 45
+						cpLight.Parent = fp
+					end
+				end
 			end
 
 			-- Checkpoint sign floating above
 			local cpSign = Instance.new("Part")
 			cpSign.Size = Vector3.new(14, 5, 1.5)
-			cpSign.Position = piecePos + Vector3.new(0, 22, 0)
+			cpSign.Position = stepCenter + Vector3.new(0, 22, 0)
 			cpSign.Anchored = true; cpSign.Color = Color3.fromRGB(60,150,90)
 			cpSign.Material = Enum.Material.Neon; cpSign.Parent = mapFolder
 			local sGui = Instance.new("SurfaceGui"); sGui.Face = Enum.NormalId.Front; sGui.Parent = cpSign
@@ -2643,9 +2669,9 @@ local function generateMap()
 			local sGui2 = Instance.new("SurfaceGui"); sGui2.Face = Enum.NormalId.Back; sGui2.Parent = cpSign
 			local sLbl2 = sLbl:Clone(); sLbl2.Parent = sGui2
 
-			-- Trigger zone (invisible, sets spawn point)
+			-- Trigger zone
 			local cpt = Instance.new("Part"); cpt.Size = Vector3.new(30,20,30)
-			cpt.Position = piecePos + Vector3.new(0,10,0); cpt.Anchored = true
+			cpt.Position = stepCenter + Vector3.new(0,10,0); cpt.Anchored = true
 			cpt.Transparency = 1; cpt.CanCollide = false; cpt.Parent = mapFolder
 			local cpIdx = checkpointCount
 			cpt.Touched:Connect(function(hit)
@@ -2657,18 +2683,18 @@ local function generateMap()
 			end)
 		end
 
-		-- Collectible every 5 pieces
-		if i % 5 == 0 and not piece.checkpoint then
-			createCollectible(piecePos, i)
+		-- Collectible every 5 steps
+		if i % 5 == 0 and not step.checkpoint then
+			createCollectible(stepCenter, i)
 		end
 
-		lastPiecePos = piecePos
+		lastStepPos = stepCenter
 	end
 
 	-- ============================================================
 	-- FINAL HALLWAY RUN (disappearing tiles before finish)
 	-- ============================================================
-	local hallwayStart = lastPiecePos + Vector3.new(0, 0, -20)
+	local hallwayStart = lastStepPos + Vector3.new(0, 0, -20)
 	local FINAL_W = 20     -- narrow corridor width
 	local FINAL_H = 40     -- corridor height
 	local FINAL_LEN = 300  -- corridor length
