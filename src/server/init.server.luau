@@ -1700,196 +1700,207 @@ local function createSpawnRoom()
 	end)
 
 	-- ============================================================
-	-- LUCKY WHEEL — Vertical, front-facing, smooth clockwise spin
-	-- Tick sounds as segments pass pointer, settling motion at end
+	-- LUCKY WHEEL — Bright arcade-style vertical wheel
+	-- Circular disc with colorful wedge segments like a pizza
+	-- Raised outer rim, center hub pivot, fixed pointer at top
+	-- Smooth, bright, eye-catching
 	-- ============================================================
 	local SPIN_X = -55
 	local SPIN_Z = -40
-	local WR = 18 -- wheel radius
+	local WR = 20 -- wheel radius (slightly bigger for visual impact)
 	local NUM_SEG = #SPIN_REWARDS
 	local SEG_ANGLE = (2 * math.pi) / NUM_SEG
+	local SEG_DEG = 360 / NUM_SEG
 	local wheelModel = Instance.new("Model"); wheelModel.Name = "LuckyWheel"
 
-	local WCY = floorY + WR + 8 -- wheel center Y (eye level)
+	local WCY = floorY + WR + 10 -- wheel center Y
 
-	-- Support frame: two gold pillars + crossbar
-	for _, sx in ipairs({-1, 1}) do
-		local post = Instance.new("Part")
-		post.Size = Vector3.new(3, WR * 2 + 16, 3)
-		post.Position = Vector3.new(SPIN_X + sx * (WR + 6), floorY + post.Size.Y / 2, SPIN_Z + 2)
-		post.Anchored = true; post.Color = Color3.fromRGB(200, 160, 50)
-		post.Material = Enum.Material.Metal; post.Parent = wheelModel
-	end
-	local crossbar = Instance.new("Part")
-	crossbar.Size = Vector3.new(WR * 2 + 15, 3, 3)
-	crossbar.Position = Vector3.new(SPIN_X, floorY + WR * 2 + 18, SPIN_Z + 2)
-	crossbar.Anchored = true; crossbar.Color = Color3.fromRGB(200, 160, 50)
-	crossbar.Material = Enum.Material.Metal; crossbar.Parent = wheelModel
+	-- ============ BASE / STAND ============
+	-- Sturdy base pedestal
+	local base = Instance.new("Part"); base.Name = "WheelBase"
+	base.Size = Vector3.new(14, 6, 10)
+	base.Position = Vector3.new(SPIN_X, floorY + 5, SPIN_Z)
+	base.Anchored = true; base.Color = Color3.fromRGB(50, 25, 60)
+	base.Material = Enum.Material.SmoothPlastic; base.Parent = wheelModel
+	Instance.new("UICorner", base)
 
-	-- Dark backing disc
-	local backing = Instance.new("Part")
-	backing.Size = Vector3.new(WR * 2 + 6, 1, WR * 2 + 6)
-	backing.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z + 1.5) * CFrame.Angles(math.rad(90), 0, 0)
-	backing.Anchored = true; backing.Color = Color3.fromRGB(30, 15, 40)
-	backing.Material = Enum.Material.SmoothPlastic; backing.Shape = Enum.PartType.Cylinder
-	backing.CanCollide = false; backing.Parent = wheelModel
+	-- Base accent strip
+	local baseAccent = Instance.new("Part")
+	baseAccent.Size = Vector3.new(15, 1, 11)
+	baseAccent.Position = Vector3.new(SPIN_X, floorY + 8.5, SPIN_Z)
+	baseAccent.Anchored = true; baseAccent.Color = Color3.fromRGB(255, 215, 0)
+	baseAccent.Material = Enum.Material.Neon; baseAccent.Transparency = 0.3
+	baseAccent.CanCollide = false; baseAccent.Parent = wheelModel
 
-	-- ---- STATIC WHEEL FRAME (disc, rim, lights — does NOT rotate) ----
-	-- Main disc face
-	local disc = Instance.new("Part"); disc.Name = "Disc"
-	disc.Size = Vector3.new(WR * 2, 2, WR * 2)
+	-- Support pole (connects base to wheel center)
+	local pole = Instance.new("Part")
+	pole.Size = Vector3.new(3, WCY - floorY - 8, 3)
+	pole.Position = Vector3.new(SPIN_X, floorY + 8 + pole.Size.Y / 2, SPIN_Z + 2)
+	pole.Anchored = true; pole.Color = Color3.fromRGB(180, 150, 50)
+	pole.Material = Enum.Material.Metal; pole.Parent = wheelModel
+
+	-- ============ WHEEL DISC (the circular background — spins with prizes) ============
+	-- The ENTIRE disc + segments + dividers + labels all rotate together
+	local spinModel = Instance.new("Model"); spinModel.Name = "WheelDisc"; spinModel.Parent = wheelModel
+
+	-- Main circular disc (the pizza base)
+	local disc = Instance.new("Part"); disc.Name = "DiscFace"
+	disc.Size = Vector3.new(WR * 2, 3, WR * 2)
 	disc.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z) * CFrame.Angles(math.rad(90), 0, 0)
-	disc.Anchored = true; disc.Color = Color3.fromRGB(240, 230, 210)
+	disc.Anchored = true; disc.Color = Color3.fromRGB(250, 245, 235)
 	disc.Material = Enum.Material.SmoothPlastic; disc.Shape = Enum.PartType.Cylinder
-	disc.Parent = wheelModel
+	disc.Parent = spinModel
 
-	-- Gold outer rim
-	local outerRim = Instance.new("Part")
-	outerRim.Size = Vector3.new(WR * 2 + 4, 3, WR * 2 + 4)
-	outerRim.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z + 0.3) * CFrame.Angles(math.rad(90), 0, 0)
+	-- Colorful wedge segments (laid on top of disc, pizza-slice shaped)
+	local segColors = {
+		Color3.fromRGB(255, 65, 85),   -- red
+		Color3.fromRGB(255, 200, 50),  -- gold
+		Color3.fromRGB(80, 200, 255),  -- sky blue
+		Color3.fromRGB(255, 100, 200), -- pink
+		Color3.fromRGB(100, 220, 100), -- green
+		Color3.fromRGB(180, 80, 255),  -- purple
+		Color3.fromRGB(255, 160, 50),  -- orange
+		Color3.fromRGB(100, 220, 220), -- teal
+	}
+
+	for i, reward in ipairs(SPIN_REWARDS) do
+		local a0 = (i - 1) * SEG_ANGLE -- start angle
+		local aMid = a0 + SEG_ANGLE / 2 -- middle of segment
+		local col = segColors[((i - 1) % #segColors) + 1]
+
+		-- Wedge fill: 3 overlapping thin parts fanning out to approximate a pie slice
+		for fan = -1, 1 do
+			local fanAngle = aMid + fan * (SEG_ANGLE * 0.28)
+			local seg = Instance.new("Part")
+			seg.Size = Vector3.new(3.8, WR * 0.85, 2.5)
+			seg.CFrame = CFrame.new(
+				SPIN_X + math.cos(fanAngle) * (WR * 0.42),
+				WCY + math.sin(fanAngle) * (WR * 0.42),
+				SPIN_Z - 0.5
+			) * CFrame.Angles(0, 0, fanAngle - math.pi / 2)
+			seg.Anchored = true; seg.Color = col
+			seg.Material = Enum.Material.SmoothPlastic; seg.CanCollide = false
+			seg.Parent = spinModel
+		end
+
+		-- Divider line between segments (thin dark line)
+		local div = Instance.new("Part")
+		div.Size = Vector3.new(0.2, WR * 0.92, 3)
+		div.CFrame = CFrame.new(
+			SPIN_X + math.cos(a0) * (WR * 0.44),
+			WCY + math.sin(a0) * (WR * 0.44),
+			SPIN_Z - 0.6
+		) * CFrame.Angles(0, 0, a0 - math.pi / 2)
+		div.Anchored = true; div.Color = Color3.fromRGB(40, 20, 50)
+		div.Material = Enum.Material.SmoothPlastic; div.CanCollide = false
+		div.Parent = spinModel
+
+		-- Prize label (SurfaceGui on thin part, facing player)
+		local lblP = Instance.new("Part"); lblP.Name = "Lbl" .. i
+		lblP.Size = Vector3.new(5.5, 2, 0.1)
+		lblP.CFrame = CFrame.new(
+			SPIN_X + math.cos(aMid) * (WR * 0.55),
+			WCY + math.sin(aMid) * (WR * 0.55),
+			SPIN_Z - 2
+		) * CFrame.Angles(0, 0, aMid - math.pi / 2)
+		lblP.Anchored = true; lblP.Transparency = 1; lblP.CanCollide = false
+		lblP.Parent = spinModel
+		local sg = Instance.new("SurfaceGui"); sg.Face = Enum.NormalId.Back
+		sg.LightInfluence = 0; sg.Brightness = 1.5; sg.Parent = lblP
+		local tl = Instance.new("TextLabel"); tl.Size = UDim2.fromScale(1, 1)
+		tl.BackgroundTransparency = 1; tl.Text = reward.icon .. " " .. reward.name
+		tl.TextColor3 = Color3.fromRGB(255, 255, 255); tl.TextScaled = true
+		tl.Font = Enum.Font.FredokaOne; tl.Parent = sg
+		local tlStroke = Instance.new("UIStroke"); tlStroke.Color = Color3.fromRGB(0, 0, 0)
+		tlStroke.Thickness = 2; tlStroke.Parent = tl
+	end
+
+	-- Center hub (gold, rotates with disc)
+	local hub = Instance.new("Part"); hub.Name = "Hub"
+	hub.Size = Vector3.new(5, 5, 4)
+	hub.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z - 1) * CFrame.Angles(math.rad(90), 0, 0)
+	hub.Anchored = true; hub.Color = Color3.fromRGB(255, 215, 0)
+	hub.Material = Enum.Material.Metal; hub.Shape = Enum.PartType.Cylinder
+	hub.Parent = spinModel
+
+	-- ============ OUTER RIM (static, raised, stays in place) ============
+	local outerRim = Instance.new("Part"); outerRim.Name = "OuterRim"
+	outerRim.Size = Vector3.new(WR * 2 + 5, 4, WR * 2 + 5)
+	outerRim.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z + 0.5) * CFrame.Angles(math.rad(90), 0, 0)
 	outerRim.Anchored = true; outerRim.Color = Color3.fromRGB(255, 215, 0)
-	outerRim.Material = Enum.Material.Metal; outerRim.Transparency = 0.15
-	outerRim.Shape = Enum.PartType.Cylinder; outerRim.CanCollide = false
-	outerRim.Parent = wheelModel
+	outerRim.Material = Enum.Material.Metal; outerRim.Shape = Enum.PartType.Cylinder
+	outerRim.CanCollide = false; outerRim.Parent = wheelModel
 
-	-- Rim lights (static, around the frame)
-	for i = 1, 20 do
-		local a = (i / 20) * math.pi * 2
+	-- Arcade bulb lights around rim (static)
+	for i = 1, 24 do
+		local a = (i / 24) * math.pi * 2
 		local bulb = Instance.new("Part")
-		bulb.Size = Vector3.new(1.2, 1.2, 1.2)
-		bulb.Position = Vector3.new(SPIN_X + math.cos(a) * (WR + 3), WCY + math.sin(a) * (WR + 3), SPIN_Z - 0.5)
+		bulb.Size = Vector3.new(1.5, 1.5, 1.5)
+		bulb.Position = Vector3.new(
+			SPIN_X + math.cos(a) * (WR + 3.5),
+			WCY + math.sin(a) * (WR + 3.5),
+			SPIN_Z - 0.8
+		)
 		bulb.Anchored = true; bulb.Shape = Enum.PartType.Ball
-		bulb.Color = if i % 2 == 0 then Color3.fromRGB(255, 50, 50) else Color3.fromRGB(255, 255, 80)
+		bulb.Color = if i % 3 == 0 then Color3.fromRGB(255, 50, 50)
+			elseif i % 3 == 1 then Color3.fromRGB(255, 255, 80)
+			else Color3.fromRGB(80, 200, 255)
 		bulb.Material = Enum.Material.Neon; bulb.CanCollide = false
 		bulb.Parent = wheelModel
 	end
 
-	-- Center hub (static, stays in place)
-	local hub = Instance.new("Part")
-	hub.Size = Vector3.new(4, 4, 3)
-	hub.CFrame = CFrame.new(SPIN_X, WCY, SPIN_Z - 0.8) * CFrame.Angles(math.rad(90), 0, 0)
-	hub.Anchored = true; hub.Color = Color3.fromRGB(255, 215, 0)
-	hub.Material = Enum.Material.Metal; hub.Shape = Enum.PartType.Cylinder
-	hub.Parent = wheelModel
-
-	-- ---- SPINNING PRIZE SLICES (only segments + dividers + labels rotate) ----
-	local spinModel = Instance.new("Model"); spinModel.Name = "PrizeSlices"; spinModel.Parent = wheelModel
-
-	-- Segment colors
-	local segColors = {
-		Color3.fromRGB(255, 200, 50),  Color3.fromRGB(80, 200, 255),
-		Color3.fromRGB(255, 100, 200), Color3.fromRGB(100, 255, 150),
-		Color3.fromRGB(255, 140, 60),  Color3.fromRGB(180, 80, 255),
-		Color3.fromRGB(255, 220, 100), Color3.fromRGB(100, 220, 220),
-	}
-
-	-- Build segments + dividers + labels
-	for i, reward in ipairs(SPIN_REWARDS) do
-		local a0 = (i - 1) * SEG_ANGLE
-		local aMid = a0 + SEG_ANGLE / 2
-		local col = segColors[((i - 1) % #segColors) + 1]
-
-		-- Segment block
-		local seg = Instance.new("Part"); seg.Name = "Seg" .. i
-		seg.Size = Vector3.new(5, WR * 0.82, 2)
-		seg.CFrame = CFrame.new(
-			SPIN_X + math.cos(aMid) * (WR * 0.4),
-			WCY + math.sin(aMid) * (WR * 0.4),
-			SPIN_Z - 0.3
-		) * CFrame.Angles(0, 0, aMid - math.pi / 2)
-		seg.Anchored = true; seg.Color = col
-		seg.Material = Enum.Material.SmoothPlastic; seg.CanCollide = false
-		seg.Parent = spinModel
-
-		-- Divider line
-		local div = Instance.new("Part")
-		div.Size = Vector3.new(0.25, WR * 0.9, 2.5)
-		div.CFrame = CFrame.new(
-			SPIN_X + math.cos(a0) * (WR * 0.42),
-			WCY + math.sin(a0) * (WR * 0.42),
-			SPIN_Z - 0.4
-		) * CFrame.Angles(0, 0, a0 - math.pi / 2)
-		div.Anchored = true; div.Color = Color3.fromRGB(30, 15, 40)
-		div.Material = Enum.Material.SmoothPlastic; div.CanCollide = false
-		div.Parent = spinModel
-
-		-- Label
-		local lblP = Instance.new("Part"); lblP.Name = "Lbl" .. i
-		lblP.Size = Vector3.new(5, 2.2, 0.1)
-		lblP.CFrame = CFrame.new(
-			SPIN_X + math.cos(aMid) * (WR * 0.58),
-			WCY + math.sin(aMid) * (WR * 0.58),
-			SPIN_Z - 1.5
-		) * CFrame.Angles(0, 0, aMid - math.pi / 2)
-		lblP.Anchored = true; lblP.Transparency = 0.95; lblP.CanCollide = false
-		lblP.Parent = spinModel
-		local sg = Instance.new("SurfaceGui"); sg.Face = Enum.NormalId.Back; sg.Parent = lblP
-		local tl = Instance.new("TextLabel"); tl.Size = UDim2.fromScale(1,1)
-		tl.BackgroundTransparency = 1; tl.Text = reward.icon .. " " .. reward.name
-		tl.TextColor3 = Color3.fromRGB(0,0,0); tl.TextScaled = true
-		tl.Font = Enum.Font.FredokaOne; tl.Parent = sg
-	end
-
-	-- ---- STATIC POINTER at top (does NOT rotate) ----
+	-- ============ POINTER at top (static, never rotates) ============
+	-- Pointer post
 	local pointer = Instance.new("Part"); pointer.Name = "Pointer"
-	pointer.Size = Vector3.new(2, 6, 2)
-	pointer.Position = Vector3.new(SPIN_X, WCY + WR + 2, SPIN_Z - 2)
+	pointer.Size = Vector3.new(2.5, 5, 2.5)
+	pointer.Position = Vector3.new(SPIN_X, WCY + WR + 3, SPIN_Z - 1.5)
 	pointer.Anchored = true; pointer.Color = Color3.fromRGB(255, 30, 30)
-	pointer.Material = Enum.Material.Neon
-	pointer.Parent = wheelModel
-	-- Pointer triangle tip
+	pointer.Material = Enum.Material.Neon; pointer.Parent = wheelModel
+	-- Pointer tip (ball pointing down at wheel)
 	local pTip = Instance.new("Part")
-	pTip.Size = Vector3.new(3, 3, 3)
-	pTip.Position = Vector3.new(SPIN_X, WCY + WR - 1, SPIN_Z - 2)
+	pTip.Size = Vector3.new(3.5, 3.5, 3.5)
+	pTip.Position = Vector3.new(SPIN_X, WCY + WR, SPIN_Z - 1.5)
 	pTip.Anchored = true; pTip.Color = Color3.fromRGB(255, 30, 30)
 	pTip.Material = Enum.Material.Neon; pTip.Shape = Enum.PartType.Ball
 	pTip.Parent = wheelModel
 
-	-- "LUCKY WHEEL" sign
+	-- ============ SIGN ============
 	local signP = Instance.new("Part")
 	signP.Size = Vector3.new(1,1,1)
 	signP.Position = Vector3.new(SPIN_X, WCY + WR + 12, SPIN_Z)
 	signP.Anchored = true; signP.Transparency = 1; signP.CanCollide = false; signP.Parent = wheelModel
-	local signBB = Instance.new("BillboardGui"); signBB.Size = UDim2.fromOffset(280, 70); signBB.Parent = signP
+	local signBB = Instance.new("BillboardGui"); signBB.Size = UDim2.fromOffset(300, 80); signBB.Parent = signP
 	local signLbl = Instance.new("TextLabel"); signLbl.Size = UDim2.fromScale(1,1)
 	signLbl.BackgroundTransparency = 1; signLbl.Text = "🎡 LUCKY WHEEL 🎡"
 	signLbl.TextColor3 = Color3.fromRGB(255, 220, 80); signLbl.TextScaled = true
 	signLbl.Font = Enum.Font.FredokaOne; signLbl.Parent = signBB
 	Instance.new("UIStroke", signLbl).Color = Color3.fromRGB(200, 140, 20)
 
-	-- Tick sound (plays each time a segment passes the pointer)
+	-- Tick sound
 	local tickSound = Instance.new("Sound")
 	tickSound.Name = "WheelTick"; tickSound.SoundId = "rbxassetid://6732690176"
-	tickSound.Volume = 0.8; tickSound.RollOffMaxDistance = 60
-	tickSound.Parent = pointer
+	tickSound.Volume = 0.8; tickSound.RollOffMaxDistance = 60; tickSound.Parent = pointer
 
-	-- ProximityPrompt
-	local pedestal = Instance.new("Part"); pedestal.Name = "SpinPedestal"
-	pedestal.Size = Vector3.new(10, 3, 6)
-	pedestal.Position = Vector3.new(SPIN_X, floorY + 3, SPIN_Z - 8)
-	pedestal.Anchored = true; pedestal.Color = Color3.fromRGB(60, 30, 30)
-	pedestal.Material = Enum.Material.Wood; pedestal.Parent = wheelModel
-
+	-- ProximityPrompt on the base
 	local spinPrompt = Instance.new("ProximityPrompt")
 	spinPrompt.ActionText = "Spin"; spinPrompt.ObjectText = "Lucky Wheel (Hold E)"
 	spinPrompt.KeyboardKeyCode = Enum.KeyCode.E; spinPrompt.HoldDuration = 0.8
-	spinPrompt.MaxActivationDistance = 16; spinPrompt.RequiresLineOfSight = false
-	spinPrompt.Parent = pedestal
+	spinPrompt.MaxActivationDistance = 18; spinPrompt.RequiresLineOfSight = false
+	spinPrompt.Parent = base
 
 	wheelModel.Parent = mapFolder
 
-	-- ---- ROTATION STATE ----
+	-- ============ ROTATION ============
 	local wheelSpinning = false
-	local currentAngle = 0 -- degrees, clockwise from top
-	local IDLE_SPEED = 0.25 -- deg/frame (~7.5 deg/sec idle)
+	local currentAngle = 0
+	local IDLE_SPEED = 0.2 -- subtle idle rotation
 	local wheelPivot = CFrame.new(SPIN_X, WCY, SPIN_Z)
 
-	-- Apply rotation: positive angle = clockwise when viewed from front (-Z)
 	local function setWheelAngle(angleDeg)
 		spinModel:PivotTo(wheelPivot * CFrame.Angles(0, 0, math.rad(-angleDeg)))
 	end
 
-	-- ---- IDLE: slow continuous clockwise spin ----
+	-- Idle: subtle continuous clockwise spin
 	task.spawn(function()
 		while wheelModel and wheelModel.Parent do
 			if not wheelSpinning then
