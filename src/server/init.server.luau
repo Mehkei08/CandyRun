@@ -294,79 +294,77 @@ end
 -- The 3 candies are placed around that center with slight offsets.
 -- ============================================================
 
-local PARKOUR_START_Z = -64
+local PARKOUR_START_Z = -83
 local BASE_Y = START_HEIGHT
 
 -- Offsets for the 3 candy models within each step (relative to step center)
 -- candy1: small, left-back | candy2: big, center | candy3: medium, right-front
 local CLUSTER_OFFSETS = {
-	{dx=-6, dy=0, dz=-4,  sizeMultiplier=0.6},  -- small piece
-	{dx=0,  dy=0, dz=0,   sizeMultiplier=1.0},  -- main piece (biggest)
-	{dx=6,  dy=0, dz=4,   sizeMultiplier=0.8},  -- medium piece
+	{dx=0, dy=0, dz=0, sizeMultiplier=1.0},  -- main piece only
 }
 
 local PARKOUR_STEPS = {
 	-- === INTRO (steps 1-6): Single path, learn to jump ===
-	{x=0,    y=0,   z=-64,   size=1.8},   -- 1: starter at door
-	{x=5,    y=2,   z=-90,   size=1.6},   -- 2: right + up
-	{x=-8,   y=0,   z=-118,  size=1.5},   -- 3: left
-	{x=3,    y=3,   z=-145,  size=1.4},   -- 4: right + up
-	{x=-6,   y=1,   z=-172,  size=1.5},   -- 5: left
-	{x=0,    y=0,   z=-200,  size=1.7, checkpoint=true},  -- 6: CHECKPOINT 1
+	{x=0,    y=0,   z=-83.2,   size=2.34},   -- 1: starter at door
+	{x=6.5,  y=2,   z=-117,    size=2.08},   -- 2: right + up
+	{x=-10.4,y=0,   z=-153.4,  size=1.95},   -- 3: left
+	{x=3.9,  y=3,   z=-188.5,  size=1.82},   -- 4: right + up
+	{x=-7.8, y=1,   z=-223.6,  size=1.95},   -- 5: left
+	{x=0,    y=0,   z=-260,    size=2.21, checkpoint=true},  -- 6: CHECKPOINT 1
 
 	-- === MEDIUM (steps 7-13): Wider jumps ===
-	{x=10,   y=3,   z=-230,  size=1.4},   -- 7
-	{x=-12,  y=0,   z=-255,  size=1.3},   -- 8
-	{x=15,   y=4,   z=-282,  size=1.2},   -- 9
-	{x=-5,   y=1,   z=-310,  size=1.3},   -- 10
-	{x=8,    y=-1,  z=-338,  size=1.2},   -- 11
-	{x=-15,  y=3,   z=-365,  size=1.2},   -- 12
-	{x=0,    y=0,   z=-395,  size=1.5, checkpoint=true},  -- 13: CHECKPOINT 2
+	{x=13,   y=3,   z=-299,    size=1.82},   -- 7
+	{x=-15.6,y=0,   z=-331.5,  size=1.69},   -- 8
+	{x=19.5, y=4,   z=-366.6,  size=1.56},   -- 9
+	{x=-6.5, y=1,   z=-403,    size=1.69},   -- 10
+	{x=10.4, y=-1,  z=-439.4,  size=1.56},   -- 11
+	{x=-19.5,y=3,   z=-474.5,  size=1.56},   -- 12
+	{x=0,    y=0,   z=-513.5,  size=1.95, checkpoint=true},  -- 13: CHECKPOINT 2
 
 	-- === BRANCHING: Three paths diverge ===
 	-- LEFT PATH
-	{x=-30,  y=2,   z=-425,  size=1.2},
-	{x=-35,  y=0,   z=-455,  size=1.1},
-	{x=-28,  y=4,   z=-485,  size=1.0},
-	{x=-32,  y=1,   z=-515,  size=1.1},
+	{x=-39,  y=2,   z=-552.5,  size=1.56},
+	{x=-45.5,y=0,   z=-591.5,  size=1.43},
+	{x=-36.4,y=4,   z=-630.5,  size=1.3},
+	{x=-41.6,y=1,   z=-669.5,  size=1.43},
 
 	-- CENTER PATH (higher, harder)
-	{x=0,    y=5,   z=-430,  size=1.1},
-	{x=5,    y=3,   z=-460,  size=1.0},
-	{x=-3,   y=6,   z=-490,  size=0.9},
-	{x=2,    y=4,   z=-520,  size=1.0},
+	{x=0,    y=5,   z=-559,    size=1.43},
+	{x=6.5,  y=3,   z=-598,    size=1.3},
+	{x=-3.9, y=6,   z=-637,    size=1.17},
+	{x=2.6,  y=4,   z=-676,    size=1.3},
 
 	-- RIGHT PATH
-	{x=30,   y=2,   z=-425,  size=1.2},
-	{x=35,   y=0,   z=-455,  size=1.1},
-	{x=28,   y=4,   z=-485,  size=1.0},
-	{x=32,   y=1,   z=-515,  size=1.1},
+	{x=39,   y=2,   z=-552.5,  size=1.56},
+	{x=45.5, y=0,   z=-591.5,  size=1.43},
+	{x=36.4, y=4,   z=-630.5,  size=1.3},
+	{x=41.6, y=1,   z=-669.5,  size=1.43},
 
 	-- === PATHS MERGE ===
-	{x=-15,  y=2,   z=-545,  size=1.2},
-	{x=15,   y=2,   z=-545,  size=1.2},
-	{x=0,    y=0,   z=-575,  size=1.6, checkpoint=true},  -- CHECKPOINT 3
+	{x=-19.5,y=2,   z=-708.5,  size=1.56},
+	{x=19.5, y=2,   z=-708.5,  size=1.56},
+	{x=0,    y=0,   z=-747.5,  size=2.08, checkpoint=true},  -- CHECKPOINT 3
 
 	-- === HARD: Branches again, moving ===
 	-- LEFT HARD
-	{x=-25,  y=3,   z=-605,  size=0.9, moving=true},
-	{x=-30,  y=0,   z=-635,  size=0.8},
-	{x=-22,  y=5,   z=-665,  size=0.8, moving=true},
+	{x=-32.5,y=3,   z=-786.5,  size=1.17, moving=true},
+	{x=-39,  y=0,   z=-825.5,  size=1.04},
+	{x=-28.6,y=5,   z=-864.5,  size=1.04, moving=true},
 
 	-- CENTER HARD
-	{x=0,    y=6,   z=-610,  size=0.8, moving=true},
-	{x=5,    y=3,   z=-640,  size=0.7},
-	{x=-3,   y=7,   z=-670,  size=0.7, moving=true},
+	{x=0,    y=6,   z=-793,    size=1.04, moving=true},
+	{x=6.5,  y=3,   z=-832,    size=0.91},
+	{x=-3.9, y=7,   z=-871,    size=0.91, moving=true},
 
 	-- RIGHT HARD
-	{x=25,   y=3,   z=-605,  size=0.9, moving=true},
-	{x=30,   y=0,   z=-635,  size=0.8},
-	{x=22,   y=5,   z=-665,  size=0.8, moving=true},
+	{x=32.5, y=3,   z=-786.5,  size=1.17, moving=true},
+	{x=39,   y=0,   z=-825.5,  size=1.04},
+	{x=28.6, y=5,   z=-864.5,  size=1.04, moving=true},
 
 	-- === FINAL MERGE ===
-	{x=-10,  y=2,   z=-695,  size=1.0},
-	{x=10,   y=2,   z=-695,  size=1.0},
-	{x=0,    y=0,   z=-725,  size=1.6, checkpoint=true},  -- FINAL CHECKPOINT
+	{x=-13,  y=2,   z=-903.5,  size=1.3},
+	{x=13,   y=2,   z=-903.5,  size=1.3},
+	{x=0,    y=0,   z=-942.5,  size=2.08, checkpoint=true},  -- FINAL CHECKPOINT
 }
 
 -- ============================================================
@@ -481,9 +479,11 @@ local function createCollectible(position, index)
 	touchPart.Anchored = true; touchPart.Transparency = 1; touchPart.CanCollide = false
 	touchPart.Parent = model
 
+	local collected = false
 	touchPart.Touched:Connect(function(hit)
 		local ch = hit.Parent; local plr = Players:GetPlayerFromCharacter(ch)
-		if plr and model.Parent then
+		if plr and model.Parent and not collected then
+			collected = true
 			-- Play the collect sound before removing
 			local snd = model:FindFirstChild("CollectSound", true)
 			if snd then snd:Play() end
@@ -505,6 +505,7 @@ local function createCollectible(position, index)
 			task.delay(15, function()
 				if collectiblesFolder and collectiblesFolder.Parent then
 					model.Parent = collectiblesFolder
+					collected = false
 				end
 			end)
 		end
@@ -1027,9 +1028,9 @@ local function applySpinReward(plr, reward)
 		candyUpdateEvent:FireClient(plr, data.candies)
 	elseif reward.type == "speed_boost" then
 		if hum then
-			hum.WalkSpeed = 56
+			hum.WalkSpeed = 76
 			task.delay(reward.value * 60, function()
-				if hum and hum.Parent then hum.WalkSpeed = 28 end
+				if hum and hum.Parent then hum.WalkSpeed = 48 end
 			end)
 		end
 	elseif reward.type == "gravity_boost" then
@@ -2108,7 +2109,7 @@ local function createSpawnRoom()
 				if hum then hum.WalkSpeed = hum.WalkSpeed + 30 end
 			end)
 			tool.Unequipped:Connect(function()
-				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 30, 28) end
+				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 30, 48) end
 			end)
 
 		elseif itemName == "Gravity Coil" then
@@ -2183,7 +2184,7 @@ local function createSpawnRoom()
 				end
 			end)
 			tool.Unequipped:Connect(function()
-				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 25, 28) end
+				if hum then hum.WalkSpeed = math.max(hum.WalkSpeed - 25, 48) end
 				local rootPart = char:FindFirstChild("HumanoidRootPart")
 				if rootPart then
 					local bf = rootPart:FindFirstChild("FusionGravityReducer")
@@ -2692,173 +2693,78 @@ local function generateMap()
 	end
 
 	-- ============================================================
-	-- FINAL HALLWAY RUN (disappearing tiles before finish)
+	-- FINISH LINE + GOAL
 	-- ============================================================
-	local hallwayStart = lastStepPos + Vector3.new(0, 0, -20)
-	local FINAL_W = 20     -- narrow corridor width
-	local FINAL_H = 40     -- corridor height
-	local FINAL_LEN = 300  -- corridor length
-	local TILE_SIZE = 6    -- tile dimensions
-	local TILES_X = math.floor(FINAL_W / TILE_SIZE)
-	local TILES_Z = math.floor(FINAL_LEN / TILE_SIZE)
+	local finishZ = lastStepPos.Z - 30
+	local finishY = BASE_Y
 
-	-- Corridor walls
-	local fhWallColors = {Color3.fromRGB(255,120,160), Color3.fromRGB(200,100,255)}
-	for _, side in ipairs({-1, 1}) do
-		local wall = Instance.new("Part")
-		wall.Size = Vector3.new(4, FINAL_H, FINAL_LEN)
-		wall.Position = hallwayStart + Vector3.new(side*(FINAL_W/2+2), FINAL_H/2, -FINAL_LEN/2)
-		wall.Anchored = true; wall.Color = fhWallColors[if side==-1 then 1 else 2]
-		wall.Material = Enum.Material.SmoothPlastic; wall.Parent = mapFolder
+	-- Finish line arch (golden neon)
+	local finishArchL = Instance.new("Part")
+	finishArchL.Size = Vector3.new(4, 40, 4)
+	finishArchL.Position = Vector3.new(-20, finishY + 20, finishZ)
+	finishArchL.Anchored = true; finishArchL.Color = Color3.fromRGB(255, 215, 0)
+	finishArchL.Material = Enum.Material.Neon; finishArchL.Parent = mapFolder
 
-		-- Candy stripes on walls
-		for s = 1, 8 do
-			local stripe = Instance.new("Part")
-			stripe.Size = Vector3.new(1.5, 4, FINAL_LEN)
-			stripe.Position = hallwayStart + Vector3.new(side*(FINAL_W/2), s*5, -FINAL_LEN/2)
-			stripe.Anchored = true; stripe.Color = Color3.fromRGB(255,255,255)
-			stripe.Material = Enum.Material.SmoothPlastic
-			stripe.Transparency = 0.3; stripe.CanCollide = false
-			stripe.Parent = mapFolder
-		end
+	local finishArchR = Instance.new("Part")
+	finishArchR.Size = Vector3.new(4, 40, 4)
+	finishArchR.Position = Vector3.new(20, finishY + 20, finishZ)
+	finishArchR.Anchored = true; finishArchR.Color = Color3.fromRGB(255, 215, 0)
+	finishArchR.Material = Enum.Material.Neon; finishArchR.Parent = mapFolder
+
+	local finishArchTop = Instance.new("Part")
+	finishArchTop.Size = Vector3.new(44, 4, 4)
+	finishArchTop.Position = Vector3.new(0, finishY + 41, finishZ)
+	finishArchTop.Anchored = true; finishArchTop.Color = Color3.fromRGB(255, 215, 0)
+	finishArchTop.Material = Enum.Material.Neon; finishArchTop.Parent = mapFolder
+
+	-- "FINISH" sign
+	local finishSign = Instance.new("Part")
+	finishSign.Size = Vector3.new(30, 8, 1)
+	finishSign.Position = Vector3.new(0, finishY + 35, finishZ - 2)
+	finishSign.Anchored = true; finishSign.Color = Color3.fromRGB(255, 50, 50)
+	finishSign.Material = Enum.Material.Neon; finishSign.Parent = mapFolder
+	local fGui = Instance.new("SurfaceGui"); fGui.Face = Enum.NormalId.Front; fGui.Parent = finishSign
+	local fLbl = Instance.new("TextLabel"); fLbl.Size = UDim2.fromScale(1,1); fLbl.BackgroundTransparency = 1
+	fLbl.Text = "🏆 FINISH 🏆"; fLbl.TextColor3 = Color3.fromRGB(255,255,255)
+	fLbl.TextScaled = true; fLbl.Font = Enum.Font.FredokaOne; fLbl.Parent = fGui
+	local fGui2 = Instance.new("SurfaceGui"); fGui2.Face = Enum.NormalId.Back; fGui2.Parent = finishSign
+	local fLbl2 = fLbl:Clone(); fLbl2.Parent = fGui2
+
+	-- Goal platform (big candy piece)
+	local goalCandyName = randomCandy()
+	local _, goalModel = buildCandyPlatform(goalCandyName, 99999, Vector3.new(0, finishY, finishZ - 15), 3.0)
+	for _, part in goalModel:GetDescendants() do
+		if part:IsA("BasePart") then part.CanCollide = true end
 	end
 
-	-- Corridor ceiling
-	local fhCeil = Instance.new("Part")
-	fhCeil.Size = Vector3.new(FINAL_W+8, 3, FINAL_LEN)
-	fhCeil.Position = hallwayStart + Vector3.new(0, FINAL_H, -FINAL_LEN/2)
-	fhCeil.Anchored = true; fhCeil.Color = Color3.fromRGB(220,170,255)
-	fhCeil.Material = Enum.Material.SmoothPlastic; fhCeil.Parent = mapFolder
+	-- Confetti particles on goal
+	local goalPart = goalModel:FindFirstChildWhichIsA("BasePart", true)
+	if goalPart then
+		local confetti = Instance.new("ParticleEmitter")
+		confetti.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 80, 80)),
+			ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 255, 80)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(80, 255, 80)),
+			ColorSequenceKeypoint.new(0.75, Color3.fromRGB(80, 80, 255)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 80, 255)),
+		})
+		confetti.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 1.5), NumberSequenceKeypoint.new(1, 0)})
+		confetti.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(1, 1)})
+		confetti.Lifetime = NumberRange.new(2, 4); confetti.Rate = 30
+		confetti.Speed = NumberRange.new(5, 15); confetti.SpreadAngle = Vector2.new(60, 60)
+		confetti.Acceleration = Vector3.new(0, -5, 0)
+		confetti.Parent = goalPart
 
-	-- Ceiling lights down center of final hallway
-	for lIdx = 1, math.floor(FINAL_LEN / 20) do
-		local lz = hallwayStart.Z - lIdx * 20
-		local rod = Instance.new("Part")
-		rod.Size = Vector3.new(0.6, 8, 0.6)
-		rod.Position = Vector3.new(hallwayStart.X, hallwayStart.Y + FINAL_H - 4, lz)
-		rod.Anchored = true; rod.Color = Color3.fromRGB(240,230,200)
-		rod.Material = Enum.Material.SmoothPlastic; rod.CanCollide = false
-		rod.Parent = mapFolder
-
-		local lamp = Instance.new("Part")
-		lamp.Size = Vector3.new(2.5, 6, 6)
-		lamp.Position = Vector3.new(hallwayStart.X, hallwayStart.Y + FINAL_H - 10, lz)
-		lamp.Anchored = true; lamp.Color = Color3.fromRGB(255,80,80)
-		lamp.Material = Enum.Material.Neon; lamp.Shape = Enum.PartType.Cylinder
-		lamp.Orientation = Vector3.new(0,0,90)
-		lamp.CanCollide = false; lamp.Transparency = 0.1
-		lamp.Parent = mapFolder
-
-		local pl = Instance.new("PointLight")
-		pl.Color = Color3.fromRGB(255,150,150); pl.Brightness = 2; pl.Range = 35
-		pl.Parent = lamp
+		local goalLight = Instance.new("PointLight")
+		goalLight.Color = Color3.fromRGB(255, 215, 0)
+		goalLight.Brightness = 3; goalLight.Range = 50
+		goalLight.Parent = goalPart
 	end
 
-	-- "FINAL RUN" sign at entrance
-	local frSign = Instance.new("Part")
-	frSign.Size = Vector3.new(FINAL_W, 5, 1.5)
-	frSign.Position = hallwayStart + Vector3.new(0, FINAL_H-5, 2)
-	frSign.Anchored = true; frSign.Color = Color3.fromRGB(255,50,50)
-	frSign.Material = Enum.Material.Neon; frSign.Parent = mapFolder
-	local frGui = Instance.new("SurfaceGui"); frGui.Face = Enum.NormalId.Back; frGui.Parent = frSign
-	local frLbl = Instance.new("TextLabel"); frLbl.Size = UDim2.fromScale(1,1); frLbl.BackgroundTransparency = 1
-	frLbl.Text = "⚡ FINAL RUN ⚡"; frLbl.TextColor3 = Color3.fromRGB(255,255,255)
-	frLbl.TextScaled = true; frLbl.Font = Enum.Font.FredokaOne; frLbl.Parent = frGui
-
-	-- DISAPPEARING TILES
-	local tileColors = {
-		Color3.fromRGB(255,180,210), Color3.fromRGB(200,160,255),
-		Color3.fromRGB(160,210,255), Color3.fromRGB(255,210,160),
-	}
-
-	for tz = 0, TILES_Z - 1 do
-		for tx = 0, TILES_X - 1 do
-			local tile = Instance.new("Part")
-			tile.Name = "DisappearTile"
-			tile.Size = Vector3.new(TILE_SIZE - 0.3, 1.5, TILE_SIZE - 0.3)
-			tile.Position = hallwayStart + Vector3.new(
-				-FINAL_W/2 + tx*TILE_SIZE + TILE_SIZE/2,
-				-0.5,
-				-(tz*TILE_SIZE + TILE_SIZE/2)
-			)
-			tile.Anchored = true
-			tile.Color = tileColors[((tx+tz) % #tileColors) + 1]
-			tile.Material = Enum.Material.SmoothPlastic
-			tile.TopSurface = Enum.SurfaceType.Smooth
-			tile.BottomSurface = Enum.SurfaceType.Smooth
-			tile.Parent = mapFolder
-
-			-- Disappear logic: 0.5s after touch, tile vanishes instantly
-			local tileActive = true
-			local tileFading = false
-			tile.Touched:Connect(function(hit)
-				if tileFading or not tileActive then return end
-				local ch = hit.Parent; local hum = ch and ch:FindFirstChild("Humanoid")
-				if not hum then return end
-				tileFading = true
-
-				-- Instant red flash + crack particles
-				tile.Color = Color3.fromRGB(255, 50, 50)
-				local crack = Instance.new("ParticleEmitter")
-				crack.Color = ColorSequence.new(Color3.fromRGB(255,100,100))
-				crack.Size = NumberSequence.new({NumberSequenceKeypoint.new(0,0.8),NumberSequenceKeypoint.new(1,0)})
-				crack.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0.3),NumberSequenceKeypoint.new(1,1)})
-				crack.Lifetime = NumberRange.new(0.3,0.6); crack.Rate = 60
-				crack.Speed = NumberRange.new(3,8); crack.SpreadAngle = Vector2.new(60,60)
-				crack.Parent = tile
-
-				-- Disappear after 0.5 seconds
-				task.wait(0.5)
-				crack:Destroy()
-				tileActive = false
-				tile.CanCollide = false
-				TweenService:Create(tile, TweenInfo.new(0.15), {Transparency = 1}):Play()
-
-				-- Respawn after 4 seconds
-				task.wait(4)
-				tile.Color = tileColors[((tx+tz) % #tileColors) + 1]
-				tile.Transparency = 0
-				tile.CanCollide = true
-				tileActive = true
-				tileFading = false
-			end)
-		end
-	end
-
-	-- Collectibles floating in final hallway
-	for ci = 1, 10 do
-		createCollectible(
-			hallwayStart + Vector3.new(math.random(-8,8), 5, -(ci*28)),
-			100 + ci
-		)
-	end
-
-	-- ============================================================
-	-- FINISH (at end of final hallway)
-	-- ============================================================
-	local fp = hallwayStart + Vector3.new(0, 0, -FINAL_LEN - 20)
-	local fb = Instance.new("Part"); fb.Name = "FinishPlatform"
-	fb.Size = Vector3.new(6,40,40); fb.Position = fp; fb.Anchored = true
-	fb.Color = Color3.fromRGB(255,215,0); fb.Material = Enum.Material.Neon
-	fb.Shape = Enum.PartType.Cylinder; fb.Orientation = Vector3.new(0,0,90); fb.Parent = mapFolder
-
-	local ts = Instance.new("Part"); ts.Size = Vector3.new(2.5,22,2.5)
-	ts.Position = fp+Vector3.new(0,14,0); ts.Anchored = true
-	ts.Color = Color3.fromRGB(245,235,210); ts.Material = Enum.Material.SmoothPlastic; ts.Parent = mapFolder
-
-	local tt = Instance.new("Part"); tt.Size = Vector3.new(6,16,16)
-	tt.Position = fp+Vector3.new(0,29,0); tt.Anchored = true
-	tt.Color = Color3.fromRGB(255,215,0); tt.Material = Enum.Material.Neon
-	tt.Shape = Enum.PartType.Cylinder; tt.Orientation = Vector3.new(0,0,90)
-	tt.CanCollide = false; tt.Parent = mapFolder
-
-	task.spawn(function()
-		local r = 0
-		while tt and tt.Parent do r += 2; tt.Orientation = Vector3.new(0,r%360,90); task.wait(0.03) end
-	end)
-
+	-- Victory trigger zone
 	local vz = Instance.new("Part"); vz.Name = "VictoryZone"
-	vz.Size = Vector3.new(40,30,40); vz.Position = fp+Vector3.new(0,18,0)
+	vz.Size = Vector3.new(50, 30, 50)
+	vz.Position = Vector3.new(0, finishY + 15, finishZ - 15)
 	vz.Anchored = true; vz.Transparency = 1; vz.CanCollide = false; vz.Parent = mapFolder
 
 	local wp = {}
@@ -2901,6 +2807,7 @@ end
 
 local function onCharacterAdded(player, character)
 	local humanoid = character:WaitForChild("Humanoid")
+	humanoid.WalkSpeed = 48
 	humanoid.Died:Connect(function() onPlayerDied(player) end)
 end
 
