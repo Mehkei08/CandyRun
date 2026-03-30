@@ -1,0 +1,71 @@
+{
+  "name": "CandyRun",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/shared"
+      }
+    },
+
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/server"
+      }
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      },
+      "StarterCharacterScripts": {
+        "CharacterScripts": {
+          "$path": "src/character"
+        }
+      },
+      "$properties": {
+        "CameraMode": "Classic",
+        "CameraMaxZoomDistance": 40,
+        "CameraMinZoomDistance": 8
+      }
+    },
+
+    "StarterGui": {
+      "CandyRunGui": {
+        "$path": "src/gui"
+      },
+      "$properties": {
+        "ScreenOrientation": "LandscapeSensor"
+      }
+    },
+
+    "Workspace": {
+      "$properties": {
+        "Gravity": 196.2
+      }
+    },
+
+    "Lighting": {
+      "$properties": {
+        "Ambient": [0.47, 0.35, 0.51],
+        "OutdoorAmbient": [0.63, 0.51, 0.67],
+        "Brightness": 2.0,
+        "ClockTime": 15,
+        "GlobalShadows": true,
+        "Technology": "Future",
+        "FogColor": [1, 0.78, 0.9],
+        "FogEnd": 2000,
+        "FogStart": 200
+      }
+    },
+
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}
